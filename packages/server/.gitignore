@@ -11,6 +11,8 @@
 go.work
 go.work.sum
 
+temp
+
 .env
 *.yaml
 *.toml

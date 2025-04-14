@@ -9,7 +9,8 @@ import (
 )
 
 type Config struct {
-	Http HttpConfig `yaml:"http"`
+	StoragePath string     `yaml:"storage_path" env-required:"true"`
+	Http        HttpConfig `yaml:"http"`
 }
 
 type HttpConfig struct {

@@ -1,0 +1,26 @@
+package models
+
+import "github.com/google/uuid"
+
+type Collection struct {
+	BaseModel
+
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	CoverURL    string `json:"coverUrl"`
+
+	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
+	User   User      `gorm:"foreignKey:UserID"`
+
+	CollectionSongs []CollectionSong
+}
+
+type CollectionSong struct {
+	BaseModel
+
+	SongID uuid.UUID `gorm:"type:uuid" json:"songId"`
+	Song   Song      `gorm:"foreignKey:SongID"`
+
+	CollectionID uuid.UUID  `gorm:"type:uuid" json:"collectionId"`
+	Collection   Collection `gorm:"foreignKey:CollectionID"`
+}
