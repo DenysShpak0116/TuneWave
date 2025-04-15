@@ -1,10 +1,12 @@
-import './global.css'
+import { FONTS } from "consts/fonts.enum"
+import GlobalStyle from "./global-style"
 
 function App() {
 
   return (
     <>
-      <h1>App page</h1>
+      <GlobalStyle />
+      <h1 style={{ fontFamily: `${FONTS.MONTSERRAT}` }}>Hello page!</h1>
     </>
   )
 }
