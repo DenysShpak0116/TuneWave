@@ -2,14 +2,27 @@ package repository
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func NewGORMDB(connectionString string) (*gorm.DB, error) {
-	return gorm.Open(postgres.Open(connectionString), &gorm.Config{})
+	return gorm.Open(postgres.Open(connectionString), &gorm.Config{
+		Logger: logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				SlowThreshold: time.Second,
+				LogLevel:      logger.Warn,
+				Colorful:      true,
+			},
+		),
+	})
 }
 
 func AutoMigrate(db *gorm.DB) error {

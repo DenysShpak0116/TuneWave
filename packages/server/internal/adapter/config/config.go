@@ -9,13 +9,21 @@ import (
 )
 
 type Config struct {
-	StoragePath string     `yaml:"storage_path" env-required:"true"`
-	Http        HttpConfig `yaml:"http"`
+	Env         string       `yaml:"env" env-default:"local"`
+	StoragePath string       `yaml:"storage_path" env-required:"true"`
+	JwtSecret   string       `yaml:"jwt_secret" env-required:"true"`
+	Http        HttpConfig   `yaml:"http"`
+	Google      GoogleConfig `yaml:"google"`
 }
 
 type HttpConfig struct {
 	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timout"`
+}
+
+type GoogleConfig struct {
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
 }
 
 func MustLoad() *Config {

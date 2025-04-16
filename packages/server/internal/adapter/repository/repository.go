@@ -7,14 +7,26 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: change preload
-
 type GenericRepository[T any] struct {
-	db *gorm.DB
+	db       *gorm.DB
+	preloads []string
 }
 
 func NewRepository[T any](db *gorm.DB) *GenericRepository[T] {
 	return &GenericRepository[T]{db: db}
+}
+
+func (r *GenericRepository[T]) WithPreloads(preloads ...string) *GenericRepository[T] {
+	newRepo := *r
+	newRepo.preloads = preloads
+	return &newRepo
+}
+
+func (r *GenericRepository[T]) applyPreloads(db *gorm.DB) *gorm.DB {
+	for _, preload := range r.preloads {
+		db = db.Preload(preload)
+	}
+	return db
 }
 
 func (r *GenericRepository[T]) Add(ctx context.Context, entity *T) error {
@@ -23,16 +35,12 @@ func (r *GenericRepository[T]) Add(ctx context.Context, entity *T) error {
 		return err
 	}
 
-	// Load relations to entity
-
 	return nil
 }
 
 func (r *GenericRepository[T]) GetByID(ctx context.Context, id uint) (*T, error) {
 	var entity T
-	query := r.db.WithContext(ctx).Model(&entity).Where("id = ?", id)
-
-	// Load relations to entity
+	query := r.applyPreloads(r.db.WithContext(ctx)).Model(&entity).Where("id = ?", id)
 
 	err := query.First(&entity).Error
 	if err != nil {
@@ -44,7 +52,7 @@ func (r *GenericRepository[T]) GetByID(ctx context.Context, id uint) (*T, error)
 
 func (r *GenericRepository[T]) Where(ctx context.Context, params interface{}, args ...interface{}) ([]T, error) {
 	var entities []T
-	query := r.db.WithContext(ctx)
+	query := r.applyPreloads(r.db.WithContext(ctx))
 
 	switch p := params.(type) {
 	case *T:
@@ -70,7 +78,7 @@ func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	if err != nil {
 		return err
 	}
-	// Load relations to entitiy
+
 	return nil
 }
 
@@ -86,7 +94,7 @@ func (r *GenericRepository[T]) Delete(ctx context.Context, id uint) error {
 
 func (r *GenericRepository[T]) SkipTake(ctx context.Context, skip int, take int) (*[]T, error) {
 	var entities []T
-	query := r.db.WithContext(ctx).Offset(skip).Limit(take)
+	query := r.applyPreloads(r.db.WithContext(ctx)).Offset(skip).Limit(take)
 
 	err := query.Find(&entities).Error
 	if err != nil {
@@ -99,22 +107,18 @@ func (r *GenericRepository[T]) CountWhere(ctx context.Context, params *T) int64 
 	var count int64
 	query := r.db.WithContext(ctx).Model(new(T)).Where(params)
 
-	// Load relations to entitiy
-
 	query.Count(&count)
 	return count
 }
 
 func (r *GenericRepository[T]) GetAll(ctx context.Context) ([]T, error) {
 	var entities []T
-	query := r.db.WithContext(ctx)
+	query := r.applyPreloads(r.db.WithContext(ctx))
 
 	err := query.Find(&entities).Error
 	if err != nil {
 		return nil, err
 	}
-
-	// Load relations to entitiies
 
 	return entities, nil
 }

@@ -4,8 +4,12 @@ import (
 	"os"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
+	"github.com/go-chi/chi"
 
 	"log/slog"
 
@@ -16,11 +20,37 @@ import (
 func BuildContainer() *dig.Container {
 	container := dig.New()
 
+	httpserver.InitGothicSessionStore()
+
 	container.Provide(config.MustLoad)
-	container.Provide(setupLogger)
+	container.Provide(func(cfg *config.Config) *slog.Logger {
+		return setupLogger(cfg.Env)
+	})
 
 	container.Provide(func(cfg *config.Config) (*gorm.DB, error) {
 		return repository.NewGORMDB(cfg.StoragePath)
+	})
+
+	// repository
+	container.Provide(func(db *gorm.DB) *repository.UserRepository {
+		return repository.NewUserRepository(db)
+	})
+
+	// service
+	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
+		return service.NewUserService(userRepo)
+	})
+
+	// handlers
+	container.Provide(func(cfg *config.Config, userService *service.UserService) *auth.AuthHandler {
+		return auth.NewAuthHandler(userService, cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.JwtSecret)
+	})
+	container.Provide(func(
+		cfg *config.Config,
+		log *slog.Logger,
+		authHandler *auth.AuthHandler,
+	) *chi.Mux {
+		return httpserver.NewRouter(log, cfg, authHandler)
 	})
 
 	return container
