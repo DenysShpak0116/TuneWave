@@ -6,10 +6,11 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 
 	"log/slog"
 
@@ -76,11 +77,17 @@ func BuildContainer() *dig.Container {
 		)
 	})
 	container.Provide(func(
+		userService *service.UserService,
+	) *user.UserHandler {
+		return user.NewUserHandler(userService)
+	})
+	container.Provide(func(
 		cfg *config.Config,
 		log *slog.Logger,
 		authHandler *auth.AuthHandler,
+		userHandler *user.UserHandler,
 	) *chi.Mux {
-		return httpserver.NewRouter(log, cfg, authHandler)
+		return httpserver.NewRouter(log, cfg, authHandler, userHandler)
 	})
 
 	return container

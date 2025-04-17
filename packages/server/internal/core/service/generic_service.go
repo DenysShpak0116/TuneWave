@@ -27,7 +27,7 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T) ([]T, error) {
 	return s.Repository.Where(ctx, params)
 }
 
-func (s *GenericService[T]) Update(ctx context.Context, entity *T) error {
+func (s *GenericService[T]) Update(ctx context.Context, entity *T) (*T, error) {
 	return s.Repository.Update(ctx, entity)
 }
 

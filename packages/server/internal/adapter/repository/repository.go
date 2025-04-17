@@ -69,18 +69,22 @@ func (r *GenericRepository[T]) Where(ctx context.Context, params interface{}, ar
 		return nil, err
 	}
 
-	// Load relations to entities
-
 	return entities, nil
 }
 
-func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
+func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) (*T, error) {
 	err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	var fullEntity T
+	err = r.db.WithContext(ctx).First(&fullEntity, entity).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &fullEntity, nil
 }
 
 func (r *GenericRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {

@@ -12,5 +12,6 @@ func RespondWithError(w http.ResponseWriter, r *http.Request, status int, messag
 	if err != nil {
 		errMsg = err.Error()
 	}
+	render.Status(r, status)
 	render.JSON(w, r, helpers.NewErrorResponse(status, message, errMsg))
 }

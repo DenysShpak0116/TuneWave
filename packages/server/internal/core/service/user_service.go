@@ -30,5 +30,9 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 
 	user[0].PasswordHash = hashedPassword
 
-	return us.Update(context.TODO(), &user[0])
+	_, err = us.Update(context.TODO(), &user[0])
+	if err != nil {
+		return fmt.Errorf("failed to update user password: %w", err)
+	}
+	return nil
 }

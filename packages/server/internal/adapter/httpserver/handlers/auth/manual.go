@@ -63,6 +63,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, user)
 }
 
@@ -86,7 +87,6 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	users, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil || len(users) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid credentials", nil)
 		return
 	}
@@ -94,7 +94,6 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	user := users[0]
 
 	if user.IsGoogleAccount {
-		w.WriteHeader(http.StatusForbidden)
 		handlers.RespondWithError(w, r, http.StatusForbidden, "This email is associated with a Google account. Please log in with Google.", nil)
 		return
 	}
@@ -102,14 +101,12 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Password Hash:", user.PasswordHash)
 
 	if !CheckPasswordHash(req.Password, user.PasswordHash) {
-		w.WriteHeader(http.StatusUnauthorized)
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid credentials", nil)
 		return
 	}
 
 	accessToken, refreshToken, err := ah.GenerateTokens(user.ID.String())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
 		return
 	}
@@ -134,7 +131,6 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		w.WriteHeader(http.StatusUnauthorized)
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Missing Authorization header", nil)
 		return
 	}
@@ -142,20 +138,17 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	userID, err := ah.ParseToken(tokenStr)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid or expired token", err)
 		return
 	}
 
 	uuidParsed, err := uuid.Parse(userID)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID format", err)
 		return
 	}
 	users, err := ah.UserService.Where(ctx, &models.User{BaseModel: models.BaseModel{ID: uuidParsed}})
 	if err != nil || len(users) == 0 {
-		w.WriteHeader(http.StatusUnauthorized)
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "User not found", err)
 		return
 	}
@@ -164,7 +157,6 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	if user.IsGoogleAccount {
 		if err := gothic.Logout(w, r); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
 			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to logout Google user", err)
 			return
 		}

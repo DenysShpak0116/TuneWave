@@ -12,7 +12,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/digcontainer"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 )
 

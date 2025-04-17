@@ -8,8 +8,9 @@ import (
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	mwLogger "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -19,6 +20,7 @@ func NewRouter(
 	log *slog.Logger,
 	cfg *config.Config,
 	authHandler *auth.AuthHandler,
+	userHandler *user.UserHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -53,5 +55,9 @@ func NewRouter(
 	router.Get("/auth/google/callback", authHandler.GoogleCallback)
 	router.Get("/auth/google", authHandler.GoogleAuth)
 
+	router.Route("/users", func(r chi.Router) {
+		r.Put("/{id}", userHandler.Update)
+		r.Delete("/{id}", userHandler.Delete)
+	})
 	return router
 }
