@@ -9,22 +9,12 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/markbates/goth/gothic"
 )
-
-type registerRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-}
-
-type loginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 // Register godoc
 // @Summary Register a new user
@@ -32,10 +22,10 @@ type loginRequest struct {
 // @Tags Auth
 // @Accept  json
 // @Produce  json
-// @Param user body registerRequest true "User registration data"
+// @Param user body dto.RegisterRequest true "User registration data"
 // @Router /auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
+	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request", err)
 		return
@@ -82,10 +72,10 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Tags Auth
 // @Accept  json
 // @Produce  json
-// @Param login body loginRequest true "User login data"
+// @Param login body dto.LoginRequest true "User login data"
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
+	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request", err)
 		return

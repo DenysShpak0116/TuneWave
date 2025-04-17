@@ -46,6 +46,8 @@ func NewRouter(
 	router.Post("/auth/login", authHandler.Login)
 	router.Post("/auth/register", authHandler.Register)
 	router.Post("/auth/logout", authHandler.Logout)
+	router.Post("/auth/forgot-password", authHandler.ForgotPassword)
+	router.Post("/auth/reset-password", authHandler.ResetPassword)
 	router.Get("/auth/refresh", authHandler.Refresh)
 
 	router.Get("/auth/google/callback", authHandler.GoogleCallback)

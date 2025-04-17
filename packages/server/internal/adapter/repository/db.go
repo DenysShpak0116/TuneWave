@@ -40,5 +40,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.UserReaction{},
 		&models.Tag{},
 		&models.SongTag{},
+		&models.Token{},
 	)
 }

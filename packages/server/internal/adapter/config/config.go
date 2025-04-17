@@ -14,6 +14,14 @@ type Config struct {
 	JwtSecret   string       `yaml:"jwt_secret" env-required:"true"`
 	Http        HttpConfig   `yaml:"http"`
 	Google      GoogleConfig `yaml:"google"`
+	Mail        MailConfig   `yaml:"mail"`
+}
+
+type MailConfig struct {
+	StmpServer   string `yaml:"smtp_server"`
+	SmtpPort     int    `yaml:"smtp_port"`
+	FromMail     string `yaml:"from_email"`
+	FromPassword string `yaml:"from_password"`
 }
 
 type HttpConfig struct {

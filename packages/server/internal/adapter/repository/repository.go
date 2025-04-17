@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +39,7 @@ func (r *GenericRepository[T]) Add(ctx context.Context, entity *T) error {
 	return nil
 }
 
-func (r *GenericRepository[T]) GetByID(ctx context.Context, id uint) (*T, error) {
+func (r *GenericRepository[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, error) {
 	var entity T
 	query := r.applyPreloads(r.db.WithContext(ctx)).Model(&entity).Where("id = ?", id)
 
@@ -82,7 +83,7 @@ func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	return nil
 }
 
-func (r *GenericRepository[T]) Delete(ctx context.Context, id uint) error {
+func (r *GenericRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
 	var entity T
 	err := r.db.WithContext(ctx).Where("id = ?", id).Delete(&entity).Error
 	if err != nil {

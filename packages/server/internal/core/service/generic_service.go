@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/google/uuid"
 )
 
 type GenericService[T any] struct {
@@ -18,7 +19,7 @@ func (s *GenericService[T]) Create(ctx context.Context, entity *T) error {
 	return s.Repository.Add(ctx, entity)
 }
 
-func (s *GenericService[T]) GetByID(ctx context.Context, id uint) (*T, error) {
+func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, error) {
 	return s.Repository.GetByID(ctx, id)
 }
 
@@ -30,7 +31,7 @@ func (s *GenericService[T]) Update(ctx context.Context, entity *T) error {
 	return s.Repository.Update(ctx, entity)
 }
 
-func (s *GenericService[T]) Delete(ctx context.Context, id uint) error {
+func (s *GenericService[T]) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.Repository.Delete(ctx, id)
 }
 

@@ -13,6 +13,7 @@ import (
 )
 
 type AuthHandler struct {
+	AuthService        services.AuthService
 	UserService        services.UserService
 	GoogleClientID     string
 	GoogleClientSecret string
@@ -20,6 +21,7 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(
+	authService services.AuthService,
 	userService services.UserService,
 	googleClientID,
 	googleClientSecret string,
@@ -36,6 +38,7 @@ func NewAuthHandler(
 	)
 
 	return &AuthHandler{
+		AuthService:        authService,
 		UserService:        userService,
 		GoogleClientID:     googleClientID,
 		GoogleClientSecret: googleClientSecret,

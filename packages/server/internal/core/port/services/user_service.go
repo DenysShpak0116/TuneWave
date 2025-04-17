@@ -4,4 +4,5 @@ import "github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/
 
 type UserService interface {
 	Service[models.User]
+	UpdateUserPassword(email string, hashedPassword string) error
 }

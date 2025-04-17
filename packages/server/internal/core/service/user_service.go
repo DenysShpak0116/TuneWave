@@ -1,6 +1,9 @@
 package service
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 )
@@ -13,4 +16,19 @@ func NewUserService(repo port.Repository[models.User]) *UserService {
 	return &UserService{
 		GenericService: NewGenericService(repo),
 	}
+}
+
+func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {
+	user, err := us.Where(context.TODO(), &models.User{Email: email})
+	if err != nil {
+		return err
+	}
+
+	if len(user) == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	user[0].PasswordHash = hashedPassword
+
+	return us.Update(context.TODO(), &user[0])
 }

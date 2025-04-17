@@ -36,14 +36,44 @@ func BuildContainer() *dig.Container {
 		return repository.NewUserRepository(db)
 	})
 
+	container.Provide(func(db *gorm.DB) *repository.TokenRepository {
+		return repository.NewTokenRepository(db)
+	})
+
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
 	})
 
+	container.Provide(func(cfg *config.Config) *service.MailService {
+		return service.NewMailService(
+			cfg.Mail.StmpServer,
+			cfg.Mail.SmtpPort,
+			cfg.Mail.FromMail,
+			cfg.Mail.FromPassword,
+		)
+	})
+
+	container.Provide(func(
+		mailService *service.MailService,
+		tokenRepo *repository.TokenRepository,
+		userService *service.UserService,
+	) *service.AuthService {
+		return service.NewAuthService(mailService, tokenRepo, userService)
+	})
 	// handlers
-	container.Provide(func(cfg *config.Config, userService *service.UserService) *auth.AuthHandler {
-		return auth.NewAuthHandler(userService, cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.JwtSecret)
+	container.Provide(func(
+		authService *service.AuthService,
+		userService *service.UserService,
+		cfg *config.Config,
+	) *auth.AuthHandler {
+		return auth.NewAuthHandler(
+			authService,
+			userService,
+			cfg.Google.ClientID,
+			cfg.Google.ClientSecret,
+			cfg.JwtSecret,
+		)
 	})
 	container.Provide(func(
 		cfg *config.Config,
