@@ -12,7 +12,10 @@ go.work
 go.work.sum
 
 temp
+tmp
 
 .env
 *.yaml
 *.toml
+
+!Taskfile.yaml
