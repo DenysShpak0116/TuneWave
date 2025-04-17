@@ -1,12 +1,13 @@
-import { FONTS } from "consts/fonts.enum"
 import GlobalStyle from "./global-style"
+import { RouterProvider } from "react-router-dom"
+import router from "pages/router"
 
 function App() {
 
   return (
     <>
       <GlobalStyle />
-      <h1 style={{ fontFamily: `${FONTS.MONTSERRAT}` }}>Hello page!</h1>
+      <RouterProvider router={router} />
     </>
   )
 }
