@@ -10,7 +10,9 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/markbates/goth/gothic"
@@ -63,8 +65,14 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userDTO := &dtos.UserDTO{}
+	if err := dtoMapper.Map(userDTO, user); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user to DTO", err)
+		return
+	}
+
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, user)
+	render.JSON(w, r, userDTO)
 }
 
 // Login godoc

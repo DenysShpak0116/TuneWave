@@ -48,13 +48,16 @@ func (as *AuthService) HandleForgotPassword(req dto.ForgotPasswordRequest) error
 	as.MailService.SendEmail(
 		req.Email,
 		"Password Reset",
-		fmt.Sprintf("Click here to reset your password: http://example.com/reset-password?token=%s", token),
+		fmt.Sprintf("Click here to reset your password: http://localhost:8081/auth/reset-password?token=%s", token),
 	)
 	return nil
 }
 
 func (as *AuthService) HandleResetPassword(req dto.ResetPasswordRequest) error {
-	tokens, err := as.TokenRepository.Where(context.Background(), &models.Token{Token: req.Token})
+	tokens, err := as.TokenRepository.NewQuery(context.Background()).
+		Where("token = ?", req.Token).
+		Take(1).
+		Find()
 	if err != nil {
 		return errors.New("invalid token")
 	}

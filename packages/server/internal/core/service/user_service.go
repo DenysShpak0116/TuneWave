@@ -19,7 +19,7 @@ func NewUserService(repo port.Repository[models.User]) *UserService {
 }
 
 func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {
-	user, err := us.Where(context.TODO(), &models.User{Email: email})
+	user, err := us.Repository.NewQuery(context.Background()).Where("email = ?", email).Find()
 	if err != nil {
 		return err
 	}

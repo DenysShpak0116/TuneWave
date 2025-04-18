@@ -3,11 +3,11 @@ package httpserver
 import (
 	"fmt"
 	"log/slog"
-	"net/http"
 
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	mwLogger "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
 	"github.com/go-chi/chi/v5"
@@ -21,6 +21,7 @@ func NewRouter(
 	cfg *config.Config,
 	authHandler *auth.AuthHandler,
 	userHandler *user.UserHandler,
+	songHandler *song.SongHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -40,11 +41,6 @@ func NewRouter(
 		httpSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Http.Port)),
 	))
 
-	router.Get("/home", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
 	router.Post("/auth/login", authHandler.Login)
 	router.Post("/auth/register", authHandler.Register)
 	router.Post("/auth/logout", authHandler.Logout)
@@ -56,8 +52,18 @@ func NewRouter(
 	router.Get("/auth/google", authHandler.GoogleAuth)
 
 	router.Route("/users", func(r chi.Router) {
+		r.Get("/{id}", userHandler.GetByID)
 		r.Put("/{id}", userHandler.Update)
 		r.Delete("/{id}", userHandler.Delete)
 	})
+
+	router.Route("/songs", func(r chi.Router) {
+		r.Get("/", songHandler.GetSongs)
+		r.Get("/{id}", songHandler.GetByID)
+		r.Post("/", songHandler.Create)
+		r.Put("/{id}", songHandler.Update)
+		r.Delete("/{id}", songHandler.Delete)
+	})
+
 	return router
 }

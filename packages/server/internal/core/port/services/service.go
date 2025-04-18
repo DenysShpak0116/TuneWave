@@ -12,6 +12,5 @@ type Service[T any] interface {
 	Where(ctx context.Context, params *T) ([]T, error)
 	Update(ctx context.Context, entity *T) (*T, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	SkipTake(ctx context.Context, skip int, take int) (*[]T, error)
-	CountWhere(ctx context.Context, params *T) int64
+	CountWhere(ctx context.Context, params *T) (int64, error)
 }

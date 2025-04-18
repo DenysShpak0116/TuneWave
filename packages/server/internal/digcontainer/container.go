@@ -6,6 +6,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
@@ -41,6 +42,10 @@ func BuildContainer() *dig.Container {
 		return repository.NewTokenRepository(db)
 	})
 
+	container.Provide(func(db *gorm.DB) *repository.SongRepository {
+		return repository.NewSongRepository(db)
+	})
+
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
@@ -62,6 +67,12 @@ func BuildContainer() *dig.Container {
 	) *service.AuthService {
 		return service.NewAuthService(mailService, tokenRepo, userService)
 	})
+
+	container.Provide(func(
+		songRepo *repository.SongRepository,
+	) *service.SongService {
+		return service.NewSongService(songRepo)
+	})
 	// handlers
 	container.Provide(func(
 		authService *service.AuthService,
@@ -82,12 +93,19 @@ func BuildContainer() *dig.Container {
 		return user.NewUserHandler(userService)
 	})
 	container.Provide(func(
+		songService *service.SongService,
+	) *song.SongHandler {
+		return song.NewSongHandler(songService)
+	})
+
+	container.Provide(func(
 		cfg *config.Config,
 		log *slog.Logger,
 		authHandler *auth.AuthHandler,
 		userHandler *user.UserHandler,
+		songHandler *song.SongHandler,
 	) *chi.Mux {
-		return httpserver.NewRouter(log, cfg, authHandler, userHandler)
+		return httpserver.NewRouter(log, cfg, authHandler, userHandler, songHandler)
 	})
 
 	return container

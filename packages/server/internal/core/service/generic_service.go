@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
@@ -20,11 +21,25 @@ func (s *GenericService[T]) Create(ctx context.Context, entity *T) error {
 }
 
 func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, error) {
-	return s.Repository.GetByID(ctx, id)
+	entities, err := s.Repository.NewQuery(ctx).
+		Where("id = ?", id).Take(1).
+		Find()
+	if err != nil {
+		return nil, err
+	}
+	if len(entities) == 0 {
+		return nil, fmt.Errorf("entity with id %s not found", id)
+	}
+	return &entities[0], nil
 }
 
 func (s *GenericService[T]) Where(ctx context.Context, params *T) ([]T, error) {
-	return s.Repository.Where(ctx, params)
+	entities, err := s.Repository.NewQuery(ctx).
+		Where(params).Find()
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
 }
 
 func (s *GenericService[T]) Update(ctx context.Context, entity *T) (*T, error) {
@@ -35,10 +50,12 @@ func (s *GenericService[T]) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.Repository.Delete(ctx, id)
 }
 
-func (s *GenericService[T]) SkipTake(ctx context.Context, skip int, take int) (*[]T, error) {
-	return s.Repository.SkipTake(ctx, skip, take)
-}
+func (s *GenericService[T]) CountWhere(ctx context.Context, params *T) (int64, error) {
+	entities, err := s.Repository.NewQuery(ctx).
+		Where(params).Count()
+	if err != nil {
+		return 0, err
+	}
 
-func (s *GenericService[T]) CountWhere(ctx context.Context, params *T) int64 {
-	return s.Repository.CountWhere(ctx, params)
+	return entities, nil
 }
