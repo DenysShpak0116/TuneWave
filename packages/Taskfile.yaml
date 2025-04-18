@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+  run_server:
+    desc: "Run server app"
+    cmds:
+      - |
+        cd ./server
+        task run
+  
+  run_web:
+    desc: "Run web app"
+    cmds:
+      - |
+        cd ./web
+        npm i
+        npm run dev
+  
+  run_all:
+    desc: "Run all apps"
+    deps:
+      - run_server
+      - run_web
+    
+
