@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	dtoMapper "github.com/dranikpg/dto-mapper"
-	"github.com/go-chi/render"
 	"github.com/markbates/goth/gothic"
 )
 
@@ -95,11 +95,31 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user to DTO", err)
 		return
 	}
-	render.JSON(w, r, map[string]any{
+
+	authData := map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
 		"user":         userDTO,
+	}
+
+	authJSON, err := json.Marshal(authData)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
+		return
+	}
+
+	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_data",
+		Value:    authBase64,
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
 	})
+
+	http.Redirect(w, r, "http://localhost:5173/", http.StatusSeeOther)
 }
 
 func fetchGoogleNickname(token string) (string, error) {
