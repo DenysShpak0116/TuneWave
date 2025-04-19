@@ -12,6 +12,7 @@ type Query[T any] interface {
 	Skip(offset int) Query[T]
 	Take(limit int) Query[T]
 	Preload(preloads ...string) Query[T]
+	Delete() error
 	Find() ([]T, error)
 	Count() (int64, error)
 }

@@ -75,3 +75,7 @@ func (qb *QueryBuilder[T]) Count() (int64, error) {
 	err := qb.query.Count(&count).Error
 	return count, err
 }
+
+func (qb *QueryBuilder[T]) Delete() error {
+	return qb.query.Delete(new(T)).Error
+}

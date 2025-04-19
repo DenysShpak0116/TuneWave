@@ -9,20 +9,19 @@ import (
 type Song struct {
 	BaseModel
 
-	Title      string    `json:"title"`
-	ArtistName string    `json:"artistName"`
-	UploadDate time.Time `json:"uploadDate"`
-	Genre      string    `json:"genre"`
-	FileURL    string    `json:"fileUrl"`
-	CoverURL   string    `json:"coverUrl"`
-	Duration   float64   `json:"duration"`
-	Listenings int       `json:"listenings"`
+	Title      string        `json:"title"`
+	Genre      string        `json:"genre"`
+	SongURL    string        `json:"songUrl"`
+	CoverURL   string        `json:"coverUrl"`
+	Duration   time.Duration `json:"duration"`
+	Listenings int64         `json:"listenings"`
 
 	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
 	User   User      `gorm:"foreignKey:UserID"`
 
-	SongTags        []SongTag
+	SongTags        []SongTag `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
 	Comments        []Comment
-	Authors         []SongAuthor
+	Authors         []SongAuthor `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
 	CollectionSongs []CollectionSong
+	Reactions       []UserReaction `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/songservice"
 	"github.com/go-chi/chi/v5"
 
 	"log/slog"
@@ -34,6 +35,9 @@ func BuildContainer() *dig.Container {
 	})
 
 	// repository
+	container.Provide(func(cfg *config.Config) *repository.FileStorage {
+		return repository.NewFileStorage(cfg.AWS.Region, cfg.AWS.AccessKey, cfg.AWS.SecretKey, cfg.AWS.Bucket)
+	})
 	container.Provide(func(db *gorm.DB) *repository.UserRepository {
 		return repository.NewUserRepository(db)
 	})
@@ -46,6 +50,25 @@ func BuildContainer() *dig.Container {
 		return repository.NewSongRepository(db)
 	})
 
+	container.Provide(func(db *gorm.DB) *repository.AuthorRepository {
+		return repository.NewAuthorRepository(db)
+	})
+
+	container.Provide(func(db *gorm.DB) *repository.SongAuthorRepository {
+		return repository.NewSongAuthorRepository(db)
+	})
+
+	container.Provide(func(db *gorm.DB) *repository.TagRepository {
+		return repository.NewTagRepository(db)
+	})
+
+	container.Provide(func(db *gorm.DB) *repository.SongTagRepository {
+		return repository.NewSongTagRepository(db)
+	})
+
+	container.Provide(func(db *gorm.DB) *repository.UserReactionRepository {
+		return repository.NewUserReactionRepository(db)
+	})
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
@@ -70,8 +93,22 @@ func BuildContainer() *dig.Container {
 
 	container.Provide(func(
 		songRepo *repository.SongRepository,
-	) *service.SongService {
-		return service.NewSongService(songRepo)
+		fileStorage *repository.FileStorage,
+		authorRepository *repository.AuthorRepository,
+		songAuthorRepository *repository.SongAuthorRepository,
+		tagRepository *repository.TagRepository,
+		songTagRepository *repository.SongTagRepository,
+		userReactionRepository *repository.UserReactionRepository,
+	) *songservice.SongService {
+		return songservice.NewSongService(
+			songRepo,
+			fileStorage,
+			authorRepository,
+			songAuthorRepository,
+			tagRepository,
+			songTagRepository,
+			userReactionRepository,
+		)
 	})
 	// handlers
 	container.Provide(func(
@@ -93,7 +130,7 @@ func BuildContainer() *dig.Container {
 		return user.NewUserHandler(userService)
 	})
 	container.Provide(func(
-		songService *service.SongService,
+		songService *songservice.SongService,
 	) *song.SongHandler {
 		return song.NewSongHandler(songService)
 	})

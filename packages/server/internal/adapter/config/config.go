@@ -15,6 +15,14 @@ type Config struct {
 	Http        HttpConfig   `yaml:"http"`
 	Google      GoogleConfig `yaml:"google"`
 	Mail        MailConfig   `yaml:"mail"`
+	AWS         AWSConfig    `yaml:"aws"`
+}
+
+type AWSConfig struct {
+	Region    string `yaml:"region"`
+	AccessKey string `yaml:"access_key"`
+	SecretKey string `yaml:"secret_key"`
+	Bucket    string `yaml:"bucket"`
 }
 
 type MailConfig struct {

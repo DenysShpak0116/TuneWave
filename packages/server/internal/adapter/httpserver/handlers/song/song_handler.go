@@ -7,7 +7,9 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 )
 
 type SongHandler struct {
@@ -20,7 +22,7 @@ func NewSongHandler(songService services.SongService) *SongHandler {
 	}
 }
 
-func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
+func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	sortBy := r.URL.Query().Get("sortBy")
 	order := r.URL.Query().Get("order")
@@ -43,7 +45,7 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 		order = "desc"
 	}
 
-	songs, err := h.SongService.GetSongs(context.Background(), search, sortBy, order, page, limit)
+	songs, err := sh.SongService.GetSongs(context.Background(), search, sortBy, order, page, limit)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get songs", err)
 		return
@@ -53,22 +55,126 @@ func (h *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, songs)
 }
 
-func (h *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	// Implementation for getting a song by ID
-	w.Write([]byte("Get song by ID"))
+// GetByID godoc
+// @Summary Get a song by ID
+// @Description Get a song by ID
+// @Security BearerAuth
+// @Tags songs
+// @Param id path string true "Song ID"
+// @Produce json
+// @Router /songs/{id} [get]
+func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "id")
+	songUUID, err := uuid.Parse(songID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
+		return
+	}
+
+	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, songDTO)
 }
 
-func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
-	// Implementation for creating a new song
-	w.Write([]byte("Create a new song"))
+// Create godoc
+// @Summary Create a new song
+// @Description Create a new song
+// @Security BearerAuth
+// @Tags songs
+// @Accept multipart/form-data
+// @Produce json
+// @Param userID formData string true "User ID"
+// @Param title formData string true "Song title"
+// @Param genre formData string true "Song genre"
+// @Param artists formData []string true "Artists" collectionFormat(multi)
+// @Param tags formData []string true "Tags" collectionFormat(multi)
+// @Param file formData file true "Song file"
+// @Param cover formData file true "Cover image"
+// @Router /songs [post]
+func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
+		return
+	}
+
+	userID := r.FormValue("userID")
+	userIDuuid, err := uuid.Parse(userID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
+		return
+	}
+
+	title := r.FormValue("title")
+	genre := r.FormValue("genre")
+	artists := r.Form["artists"]
+	tags := r.Form["tags"]
+
+	songFile, songHeader, err := r.FormFile("file")
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song file is required", err)
+		return
+	}
+	defer songFile.Close()
+
+	coverFile, coverHeader, err := r.FormFile("cover")
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Cover image is required", err)
+		return
+	}
+	defer coverFile.Close()
+
+	song, err := sh.SongService.SaveSong(context.Background(), services.SaveSongParams{
+		UserID:      userIDuuid,
+		Title:       title,
+		Genre:       genre,
+		Artists:     artists,
+		Tags:        tags,
+		Song:        songFile,
+		SongHeader:  songHeader,
+		Cover:       coverFile,
+		CoverHeader: coverHeader,
+	})
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to save song", err)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, song)
 }
 
-func (h *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// Implementation for updating a song
 	w.Write([]byte("Update a song"))
 }
 
-func (h *SongHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	// Implementation for deleting a song
-	w.Write([]byte("Delete a song"))
+// Delete godoc
+// @Summary Delete a song
+// @Description Delete a song by ID
+// @Security BearerAuth
+// @Tags songs
+// @Param id path string true "Song ID"
+// @Produce json
+// @Router /songs/{id} [delete]
+func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	songID := chi.URLParam(r, "id")
+	songUUID, err := uuid.Parse(songID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
+		return
+	}
+
+	if err := sh.SongService.Delete(context.Background(), songUUID); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to delete song", err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+	render.NoContent(w, r)
 }
