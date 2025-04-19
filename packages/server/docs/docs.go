@@ -350,6 +350,45 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/songs/{id}/reaction": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set reaction to song",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Set reaction to song",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reaction request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/song.songReactionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/users/{id}": {
             "get": {
                 "security": [
@@ -500,6 +539,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "song.songReactionRequest": {
+            "type": "object",
+            "properties": {
+                "reactionType": {
+                    "type": "string"
+                },
+                "userId": {
                     "type": "string"
                 }
             }

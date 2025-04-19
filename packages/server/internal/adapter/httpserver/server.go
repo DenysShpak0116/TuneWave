@@ -63,6 +63,8 @@ func NewRouter(
 		r.Post("/", songHandler.Create)
 		r.Put("/{id}", songHandler.Update)
 		r.Delete("/{id}", songHandler.Delete)
+
+		r.Post("/{id}/reaction", songHandler.SetReaction)
 	})
 
 	return router
