@@ -95,7 +95,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	users, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil || len(users) == 0 {
-		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid credentials", nil)
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid credentials", nil)
 		return
 	}
 
