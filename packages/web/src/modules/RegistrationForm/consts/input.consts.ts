@@ -1,7 +1,6 @@
+type AuthInputType = { placeholder: string; type: string, name: string };
 
-type InputType = { placeholder: string; type: string, name: string };
-
-export const registrationInputs: InputType[] = [
+export const registrationInputs: AuthInputType[] = [
     { placeholder: "Ім’я користувача", type: "text", name: "username" },
     { placeholder: "Електрона пошта", type: "email", name: "email" },
     { placeholder: "Пароль", type: "password", name: "password" },

@@ -1,5 +1,5 @@
 import { FC, useState, ChangeEvent, FormEvent } from "react";
-import { AuthContainer, FormContainer, LoginText } from "./registration-form.style";
+import { LoginText } from "./registration-form.style";
 import { registrationInputs } from "./consts/input.consts";
 import { AuthInput } from "@ui/AuthInput/auth-input.component";
 import { Button } from "@ui/Btn/btn.component";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { useRegister } from "./hooks/useRegistration";
 import toast from "react-hot-toast";
+import { AuthForm } from "@components/AuthForm/auth-form.component";
 
 export const RegistrationForm: FC = () => {
     const navigate = useNavigate();
@@ -28,6 +29,7 @@ export const RegistrationForm: FC = () => {
     };
 
     const handleSubmit = (e: FormEvent) => {
+
         e.preventDefault();
 
         const passwordIndex = registrationInputs.findIndex(el => el.name === "password");
@@ -66,27 +68,26 @@ export const RegistrationForm: FC = () => {
     };
 
     return (
-        <AuthContainer>
-            <FormContainer as="form" onSubmit={handleSubmit}>
-                <h1>Реєстрація</h1>
+        <AuthForm submitFn={handleSubmit}>
+            <h1>Реєстрація</h1>
 
-                {registrationInputs.map((el, index) => (
-                    <AuthInput
-                        key={index}
-                        placeholder={el.placeholder}
-                        type={el.type}
-                        value={formValues[index]}
-                        handleInput={handleInput(index)}
-                    />
-                ))}
-
-                <Button
-                    text={registerMutation.isPending ? "Завантаження..." : "Зареєструватися"}
-                    type="submit"
+            {registrationInputs.map((el, index) => (
+                <AuthInput
+                    key={index}
+                    placeholder={el.placeholder}
+                    type={el.type}
+                    value={formValues[index]}
+                    handleInput={handleInput(index)}
                 />
-                <GoogleButton onClickHandle={handleGoogleButtonClick} />
-                <LoginText onClick={() => navigate(ROUTES.SIGN_IN)}>Авторизуйтесь</LoginText>
-            </FormContainer>
-        </AuthContainer>
+            ))}
+
+            <Button
+                text={registerMutation.isPending ? "Завантаження..." : "Зареєструватися"}
+                type="submit"
+            />
+            <GoogleButton onClickHandle={handleGoogleButtonClick} />
+            <LoginText onClick={() => navigate(ROUTES.SIGN_IN)}>Авторизуйтесь</LoginText>
+
+        </AuthForm>
     );
 };
