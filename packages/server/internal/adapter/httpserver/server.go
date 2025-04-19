@@ -7,6 +7,7 @@ import (
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	mwLogger "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
@@ -22,6 +23,7 @@ func NewRouter(
 	authHandler *auth.AuthHandler,
 	userHandler *user.UserHandler,
 	songHandler *song.SongHandler,
+	commentHandler *comment.CommentHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -65,6 +67,11 @@ func NewRouter(
 		r.Delete("/{id}", songHandler.Delete)
 
 		r.Post("/{id}/reaction", songHandler.SetReaction)
+	})
+
+	router.Route("/comments", func(r chi.Router) {
+		r.Post("/", commentHandler.CreateComment)
+		r.Delete("/{id}", commentHandler.DeleteComment)
 	})
 
 	return router

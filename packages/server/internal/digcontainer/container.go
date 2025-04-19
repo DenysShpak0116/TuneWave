@@ -6,6 +6,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
@@ -69,6 +70,10 @@ func BuildContainer() *dig.Container {
 	container.Provide(func(db *gorm.DB) *repository.UserReactionRepository {
 		return repository.NewUserReactionRepository(db)
 	})
+
+	container.Provide(func(db *gorm.DB) *repository.CommentRepository {
+		return repository.NewCommentRepository(db)
+	})
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
@@ -110,6 +115,12 @@ func BuildContainer() *dig.Container {
 			userReactionRepository,
 		)
 	})
+
+	container.Provide(func(
+		commentRepo *repository.CommentRepository,
+	) *service.CommentService {
+		return service.NewCommentService(commentRepo)
+	})
 	// handlers
 	container.Provide(func(
 		authService *service.AuthService,
@@ -136,13 +147,20 @@ func BuildContainer() *dig.Container {
 	})
 
 	container.Provide(func(
+		commentService *service.CommentService,
+	) *comment.CommentHandler {
+		return comment.NewCommentHandler(commentService)
+	})
+
+	container.Provide(func(
 		cfg *config.Config,
 		log *slog.Logger,
 		authHandler *auth.AuthHandler,
 		userHandler *user.UserHandler,
 		songHandler *song.SongHandler,
+		commentHandler *comment.CommentHandler,
 	) *chi.Mux {
-		return httpserver.NewRouter(log, cfg, authHandler, userHandler, songHandler)
+		return httpserver.NewRouter(log, cfg, authHandler, userHandler, songHandler, commentHandler)
 	})
 
 	return container

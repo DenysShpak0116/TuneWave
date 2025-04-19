@@ -93,7 +93,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Param genre formData string true "Song genre"
 // @Param artists formData []string true "Artists" collectionFormat(multi)
 // @Param tags formData []string true "Tags" collectionFormat(multi)
-// @Param file formData file true "Song file"
+// @Param song formData file true "Song file"
 // @Param cover formData file true "Cover image"
 // @Router /songs [post]
 func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -145,8 +145,14 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), song.ID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
+		return
+	}
+
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, song)
+	render.JSON(w, r, songDTO)
 }
 
 func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
