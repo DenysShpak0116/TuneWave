@@ -1,5 +1,4 @@
-
-import { RegistrationForm } from "@modules/RegistrationForm/registration-form.component";
+import { RegistrationForm } from "@modules/RegistrationForm";
 import { MainLayout } from "@ui/layout/main-layout";
 import { FC } from "react";
 

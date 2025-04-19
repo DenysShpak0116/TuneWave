@@ -1,0 +1,22 @@
+import { FC } from "react";
+import { LogoutBlock, UserBlockContainer, UserProfileImg } from "./user-block.style";
+import logoutIcon from "@assets/images/ic_logout.png"
+
+interface IUserBlockProps {
+    profileImg: string | undefined;
+    username: string | undefined;
+    logoutFn: VoidFunction;
+}
+
+export const UserBlock: FC<IUserBlockProps> = ({ profileImg, username, logoutFn }) => {
+
+    return (
+        <UserBlockContainer>
+
+            <span>{username}</span>
+            <UserProfileImg src={profileImg} alt="user-image" />
+
+            <LogoutBlock src={logoutIcon} onClick={logoutFn} />
+        </UserBlockContainer>
+    )
+}

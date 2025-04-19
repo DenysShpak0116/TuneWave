@@ -4,8 +4,14 @@ import router from "pages/router"
 import { Toaster } from "react-hot-toast"
 import { COLORS } from "@consts/colors.consts"
 import { FONTS } from "@consts/fonts.enum"
+import { checkAuth } from "helpers/check-auth"
+import { useEffect } from "react"
 
 function App() {
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   return (
     <>
