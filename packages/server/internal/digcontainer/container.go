@@ -6,6 +6,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
@@ -74,6 +75,14 @@ func BuildContainer() *dig.Container {
 	container.Provide(func(db *gorm.DB) *repository.CommentRepository {
 		return repository.NewCommentRepository(db)
 	})
+
+	container.Provide(func(db *gorm.DB) *repository.CollectionRepository {
+		return repository.NewCollectionRepository(db)
+	})
+
+	container.Provide(func(db *gorm.DB) *repository.CollectionSongRepository {
+		return repository.NewCollectionSongRepository(db)
+	})
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
@@ -121,6 +130,14 @@ func BuildContainer() *dig.Container {
 	) *service.CommentService {
 		return service.NewCommentService(commentRepo)
 	})
+
+	container.Provide(func(
+		collectionRepo *repository.CollectionRepository,
+		fileStorage *repository.FileStorage,
+		collectionSongRepository *repository.CollectionSongRepository,
+	) *service.CollectionService {
+		return service.NewCollectionService(collectionRepo, fileStorage, collectionSongRepository)
+	})
 	// handlers
 	container.Provide(func(
 		authService *service.AuthService,
@@ -153,14 +170,29 @@ func BuildContainer() *dig.Container {
 	})
 
 	container.Provide(func(
+		collectionService *service.CollectionService,
+	) *collection.CollectionHandler {
+		return collection.NewCollectionHandler(collectionService)
+	})
+
+	container.Provide(func(
 		cfg *config.Config,
 		log *slog.Logger,
 		authHandler *auth.AuthHandler,
 		userHandler *user.UserHandler,
 		songHandler *song.SongHandler,
 		commentHandler *comment.CommentHandler,
+		collectionHandler *collection.CollectionHandler,
 	) *chi.Mux {
-		return httpserver.NewRouter(log, cfg, authHandler, userHandler, songHandler, commentHandler)
+		return httpserver.NewRouter(
+			log,
+			cfg,
+			authHandler,
+			userHandler,
+			songHandler,
+			commentHandler,
+			collectionHandler,
+		)
 	})
 
 	return container

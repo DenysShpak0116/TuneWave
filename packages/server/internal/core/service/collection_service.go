@@ -1,0 +1,179 @@
+package service
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"strings"
+	"time"
+
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	"github.com/google/uuid"
+)
+
+type CollectionService struct {
+	*GenericService[models.Collection]
+	CollectionSongRepository port.Repository[models.CollectionSong]
+	FileStorage              port.FileStorage
+}
+
+func NewCollectionService(
+	repo port.Repository[models.Collection],
+	fileStorage port.FileStorage,
+	collectionSongRepository port.Repository[models.CollectionSong],
+) *CollectionService {
+	return &CollectionService{
+		GenericService:           NewGenericService(repo),
+		FileStorage:              fileStorage,
+		CollectionSongRepository: collectionSongRepository,
+	}
+}
+
+func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParams services.SaveCollectionParams) (*models.Collection, error) {
+	coverURL, err := cs.saveCoverFile(ctx, SaveFileParams{
+		UserID:   collectionParams.UserID,
+		Filename: collectionParams.CoverHeader.Filename,
+		File:     collectionParams.Cover,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	collection := &models.Collection{
+		Title:       collectionParams.Title,
+		Description: collectionParams.Description,
+		CoverURL:    coverURL,
+		UserID:      collectionParams.UserID,
+	}
+
+	if err := cs.Repository.Add(ctx, collection); err != nil {
+		return nil, err
+	}
+	return collection, nil
+}
+
+func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionDTO, error) {
+	collections, err := cs.Repository.NewQuery(ctx).
+		Where("id = ?", id).
+		Preload("User").
+		Preload("CollectionSongs").
+		Preload("CollectionSongs.Song").
+		Preload("CollectionSongs.Song.User").
+		Find()
+	if err != nil {
+		return nil, err
+	}
+	if len(collections) == 0 {
+		return nil, fmt.Errorf("collection with id %s not found", id)
+	}
+
+	collection := collections[0]
+
+	collectionSongs := make([]dtos.SongPreviewDTO, len(collection.CollectionSongs))
+	for i, collectionSong := range collection.CollectionSongs {
+		collectionSongs[i] = dtos.SongPreviewDTO{
+			ID:         collectionSong.Song.ID,
+			Title:      collectionSong.Song.Title,
+			Duration:   formatDuration(time.Duration(collectionSong.Song.Duration)),
+			CoverURL:   collectionSong.Song.CoverURL,
+			Listenings: collectionSong.Song.Listenings,
+			UserID:     collectionSong.Song.User.ID,
+			UserName:   collectionSong.Song.User.Username,
+		}
+	}
+
+	collectionDTO := &dtos.CollectionDTO{
+		ID:          collection.ID,
+		Title:       collection.Title,
+		Description: collection.Description,
+		CoverURL:    collection.CoverURL,
+		CreatedAt:   collection.CreatedAt,
+		User: dtos.UserDTO{
+			ID:             collection.User.ID,
+			Username:       collection.User.Username,
+			ProfileInfo:    collection.User.ProfileInfo,
+			Email:          collection.User.Email,
+			ProfilePicture: collection.User.ProfilePicture,
+		},
+		CollectionSongs: collectionSongs,
+	}
+
+	return collectionDTO, nil
+}
+
+func formatDuration(d time.Duration) string {
+	minutes := int(d.Minutes())
+	seconds := int(d.Seconds()) % 60
+	return fmt.Sprintf("%02d:%02d", minutes, seconds)
+}
+
+func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID, collectionParams services.UpdateCollectionParams) (*models.Collection, error) {
+	collections, err := cs.Repository.NewQuery(ctx).
+		Where("id = ?", id).
+		Find()
+	if err != nil {
+		return nil, err
+	}
+	if len(collections) == 0 {
+		return nil, fmt.Errorf("collection with id %s not found", id)
+	}
+
+	collection := collections[0]
+
+	if err := cs.FileStorage.Remove(ctx, extractS3Key(collection.CoverURL)); err != nil {
+		return nil, err
+	}
+
+	if collectionParams.CoverHeader != nil && collectionParams.Cover != nil {
+		coverURL, err := cs.saveCoverFile(ctx, SaveFileParams{
+			UserID:   collectionParams.UserID,
+			Filename: collectionParams.CoverHeader.Filename,
+			File:     collectionParams.Cover,
+		})
+		if err != nil {
+			return nil, err
+		}
+		collection.CoverURL = coverURL
+	}
+
+	collection.Title = collectionParams.Title
+	collection.Description = collectionParams.Description
+
+	newCollection, err := cs.Repository.Update(ctx, &collection)
+	if err != nil {
+		return nil, err
+	}
+	return newCollection, nil
+}
+
+type SaveFileParams struct {
+	UserID   uuid.UUID
+	Filename string
+	File     multipart.File
+}
+
+func (cs *CollectionService) saveCoverFile(ctx context.Context, SaveFileParams SaveFileParams) (string, error) {
+	key := fmt.Sprintf("collectionCovers/%s/%d-%s", SaveFileParams.UserID, time.Now().Unix(), SaveFileParams.Filename)
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, SaveFileParams.File); err != nil {
+		return "", err
+	}
+
+	url, err := cs.FileStorage.Save(ctx, key, buf)
+	if err != nil {
+		return "", err
+	}
+
+	return url, nil
+}
+
+func extractS3Key(fullURL string) string {
+	const baseURL = "https://tunewavebucket.s3.eu-west-3.amazonaws.com/"
+	return strings.TrimPrefix(fullURL, baseURL)
+}

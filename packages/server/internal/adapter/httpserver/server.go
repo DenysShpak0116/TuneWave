@@ -7,6 +7,7 @@ import (
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
@@ -24,6 +25,7 @@ func NewRouter(
 	userHandler *user.UserHandler,
 	songHandler *song.SongHandler,
 	commentHandler *comment.CommentHandler,
+	collectionHandler *collection.CollectionHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -72,6 +74,13 @@ func NewRouter(
 	router.Route("/comments", func(r chi.Router) {
 		r.Post("/", commentHandler.CreateComment)
 		r.Delete("/{id}", commentHandler.DeleteComment)
+	})
+
+	router.Route("/collections", func(r chi.Router) {
+		r.Get("/{id}", collectionHandler.GetCollectionByID)
+		r.Post("/", collectionHandler.CreateCollection)
+		r.Put("/{id}", collectionHandler.UpdateCollection)
+		r.Delete("/{id}", collectionHandler.DeleteCollection)
 	})
 
 	return router
