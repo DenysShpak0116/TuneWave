@@ -119,9 +119,16 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, map[string]string{
+	userDTO := &dtos.UserDTO{}
+	if err := dtoMapper.Map(userDTO, user); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user to DTO", err)
+		return
+	}
+
+	render.JSON(w, r, map[string]interface{}{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
+		"user":         userDTO,
 	})
 }
 

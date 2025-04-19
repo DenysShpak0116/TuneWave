@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/render"
 	"github.com/markbates/goth/gothic"
 )
@@ -85,9 +87,15 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userDTO := &dtos.UserDTO{}
+	if err := dtoMapper.Map(userDTO, currentUser); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user to DTO", err)
+		return
+	}
 	render.JSON(w, r, map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
+		"user":         userDTO,
 	})
 }
 
