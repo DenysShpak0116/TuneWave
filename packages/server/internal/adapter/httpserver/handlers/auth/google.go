@@ -65,6 +65,9 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to fetch nickname", err)
 			return
 		}
+		if nickname == "" {
+			nickname = user.Name
+		}
 
 		currentUser = &models.User{
 			Email:           user.Email,
@@ -123,5 +126,8 @@ func fetchGoogleNickname(token string) (string, error) {
 		return "", err
 	}
 
+	if userModel.Nicknames == nil || len(userModel.Nicknames) == 0 {
+		return "", err
+	}
 	return userModel.Nicknames[0].Value, nil
 }
