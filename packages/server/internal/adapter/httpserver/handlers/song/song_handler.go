@@ -125,7 +125,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 	artists := r.Form["artists"]
 	tags := r.Form["tags"]
 
-	songFile, songHeader, err := r.FormFile("file")
+	songFile, songHeader, err := r.FormFile("song")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song file is required", err)
 		return
