@@ -42,54 +42,33 @@ func BuildContainer() *dig.Container {
 	container.Provide(func(cfg *config.Config) *repository.FileStorage {
 		return repository.NewFileStorage(cfg.AWS.Region, cfg.AWS.AccessKey, cfg.AWS.SecretKey, cfg.AWS.Bucket)
 	})
-	container.Provide(func(db *gorm.DB) *repository.UserRepository {
-		return repository.NewUserRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.TokenRepository {
-		return repository.NewTokenRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.SongRepository {
-		return repository.NewSongRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.AuthorRepository {
-		return repository.NewAuthorRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.SongAuthorRepository {
-		return repository.NewSongAuthorRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.TagRepository {
-		return repository.NewTagRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.SongTagRepository {
-		return repository.NewSongTagRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.UserReactionRepository {
-		return repository.NewUserReactionRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.CommentRepository {
-		return repository.NewCommentRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) *repository.CollectionRepository {
-		return repository.NewCollectionRepository(db)
-	})
-
-	container.Provide(func(db *gorm.DB) port.Repository[models.CollectionSong] {
-		return repository.NewRepository[models.CollectionSong](db)
+	container.Provide(func(
+		db *gorm.DB,
+	) (port.Repository[models.User],
+		port.Repository[models.Token],
+		port.Repository[models.Song],
+		port.Repository[models.Author],
+		port.Repository[models.SongAuthor],
+		port.Repository[models.Tag],
+		port.Repository[models.SongTag],
+		port.Repository[models.UserReaction],
+		port.Repository[models.Comment],
+		port.Repository[models.Collection],
+		port.Repository[models.CollectionSong]) {
+		return repository.NewRepository[models.User](db),
+			repository.NewRepository[models.Token](db),
+			repository.NewRepository[models.Song](db),
+			repository.NewRepository[models.Author](db),
+			repository.NewRepository[models.SongAuthor](db),
+			repository.NewRepository[models.Tag](db),
+			repository.NewRepository[models.SongTag](db),
+			repository.NewRepository[models.UserReaction](db),
+			repository.NewRepository[models.Comment](db),
+			repository.NewRepository[models.Collection](db),
+			repository.NewRepository[models.CollectionSong](db)
 	})
 
 	// service
-	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
-		return service.NewUserService(userRepo)
-	})
 
 	container.Provide(func(cfg *config.Config) *service.MailService {
 		return service.NewMailService(
@@ -101,21 +80,13 @@ func BuildContainer() *dig.Container {
 	})
 
 	container.Provide(func(
-		mailService *service.MailService,
-		tokenRepo *repository.TokenRepository,
-		userService *service.UserService,
-	) *service.AuthService {
-		return service.NewAuthService(mailService, tokenRepo, userService)
-	})
-
-	container.Provide(func(
-		songRepo *repository.SongRepository,
+		songRepo port.Repository[models.Song],
 		fileStorage *repository.FileStorage,
-		authorRepository *repository.AuthorRepository,
-		songAuthorRepository *repository.SongAuthorRepository,
-		tagRepository *repository.TagRepository,
-		songTagRepository *repository.SongTagRepository,
-		userReactionRepository *repository.UserReactionRepository,
+		authorRepository port.Repository[models.Author],
+		songAuthorRepository port.Repository[models.SongAuthor],
+		tagRepository port.Repository[models.Tag],
+		songTagRepository port.Repository[models.SongTag],
+		userReactionRepository port.Repository[models.UserReaction],
 		collectionSongRepository port.Repository[models.CollectionSong],
 	) *songservice.SongService {
 		return songservice.NewSongService(
@@ -130,14 +101,26 @@ func BuildContainer() *dig.Container {
 		)
 	})
 
+	container.Provide(func(userRepo port.Repository[models.User], songService *songservice.SongService) *service.UserService {
+		return service.NewUserService(userRepo, songService)
+	})
+
 	container.Provide(func(
-		commentRepo *repository.CommentRepository,
+		mailService *service.MailService,
+		tokenRepo port.Repository[models.Token],
+		userService *service.UserService,
+	) *service.AuthService {
+		return service.NewAuthService(mailService, tokenRepo, userService)
+	})
+
+	container.Provide(func(
+		commentRepo port.Repository[models.Comment],
 	) *service.CommentService {
 		return service.NewCommentService(commentRepo)
 	})
 
 	container.Provide(func(
-		collectionRepo *repository.CollectionRepository,
+		collectionRepo port.Repository[models.Collection],
 		fileStorage *repository.FileStorage,
 		collectionSongRepository port.Repository[models.CollectionSong],
 	) *service.CollectionService {

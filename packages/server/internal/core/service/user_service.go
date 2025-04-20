@@ -7,15 +7,19 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	"github.com/google/uuid"
 )
 
 type UserService struct {
 	*GenericService[models.User]
+	SongService services.SongService
 }
 
-func NewUserService(repo port.Repository[models.User]) *UserService {
+func NewUserService(repo port.Repository[models.User], songService services.SongService) *UserService {
 	return &UserService{
 		GenericService: NewGenericService(repo),
+		SongService:    songService,
 	}
 }
 
@@ -36,13 +40,85 @@ func (us *UserService) GetUsers(
 			Username:       user.Username,
 			ProfilePicture: user.ProfilePicture,
 		})
-		return usersDTOs, nil
 	}
 	if len(users) == 0 {
 		return nil, fmt.Errorf("no users found")
 	}
 
 	return usersDTOs, nil
+}
+
+func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.UserExtendedDTO, error) {
+	users, err := us.Repository.NewQuery(ctx).Where("id = ?", id).
+		Preload("Songs").Preload("Collections").Preload("Collections.User").
+		Preload("Chats1").Preload("Chats2").Find()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by ID: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	user := users[0]
+
+	songsDTOs := make([]dtos.SongDTO, len(user.Songs))
+	for i, song := range user.Songs {
+		songExtDTO, err := us.SongService.GetFullDTOByID(ctx, song.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get song by ID: %w", err)
+		}
+		songsDTOs[i] = dtos.SongDTO{
+			ID:         songExtDTO.ID,
+			Duration:   songExtDTO.Duration,
+			Title:      songExtDTO.Title,
+			SongURL:    songExtDTO.SongURL,
+			CoverURL:   songExtDTO.CoverURL,
+			Listenings: songExtDTO.Listenings,
+			Likes:      songExtDTO.Likes,
+			Dislikes:   songExtDTO.Dislikes,
+			User:       songExtDTO.User,
+		}
+	}
+
+	collectinsDTOs := make([]dtos.CollectionDTO, len(user.Collections))
+	for i, collection := range user.Collections {
+		collectinsDTOs[i] = dtos.CollectionDTO{
+			ID:       collection.ID,
+			Title:    collection.Title,
+			CoverURL: collection.CoverURL,
+			User: dtos.UserDTO{
+				ID:             collection.User.ID,
+				Username:       collection.User.Username,
+				ProfilePicture: collection.User.ProfilePicture,
+			},
+		}
+	}
+
+	chatDTOs := make([]dtos.ChatDTO, len(user.Chats1))
+	for i, chat := range user.Chats1 {
+		chatDTOs[i] = dtos.ChatDTO{
+			ID: chat.ID,
+			User1: dtos.UserDTO{
+				ID:             chat.User1.ID,
+				Username:       chat.User1.Username,
+				ProfilePicture: chat.User1.ProfilePicture,
+			},
+		}
+	}
+
+	userDTO := &dtos.UserExtendedDTO{
+		ID:             user.ID,
+		Username:       user.Username,
+		ProfileInfo:    user.ProfileInfo,
+		Email:          user.Email,
+		ProfilePicture: user.ProfilePicture,
+		CreatedAt:      user.CreatedAt,
+		Songs:          songsDTOs,
+		Collections:    collectinsDTOs,
+		Chats:          chatDTOs,
+	}
+
+	return userDTO, nil
 }
 
 func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {

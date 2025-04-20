@@ -12,7 +12,7 @@ type Collection struct {
 	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
 	User   User      `gorm:"foreignKey:UserID"`
 
-	CollectionSongs []CollectionSong
+	CollectionSongs []CollectionSong `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
 }
 
 type CollectionSong struct {
@@ -22,5 +22,5 @@ type CollectionSong struct {
 	Song   Song      `gorm:"foreignKey:SongID"`
 
 	CollectionID uuid.UUID  `gorm:"type:uuid" json:"collectionId"`
-	Collection   Collection `gorm:"foreignKey:CollectionID"`
+	Collection   Collection `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
 }

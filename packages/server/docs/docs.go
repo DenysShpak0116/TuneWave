@@ -233,7 +233,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Collections"
+                    "collections"
                 ],
                 "summary": "Create a new collection",
                 "parameters": [
@@ -281,7 +281,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Collections"
+                    "collections"
                 ],
                 "summary": "Get collection by ID",
                 "parameters": [
@@ -309,7 +309,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Collections"
+                    "collections"
                 ],
                 "summary": "Update a collection",
                 "parameters": [
@@ -352,7 +352,7 @@ const docTemplate = `{
                 ],
                 "description": "Deletes a collection by its ID. Returns no content on success.",
                 "tags": [
-                    "Collections"
+                    "collections"
                 ],
                 "summary": "Delete a collection",
                 "parameters": [
@@ -382,7 +382,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Comments"
+                    "comments"
                 ],
                 "summary": "Create a new comment",
                 "parameters": [
@@ -408,7 +408,7 @@ const docTemplate = `{
                 ],
                 "description": "Deletes a comment by its ID. Returns no content on success.",
                 "tags": [
-                    "Comments"
+                    "comments"
                 ],
                 "summary": "Delete a comment",
                 "parameters": [
@@ -617,7 +617,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Songs"
+                    "songs"
                 ],
                 "summary": "Add song to collection",
                 "parameters": [
@@ -675,6 +675,43 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/song.songReactionRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all users with pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get all users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of users per page",
+                        "name": "limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {}

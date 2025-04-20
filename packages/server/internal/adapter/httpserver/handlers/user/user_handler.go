@@ -23,7 +23,7 @@ func NewUserHandler(userService services.UserService) *UserHandler {
 // @Summary      Get all users
 // @Description  Get all users with pagination
 // @Security     BearerAuth
-// @Tags         users
+// @Tags         user
 // @Accept       json
 // @Produce      json
 // @Param        page  query  int  false  "Page number"  default(1)

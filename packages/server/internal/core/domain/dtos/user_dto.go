@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UserDTO struct {
 	ID             uuid.UUID `json:"id"`
@@ -8,14 +12,14 @@ type UserDTO struct {
 	ProfilePicture string    `json:"profilePictureUrl"`
 }
 
-type ExtendedUserDTO struct {
+type UserExtendedDTO struct {
 	ID             uuid.UUID `json:"id"`
 	Username       string    `json:"username"`
 	ProfileInfo    string    `json:"profileInfo"`
 	Email          string    `json:"email"`
 	ProfilePicture string    `json:"profilePictureUrl"`
 
-	CreatedAt   string          `json:"createdAt"`
+	CreatedAt   time.Time       `json:"createdAt"`
 	Songs       []SongDTO       `json:"songs"`
 	Collections []CollectionDTO `json:"collections"`
 	Chats       []ChatDTO       `json:"chats"`

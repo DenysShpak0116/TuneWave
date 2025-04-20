@@ -47,12 +47,13 @@ func NewSongService(
 	}
 }
 
-func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]models.Song, error) {
+func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]dtos.SongDTO, error) {
 	songs, err := ss.Repository.NewQuery(ctx).
 		Where("title LIKE ?", "%"+search+"%").
 		Order(fmt.Sprintf("%s %s", sortBy, order)).
 		Skip((page - 1) * limit).
 		Take(limit).
+		Preload("User").
 		Find()
 	if err != nil {
 		return nil, err
@@ -60,7 +61,40 @@ func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order strin
 	if len(songs) == 0 {
 		return nil, fmt.Errorf("no songs found for search term: %s", search)
 	}
-	return songs, nil
+
+	songDTOs := make([]dtos.SongDTO, len(songs))
+	for i, song := range songs {
+		likes, err := ss.ReactionsRepository.NewQuery(ctx).
+			Where("song_id = ? AND type = ?", song.ID, "like").
+			Count()
+		if err != nil {
+			return nil, fmt.Errorf("get likes: %w", err)
+		}
+
+		dislikes, err := ss.ReactionsRepository.NewQuery(ctx).
+			Where("song_id = ? AND type = ?", song.ID, "dislike").
+			Count()
+		if err != nil {
+			return nil, fmt.Errorf("get dislikes: %w", err)
+		}
+
+		songDTOs[i] = dtos.SongDTO{
+			ID:         song.ID,
+			Duration:   formatDuration(song.Duration),
+			Title:      song.Title,
+			SongURL:    song.SongURL,
+			CoverURL:   song.CoverURL,
+			Listenings: song.Listenings,
+			Likes:      likes,
+			Dislikes:   dislikes,
+			User: dtos.UserDTO{
+				ID:             song.User.ID,
+				Username:       song.User.Username,
+				ProfilePicture: song.User.ProfilePicture,
+			},
+		}
+	}
+	return songDTOs, nil
 }
 
 type readSeekCloser struct {

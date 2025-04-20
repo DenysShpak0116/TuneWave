@@ -44,6 +44,7 @@ func NewRouter(
 
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Http.Port)),
+		httpSwagger.DocExpansion("false"),
 	))
 
 	router.Route("/auth", func(r chi.Router) {

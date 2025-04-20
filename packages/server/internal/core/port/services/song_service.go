@@ -30,7 +30,7 @@ type SongService interface {
 		order string,
 		page int,
 		limit int,
-	) ([]models.Song, error)
+	) ([]dtos.SongDTO, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)
 	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error)
