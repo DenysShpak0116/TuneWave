@@ -6,7 +6,10 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 )
 
 // Refresh godoc
@@ -31,14 +34,29 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
+		return
+	}
+
 	accessToken, refreshToken, err := ah.GenerateTokens(userID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
 		return
 	}
 
-	render.JSON(w, r, map[string]string{
+	user, err := ah.UserService.GetByID(r.Context(), userUUID)
+
+	userDTO := &dtos.UserDTO{}
+	if err := dtoMapper.Map(userDTO, user); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user", err)
+		return
+	}
+
+	render.JSON(w, r, map[string]interface{}{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
+		"user":         userDTO,
 	})
 }
