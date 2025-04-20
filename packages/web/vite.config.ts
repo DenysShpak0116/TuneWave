@@ -11,7 +11,9 @@ export default defineConfig({
       '@ui': '/src/ui',
       '@components': '/src/components',
       '@api': '/src/api',
-      '@consts': '/src/consts'
+      '@consts': '/src/consts',
+      '@helpers': 'src/helpers',
+      '@types': 'src/types',
     }
   }
 });

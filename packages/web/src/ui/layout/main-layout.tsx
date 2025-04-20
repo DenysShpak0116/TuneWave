@@ -1,6 +1,6 @@
 import { FC, ReactNode } from "react"
 import { Container, Wrapper } from "./main-layout.style"
-import { Header } from "@ui/Header/header.component"
+import { Header } from "@components/Header/header.component"
 
 
 interface MainLayoutProps {

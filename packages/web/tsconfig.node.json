@@ -35,6 +35,12 @@
       ],
       "@ui/*": [
         "ui/*"
+      ],
+      "@helpers/*": [
+        "helpers/*"
+      ],
+      "@types/*": [
+        "types/*"
       ]
     }
   },
