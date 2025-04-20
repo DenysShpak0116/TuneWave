@@ -13,6 +13,6 @@ export const checkAuth = async () => {
         );
         setUser(response.data.user);
     } catch (error) {
-        console.log("🔒 Auth check failed:", error);
+        console.log(error);
     }
 };

@@ -38,9 +38,15 @@ export const LoginForm: FC = () => {
         navigate(ROUTES.HOME)
     };
 
-    const handleGoogleSubmit = () => {
-        console.log("Google submit");
-    }
+    const handleGoogleButtonClick = () => {
+        try {
+            const redirectUrl = import.meta.env.VITE_GOOGLE_AUTH_API
+            window.location.href = redirectUrl
+
+        } catch (e) {
+            console.error(e)
+        }
+    };
 
     return (
         <AuthForm submitFn={handleSubmit}>
@@ -58,7 +64,7 @@ export const LoginForm: FC = () => {
 
             <ForgotPasswordText to={ROUTES.HOME}>Забули пароль?</ForgotPasswordText>
             <Button text="Увійти" type="submit" />
-            <GoogleButton onClickHandle={handleGoogleSubmit} />
+            <GoogleButton onClickHandle={handleGoogleButtonClick} />
             <RegistationText onClick={() => navigate(ROUTES.SIGN_UP)}>Зареєструйтесь</RegistationText>
         </AuthForm>
     );

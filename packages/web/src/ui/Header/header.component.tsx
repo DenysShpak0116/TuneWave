@@ -46,7 +46,7 @@ export const Header: FC = () => {
                         logoutFn={logout}
                     />
                 ) : (
-                    <AuthBtn to={ROUTES.SIGN_UP}>Авторизуватись</AuthBtn>
+                    <AuthBtn to={ROUTES.SIGN_IN}>Авторизуватись</AuthBtn>
                 )}
             </Container>
         </Wrapper>

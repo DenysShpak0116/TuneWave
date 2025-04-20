@@ -25,7 +25,13 @@ export const RegistrationForm: FC = () => {
     };
 
     const handleGoogleButtonClick = () => {
-        console.log("Clicked Google Sign Up");
+        try {
+            const redirectUrl = import.meta.env.VITE_GOOGLE_AUTH_API
+            window.location.href = redirectUrl
+
+        } catch (e) {
+            console.error(e)
+        }
     };
 
     const handleSubmit = (e: FormEvent) => {

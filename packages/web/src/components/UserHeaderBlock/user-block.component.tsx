@@ -9,7 +9,7 @@ interface IUserBlockProps {
 }
 
 export const UserBlock: FC<IUserBlockProps> = ({ profileImg, username, logoutFn }) => {
-
+    console.log("profileImg:", profileImg);
     return (
         <UserBlockContainer>
 

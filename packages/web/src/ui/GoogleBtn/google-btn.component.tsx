@@ -25,7 +25,7 @@ interface GoogleButtonProps {
 
 export const GoogleButton: FC<GoogleButtonProps> = ({ onClickHandle }) => {
     return (
-        <GoogleButtonContainer onClick={onClickHandle}>
+        <GoogleButtonContainer type="button" onClick={onClickHandle}>
             <GoogleSpan src={googleLogo} />
         </GoogleButtonContainer>
     )
