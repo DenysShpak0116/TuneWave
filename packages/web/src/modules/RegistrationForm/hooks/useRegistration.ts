@@ -4,7 +4,7 @@ import { RegistrationRequest } from "../types/registrationRequest.type";
 
 export const useRegister = () => {
     return useMutation({
-        mutationFn: (data: RegistrationRequest ) =>
+        mutationFn: (data: RegistrationRequest) =>
             register(data),
     });
 };

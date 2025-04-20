@@ -6,7 +6,7 @@ import { HeaderItems } from "./consts/header-item.consts"
 import { NavItem } from "./nav-item"
 import { useAuthStore } from "@modules/LoginForm/store/store"
 import uploadIcon from "@assets/images/ic_upload.png"
-import { UserBlock } from "@components/UserHeaderBlock/user-block.component"
+import { UserBlock } from "@ui/UserHeaderBlock/user-block.component"
 
 export const Header: FC = () => {
     const navigate = useNavigate()
@@ -33,7 +33,7 @@ export const Header: FC = () => {
                     {isAuth() && (
                         <NavItem
                             title="Завантажити"
-                            path={ROUTES.HOME}
+                            path={ROUTES.CREATE_TRACK}
                             icon={uploadIcon}
                         />
                     )}
