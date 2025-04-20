@@ -16,12 +16,13 @@ import (
 
 type SongService struct {
 	*service.GenericService[models.Song]
-	FileStorage          port.FileStorage
-	AuthorRepository     port.Repository[models.Author]
-	SongAuthorRepository port.Repository[models.SongAuthor]
-	TagsRepository       port.Repository[models.Tag]
-	SongTagsRepository   port.Repository[models.SongTag]
-	ReactionsRepository  port.Repository[models.UserReaction]
+	FileStorage              port.FileStorage
+	AuthorRepository         port.Repository[models.Author]
+	SongAuthorRepository     port.Repository[models.SongAuthor]
+	TagsRepository           port.Repository[models.Tag]
+	SongTagsRepository       port.Repository[models.SongTag]
+	ReactionsRepository      port.Repository[models.UserReaction]
+	CollectionSongRepository port.Repository[models.CollectionSong]
 }
 
 func NewSongService(
@@ -32,15 +33,17 @@ func NewSongService(
 	tagRepository port.Repository[models.Tag],
 	songTagRepository port.Repository[models.SongTag],
 	reactionsRepository port.Repository[models.UserReaction],
+	collectionSongReporitory port.Repository[models.CollectionSong],
 ) *SongService {
 	return &SongService{
-		GenericService:       service.NewGenericService(songRepo),
-		FileStorage:          fileStorage,
-		AuthorRepository:     authorRepo,
-		SongAuthorRepository: songAuthorRepo,
-		TagsRepository:       tagRepository,
-		SongTagsRepository:   songTagRepository,
-		ReactionsRepository:  reactionsRepository,
+		GenericService:           service.NewGenericService(songRepo),
+		FileStorage:              fileStorage,
+		AuthorRepository:         authorRepo,
+		SongAuthorRepository:     songAuthorRepo,
+		TagsRepository:           tagRepository,
+		SongTagsRepository:       songTagRepository,
+		ReactionsRepository:      reactionsRepository,
+		CollectionSongRepository: collectionSongReporitory,
 	}
 }
 
@@ -100,7 +103,7 @@ func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactio
 	return reactionAmount, nil
 }
 
-func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongDTO, error) {
+func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error) {
 	song, err := ss.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -130,11 +133,14 @@ func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 	commentsDTO := make([]dtos.CommentDTO, 0)
 	for _, c := range song.Comments {
 		commentsDTO = append(commentsDTO, dtos.CommentDTO{
-			ID:         c.ID,
-			AuthorID:   c.User.ID,
-			AuthorName: c.User.Username,
-			Content:    c.Content,
-			CreatedAt:  c.CreatedAt,
+			ID: c.ID,
+			Author: dtos.UserDTO{
+				ID:             c.User.ID,
+				Username:       c.User.Username,
+				ProfilePicture: c.User.ProfilePicture,
+			},
+			Content:   c.Content,
+			CreatedAt: c.CreatedAt,
 		})
 	}
 
@@ -147,7 +153,7 @@ func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		return nil, fmt.Errorf("get dislikes: %w", err)
 	}
 
-	dto := &dtos.SongDTO{
+	dto := &dtos.SongExtendedDTO{
 		ID:         song.ID,
 		Title:      song.Title,
 		Genre:      song.Genre,

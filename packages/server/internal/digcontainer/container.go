@@ -12,6 +12,8 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/songservice"
 	"github.com/go-chi/chi/v5"
@@ -80,9 +82,10 @@ func BuildContainer() *dig.Container {
 		return repository.NewCollectionRepository(db)
 	})
 
-	container.Provide(func(db *gorm.DB) *repository.CollectionSongRepository {
-		return repository.NewCollectionSongRepository(db)
+	container.Provide(func(db *gorm.DB) port.Repository[models.CollectionSong] {
+		return repository.NewRepository[models.CollectionSong](db)
 	})
+
 	// service
 	container.Provide(func(userRepo *repository.UserRepository) *service.UserService {
 		return service.NewUserService(userRepo)
@@ -113,6 +116,7 @@ func BuildContainer() *dig.Container {
 		tagRepository *repository.TagRepository,
 		songTagRepository *repository.SongTagRepository,
 		userReactionRepository *repository.UserReactionRepository,
+		collectionSongRepository port.Repository[models.CollectionSong],
 	) *songservice.SongService {
 		return songservice.NewSongService(
 			songRepo,
@@ -122,6 +126,7 @@ func BuildContainer() *dig.Container {
 			tagRepository,
 			songTagRepository,
 			userReactionRepository,
+			collectionSongRepository,
 		)
 	})
 
@@ -134,7 +139,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(func(
 		collectionRepo *repository.CollectionRepository,
 		fileStorage *repository.FileStorage,
-		collectionSongRepository *repository.CollectionSongRepository,
+		collectionSongRepository port.Repository[models.CollectionSong],
 	) *service.CollectionService {
 		return service.NewCollectionService(collectionRepo, fileStorage, collectionSongRepository)
 	})

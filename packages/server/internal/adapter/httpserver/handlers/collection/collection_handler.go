@@ -25,7 +25,7 @@ func NewCollectionHandler(collectionService services.CollectionService) *Collect
 // CreateCollection godoc
 // @Summary Create a new collection
 // @Description Creates a new collection. Returns the created collection object.
-// @Tags Collections
+// @Tags collections
 // @Security     BearerAuth
 // @Accept  multipart/form-data
 // @Produce  json
@@ -84,7 +84,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // GetCollectionByID godoc
 // @Summary Get collection by ID
 // @Description Get collection by ID. Returns the collection object.
-// @Tags Collections
+// @Tags collections
 // @Security     BearerAuth
 // @Produce  json
 // @Param id path string true "Collection ID"
@@ -109,7 +109,7 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 // DeleteCollection godoc
 // @Summary Delete a collection
 // @Description Deletes a collection by its ID. Returns no content on success.
-// @Tags Collections
+// @Tags collections
 // @Security     BearerAuth
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [delete]
@@ -134,7 +134,7 @@ func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Req
 // UpdateCollection godoc
 // @Summary Update a collection
 // @Description Updates a collection by its ID. Returns the updated collection object.
-// @Tags Collections
+// @Tags collections
 // @Security     BearerAuth
 // @Accept  multipart/form-data
 // @Produce  json

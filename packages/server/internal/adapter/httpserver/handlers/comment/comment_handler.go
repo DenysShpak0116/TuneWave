@@ -32,7 +32,7 @@ type CreateCommentRequest struct {
 // Create godoc
 // @Summary Create a new comment
 // @Description Creates a new comment for a song. Returns the created comment object.
-// @Tags Comments
+// @Tags comments
 // @Security     BearerAuth
 // @Accept  json
 // @Produce  json
@@ -75,11 +75,14 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 	}
 
 	commentDTO := &dtos.CommentDTO{
-		ID:         commentWithPreload.ID,
-		AuthorID:   commentWithPreload.User.ID,
-		AuthorName: commentWithPreload.User.Username,
-		Content:    commentWithPreload.Content,
-		CreatedAt:  commentWithPreload.CreatedAt,
+		ID: commentWithPreload.ID,
+		Author: dtos.UserDTO{
+			ID:             commentWithPreload.User.ID,
+			Username:       commentWithPreload.User.Username,
+			ProfilePicture: commentWithPreload.User.ProfilePicture,
+		},
+		Content:   commentWithPreload.Content,
+		CreatedAt: commentWithPreload.CreatedAt,
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -89,7 +92,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 // DeleteComment godoc
 // @Summary Delete a comment
 // @Description Deletes a comment by its ID. Returns no content on success.
-// @Tags Comments
+// @Tags comments
 // @Security     BearerAuth
 // @Param id path string true "Comment ID"
 // @Router /comments/{id} [delete]

@@ -7,9 +7,8 @@ import (
 )
 
 type CommentDTO struct {
-	ID         uuid.UUID `json:"id"`
-	AuthorID   uuid.UUID `json:"authorId"`
-	AuthorName string    `json:"authorName"`
-	Content    string    `json:"content"`
-	CreatedAt  time.Time `json:"createdAt"`
+	ID uuid.UUID `json:"id"`
+	Author UserDTO `json:"author"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
 }

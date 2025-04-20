@@ -11,6 +11,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
+	authmiddleware "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/auth"
 	mwLogger "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -45,17 +46,22 @@ func NewRouter(
 		httpSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Http.Port)),
 	))
 
-	router.Post("/auth/login", authHandler.Login)
-	router.Post("/auth/register", authHandler.Register)
-	router.Post("/auth/logout", authHandler.Logout)
-	router.Post("/auth/forgot-password", authHandler.ForgotPassword)
-	router.Post("/auth/reset-password", authHandler.ResetPassword)
-	router.Get("/auth/refresh", authHandler.Refresh)
+	router.Route("/auth", func(r chi.Router) {
+		r.Post("/login", authHandler.Login)
+		r.Post("/register", authHandler.Register)
+		r.Post("/logout", authHandler.Logout)
+		r.Post("/forgot-password", authHandler.ForgotPassword)
+		r.Post("/reset-password", authHandler.ResetPassword)
+		r.Post("/refresh", authHandler.Refresh)
 
-	router.Get("/auth/google/callback", authHandler.GoogleCallback)
-	router.Get("/auth/google", authHandler.GoogleAuth)
+		r.Get("/google/callback", authHandler.GoogleCallback)
+		r.Get("/google", authHandler.GoogleAuth)
+	})
 
 	router.Route("/users", func(r chi.Router) {
+		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+		r.Get("/", userHandler.GetAll)
 		r.Get("/{id}", userHandler.GetByID)
 		r.Put("/{id}", userHandler.Update)
 		r.Delete("/{id}", userHandler.Delete)
@@ -64,23 +70,37 @@ func NewRouter(
 	router.Route("/songs", func(r chi.Router) {
 		r.Get("/", songHandler.GetSongs)
 		r.Get("/{id}", songHandler.GetByID)
-		r.Post("/", songHandler.Create)
-		r.Put("/{id}", songHandler.Update)
-		r.Delete("/{id}", songHandler.Delete)
 
-		r.Post("/{id}/reaction", songHandler.SetReaction)
+		r.Group(func(protected chi.Router) {
+			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+			protected.Post("/", songHandler.Create)
+			protected.Put("/{id}", songHandler.Update)
+			protected.Delete("/{id}", songHandler.Delete)
+
+			protected.Post("/{id}/reaction", songHandler.SetReaction)
+
+			protected.Post("/{id}/add-to-collection", songHandler.AddToCollection)
+		})
 	})
 
 	router.Route("/comments", func(r chi.Router) {
+		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
 		r.Post("/", commentHandler.CreateComment)
 		r.Delete("/{id}", commentHandler.DeleteComment)
 	})
 
 	router.Route("/collections", func(r chi.Router) {
 		r.Get("/{id}", collectionHandler.GetCollectionByID)
-		r.Post("/", collectionHandler.CreateCollection)
-		r.Put("/{id}", collectionHandler.UpdateCollection)
-		r.Delete("/{id}", collectionHandler.DeleteCollection)
+
+		r.Group(func(protected chi.Router) {
+			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+			protected.Post("/", collectionHandler.CreateCollection)
+			protected.Put("/{id}", collectionHandler.UpdateCollection)
+			protected.Delete("/{id}", collectionHandler.DeleteCollection)
+		})
 	})
 
 	return router

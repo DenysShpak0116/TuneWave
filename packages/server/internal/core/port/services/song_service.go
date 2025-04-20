@@ -33,6 +33,7 @@ type SongService interface {
 	) ([]models.Song, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)
-	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongDTO, error)
+	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error)
 	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)
+	AddToCollection(ctx context.Context, songUUID, collectionUUID uuid.UUID) error
 }

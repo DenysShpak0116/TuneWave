@@ -28,6 +28,6 @@ type UpdateCollectionParams struct {
 type CollectionService interface {
 	Service[models.Collection]
 	SaveCollection(ctx context.Context, saveCollectionParams SaveCollectionParams) (*models.Collection, error)
-	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionDTO, error)
+	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error)
 	UpdateCollection(ctx context.Context, id uuid.UUID, updateCollectionParams UpdateCollectionParams) (*models.Collection, error)
 }

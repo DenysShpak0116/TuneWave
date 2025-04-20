@@ -1,3 +1,62 @@
-package middlewares
+package authmiddleware
 
-// auth middleware
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+type contextKey string
+
+const claimsContextKey contextKey = "claims"
+
+func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+				http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+				return
+			}
+
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method")
+				}
+				return jwtSecret, nil
+			})
+
+			if err != nil || !token.Valid {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				if exp, ok := claims["exp"].(float64); ok {
+					if time.Now().After(time.Unix(int64(exp), 0)) {
+						http.Error(w, "Token has expired", http.StatusUnauthorized)
+						return
+					}
+				}
+				ctx := context.WithValue(r.Context(), claimsContextKey, claims)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
+			http.Error(w, "Failed to parse token claims", http.StatusUnauthorized)
+		})
+	}
+}
+
+func GetClaimsFromContext(r *http.Request) jwt.MapClaims {
+	if claims, ok := r.Context().Value(claimsContextKey).(jwt.MapClaims); ok {
+		return claims
+	}
+	return nil
+}

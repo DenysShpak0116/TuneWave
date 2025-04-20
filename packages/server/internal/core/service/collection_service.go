@@ -57,7 +57,7 @@ func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParam
 	return collection, nil
 }
 
-func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionDTO, error) {
+func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error) {
 	collections, err := cs.Repository.NewQuery(ctx).
 		Where("id = ?", id).
 		Preload("User").
@@ -74,20 +74,23 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 
 	collection := collections[0]
 
-	collectionSongs := make([]dtos.SongPreviewDTO, len(collection.CollectionSongs))
+	collectionSongs := make([]dtos.SongDTO, len(collection.CollectionSongs))
 	for i, collectionSong := range collection.CollectionSongs {
-		collectionSongs[i] = dtos.SongPreviewDTO{
+		collectionSongs[i] = dtos.SongDTO{
 			ID:         collectionSong.Song.ID,
 			Title:      collectionSong.Song.Title,
 			Duration:   formatDuration(time.Duration(collectionSong.Song.Duration)),
 			CoverURL:   collectionSong.Song.CoverURL,
 			Listenings: collectionSong.Song.Listenings,
-			UserID:     collectionSong.Song.User.ID,
-			UserName:   collectionSong.Song.User.Username,
+			User: dtos.UserDTO{
+				ID:             collectionSong.Song.User.ID,
+				Username:       collectionSong.Song.User.Username,
+				ProfilePicture: collectionSong.Song.User.ProfilePicture,
+			},
 		}
 	}
 
-	collectionDTO := &dtos.CollectionDTO{
+	collectionDTO := &dtos.CollectionExtendedDTO{
 		ID:          collection.ID,
 		Title:       collection.Title,
 		Description: collection.Description,
@@ -96,8 +99,6 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 		User: dtos.UserDTO{
 			ID:             collection.User.ID,
 			Username:       collection.User.Username,
-			ProfileInfo:    collection.User.ProfileInfo,
-			Email:          collection.User.Email,
 			ProfilePicture: collection.User.ProfilePicture,
 		},
 		CollectionSongs: collectionSongs,

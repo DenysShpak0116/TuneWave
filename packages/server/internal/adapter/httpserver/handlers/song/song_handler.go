@@ -22,11 +22,21 @@ func NewSongHandler(songService services.SongService) *SongHandler {
 	}
 }
 
+// GetSongs godoc
+// @Summary Get all songs
+// @Description Get all songs
+// @Tags songs
+// @Param search query string false "Search by title, artist, or genre"
+// @Param sortBy query string false "Sort by field (created_at, title, artist, genre)" default(created_at)
+// @Param order query string false "Sort order (asc, desc)" default(desc)
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Number of items per page" default(10)
+// @Produce json
+// @Router /songs [get]
 func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	sortBy := r.URL.Query().Get("sortBy")
 	order := r.URL.Query().Get("order")
-
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
 		page = 1
