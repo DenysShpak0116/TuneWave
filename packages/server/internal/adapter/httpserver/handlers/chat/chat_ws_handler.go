@@ -8,6 +8,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/golang-jwt/jwt/v5"
@@ -95,7 +96,13 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
 	if err == nil {
 		for _, msg := range messages {
-			b, _ := json.Marshal(msg)
+			msgDTO := &dtos.MessageDTO{
+				ID:        msg.ID,
+				Content:   msg.Content,
+				CreatedAt: msg.CreatedAt,
+				SenderID:  msg.SenderID,
+			}
+			b, _ := json.Marshal(msgDTO)
 			client.Send <- b
 		}
 	}

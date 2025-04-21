@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -66,13 +67,16 @@ func (c *Client) ReadPump() {
 		}
 
 		if err := c.MessageService.Create(context.Background(), &message); err != nil {
-			log.Printf("[ReadPump] failed to save message: %v", err)
 			continue
 		}
-		log.Println("[ReadPump] Message saved to DB")
 
-		outgoing, _ := json.Marshal(message)
-		log.Println("[ReadPump] Broadcasting message")
+		messageDTO := &dtos.MessageDTO{
+			ID:        message.ID,
+			CreatedAt: message.CreatedAt,
+			Content:   message.Content,
+			SenderID:  message.SenderID,
+		}
+		outgoing, _ := json.Marshal(messageDTO)
 		c.Hub.Broadcast <- outgoing
 	}
 }
@@ -83,12 +87,10 @@ func (c *Client) WritePump() {
 			log.Printf("[WritePump] panic: %v", r)
 		}
 		c.Conn.Close()
-		log.Println("[WritePump] client disconnected")
 	}()
 
 	for msg := range c.Send {
 		if err := c.Conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-			log.Printf("[WritePump] write error: %v", err)
 			break
 		}
 	}
