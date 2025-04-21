@@ -7,27 +7,40 @@ import { useCreateTrack } from "./hooks/useCreateTrack";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { useAuthStore } from "@modules/LoginForm/store/store";
+import { CreateTrackRequest } from "./types/createTrackRequest.type";
+import toast from "react-hot-toast";
+import { validateCreateTrackFormData } from "./helpers/trackFormDataValidation";
 
 export const CreateTrackForm: FC = () => {
-    const userId = useAuthStore.getState().user?.id;
     const navigate = useNavigate()
-    const [formData, setFormData] = useState<Record<string, string | File>>({});
+    const [formData, setFormData] = useState<Partial<CreateTrackRequest>>({});
     const { mutate: createTrack } = useCreateTrack();
 
     const handleSubmit = () => {
         const userId = useAuthStore.getState().user?.id;
 
-        const data = new FormData();
+        if (!userId) {
+            toast.error("Користувач не авторизований.");
+            return;
+        }
 
-        for (const key in formData) {
-            if (formData[key]) {
-                data.append(key, formData[key]);
-            }
+        const fullFormData = {
+            ...formData,
+            userID: userId,
+        };
+
+        if (!validateCreateTrackFormData(fullFormData)) {
+            return;
         }
-        
-        if (userId) {
-            data.append("userID", userId);
-        }
+
+        const data = new FormData();
+        data.append("userID", fullFormData.userID);
+        data.append("title", fullFormData.title);
+        data.append("genre", fullFormData.genre);
+        fullFormData.artists.forEach(artist => data.append("artists", artist));
+        fullFormData.tags.forEach(tag => data.append("tags", tag));
+        data.append("song", fullFormData.song);
+        data.append("cover", fullFormData.cover);
 
         createTrack(data);
         navigate(ROUTES.HOME);

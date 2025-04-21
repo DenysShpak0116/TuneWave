@@ -1,4 +1,4 @@
-import { $api } from "@api/base.api";
+import { createTrack } from "@api/track.api";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -7,11 +7,7 @@ import { ErrorType } from "types/error/error.type";
 export const useCreateTrack = () => {
     return useMutation({
         mutationFn: async (formData: FormData) => {
-            const response = await $api.post("/songs", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data"
-                }
-            });
+            const response = await createTrack(formData)
             return response.data;
         },
         onSuccess: () => {
@@ -22,7 +18,7 @@ export const useCreateTrack = () => {
                 const data = error.response.data as ErrorType;
                 toast.error(`Помилка створення треку: ${data.message}`);
             } else {
-                toast.error("Невідома помилка при створенні треку");
+                toast.error("Помилка" + error.message);
             }
         }
     });

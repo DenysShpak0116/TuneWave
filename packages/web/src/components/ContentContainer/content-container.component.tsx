@@ -1,20 +1,13 @@
-import { ChangeEvent, Dispatch, FC, useRef, useState } from "react";
-import {
-    Container,
-    UploadBox,
-    Divider,
-    UploadIcon,
-    UploadContainer,
-    PreviewImage,
-    HiddenInput,
-} from "./content-container.style";
+import { ChangeEvent, FC, useRef, useState } from "react";
+import { Container, UploadBox, Divider, UploadIcon, UploadContainer, PreviewImage, HiddenInput } from "./content-container.style";
 import { FiCheckCircle, FiUpload } from "react-icons/fi";
+import { CreateTrackRequest } from "@modules/CreateTrackForm/types/createTrackRequest.type";
 
-interface Props {
-    setFormData: Dispatch<React.SetStateAction<Record<string, string | File>>>;
+interface IContentContainerProps {
+    setFormData: React.Dispatch<React.SetStateAction<Partial<CreateTrackRequest>>>;
 }
 
-export const ContentContainer: FC<Props> = ({ setFormData }) => {
+export const ContentContainer: FC<IContentContainerProps> = ({ setFormData }) => {
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [audioFileName, setAudioFileName] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +24,6 @@ export const ContentContainer: FC<Props> = ({ setFormData }) => {
             setFormData(prev => ({ ...prev, cover: file }));
         }
     };
-
 
     const handleAudioUpload = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
