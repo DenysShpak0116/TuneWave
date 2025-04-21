@@ -23,6 +23,7 @@ export const useLogin = () => {
             setAccessToken(data.accessToken);
             setUser(data.user);
             document.cookie = `refreshToken=${data.refreshToken}`
+            localStorage.setItem("token", data.accessToken)
             toast.success("Вхід успішний");
         },
         onError: (error) => {

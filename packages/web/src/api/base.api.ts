@@ -5,6 +5,7 @@ export const $api = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
+    withCredentials: true
 });
 
 let isRefreshing = false;
@@ -21,6 +22,17 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
+$api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers["Authorization"] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 $api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -32,10 +44,17 @@ $api.interceptors.response.use(
             if (!isRefreshing) {
                 isRefreshing = true;
                 try {
-                    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {}, { withCredentials: true });
+                    const res = await axios.post(
+                        `${import.meta.env.VITE_API_URL}/auth/refresh`,
+                        {},
+                        { withCredentials: true }
+                    );
                     const newAccessToken = res.data.accessToken;
 
+                    // ✅ Зберігаємо новий токен
+                    localStorage.setItem("accessToken", newAccessToken);
                     $api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
+
                     processQueue(null, newAccessToken);
                     return $api(originalRequest);
                 } catch (err) {
