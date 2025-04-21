@@ -1,3 +1,4 @@
+import { LoginResponse } from "@modules/LoginForm/types/loginResponse";
 import axios from "axios";
 
 export const $api = axios.create({
@@ -8,74 +9,28 @@ export const $api = axios.create({
     withCredentials: true
 });
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach(prom => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-    failedQueue = [];
-};
-
-$api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            config.headers["Authorization"] = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+$api.interceptors.request.use((config) => {
+    config.headers.Authorization = `Bearer ${localStorage.getItem(`token`)}`
+    return config
+})
 
 $api.interceptors.response.use(
-    (response) => response,
+    (config) => {
+        return config
+    },
     async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-
-            if (!isRefreshing) {
-                isRefreshing = true;
-                try {
-                    const res = await axios.post(
-                        `${import.meta.env.VITE_API_URL}/auth/refresh`,
-                        {},
-                        { withCredentials: true }
-                    );
-                    const newAccessToken = res.data.accessToken;
-
-                    // ✅ Зберігаємо новий токен
-                    localStorage.setItem("accessToken", newAccessToken);
-                    $api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
-
-                    processQueue(null, newAccessToken);
-                    return $api(originalRequest);
-                } catch (err) {
-                    processQueue(err, null);
-                    return Promise.reject(err);
-                } finally {
-                    isRefreshing = false;
-                }
+        const originalRequest = error.config
+        if (error.response.status == 401 && error.config && !error.config._isRetry) {
+            originalRequest._isRetry = true
+            try {
+                const response = await $api.post<LoginResponse>(`/auth/refresh`, { withCredentials: true })
+                localStorage.setItem('token', response.data.accessToken)
+                return $api.request(originalRequest)
+            } catch (error: unknown) {
+                console.log(error);
             }
-
-            return new Promise(function (resolve, reject) {
-                failedQueue.push({
-                    resolve: (token: string) => {
-                        originalRequest.headers["Authorization"] = `Bearer ${token}`;
-                        resolve($api(originalRequest));
-                    },
-                    reject: (err: any) => reject(err),
-                });
-            });
         }
-
-        return Promise.reject(error);
-    }
-);
+        throw error
+    },
+)
