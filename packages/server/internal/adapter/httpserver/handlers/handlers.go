@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"log"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/go-chi/render"
 )
@@ -12,6 +14,9 @@ func RespondWithError(w http.ResponseWriter, r *http.Request, status int, messag
 	if err != nil {
 		errMsg = err.Error()
 	}
+
+	log.Printf("Error: %s, Status: %d, Message: %s", errMsg, status, message)
+
 	render.Status(r, status)
 	render.JSON(w, r, helpers.NewErrorResponse(status, message, errMsg))
 }

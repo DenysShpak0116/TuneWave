@@ -7,19 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type contextKey string
-
-const claimsContextKey contextKey = "claims"
 
 func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-				http.Error(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Authorization header missing or invalid", nil)
 				return
 			}
 
@@ -33,29 +32,29 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid token", err)
 				return
 			}
 
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				if exp, ok := claims["exp"].(float64); ok {
 					if time.Now().After(time.Unix(int64(exp), 0)) {
-						http.Error(w, "Token has expired", http.StatusUnauthorized)
+						handlers.RespondWithError(w, r, http.StatusUnauthorized, "Token expired", nil)
 						return
 					}
 				}
-				ctx := context.WithValue(r.Context(), claimsContextKey, claims)
+				ctx := context.WithValue(r.Context(), "claims", claims)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
-			http.Error(w, "Failed to parse token claims", http.StatusUnauthorized)
+			handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid token claims", nil)
 		})
 	}
 }
 
 func GetClaimsFromContext(r *http.Request) jwt.MapClaims {
-	if claims, ok := r.Context().Value(claimsContextKey).(jwt.MapClaims); ok {
+	if claims, ok := r.Context().Value("claims").(jwt.MapClaims); ok {
 		return claims
 	}
 	return nil

@@ -6,10 +6,12 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -54,7 +56,10 @@ func BuildContainer() *dig.Container {
 		port.Repository[models.UserReaction],
 		port.Repository[models.Comment],
 		port.Repository[models.Collection],
-		port.Repository[models.CollectionSong]) {
+		port.Repository[models.CollectionSong],
+		port.Repository[models.Chat],
+		port.Repository[models.Message],
+	) {
 		return repository.NewRepository[models.User](db),
 			repository.NewRepository[models.Token](db),
 			repository.NewRepository[models.Song](db),
@@ -65,7 +70,9 @@ func BuildContainer() *dig.Container {
 			repository.NewRepository[models.UserReaction](db),
 			repository.NewRepository[models.Comment](db),
 			repository.NewRepository[models.Collection](db),
-			repository.NewRepository[models.CollectionSong](db)
+			repository.NewRepository[models.CollectionSong](db),
+			repository.NewRepository[models.Chat](db),
+			repository.NewRepository[models.Message](db)
 	})
 
 	// service
@@ -126,7 +133,19 @@ func BuildContainer() *dig.Container {
 	) *service.CollectionService {
 		return service.NewCollectionService(collectionRepo, fileStorage, collectionSongRepository)
 	})
+
+	container.Provide(service.NewChatService)
+	container.Provide(service.NewMessageService)
 	// handlers
+	container.Provide(ws.NewHubManager)
+	container.Provide(func(
+		hubManager *ws.HubManager,
+		chatService *service.ChatService,
+		messageService *service.MessageService,
+	) *chat.ChatHandler {
+		return chat.NewChatHandler(hubManager, chatService, messageService)
+	})
+
 	container.Provide(func(
 		authService *service.AuthService,
 		userService *service.UserService,
@@ -171,6 +190,7 @@ func BuildContainer() *dig.Container {
 		songHandler *song.SongHandler,
 		commentHandler *comment.CommentHandler,
 		collectionHandler *collection.CollectionHandler,
+		chatHandler *chat.ChatHandler,
 	) *chi.Mux {
 		return httpserver.NewRouter(
 			log,
@@ -180,6 +200,7 @@ func BuildContainer() *dig.Container {
 			songHandler,
 			commentHandler,
 			collectionHandler,
+			chatHandler,
 		)
 	})
 

@@ -52,6 +52,7 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hajimehoshi/go-mp3 v0.3.0 // indirect
 	github.com/icza/bitio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

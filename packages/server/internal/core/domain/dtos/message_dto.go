@@ -1,12 +1,16 @@
 package dtos
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type MessageDTO struct {
 	ID        uuid.UUID `json:"id"`
-	CreatedAt string    `json:"createdAt"`
+	CreatedAt time.Time `json:"createdAt"`
 
 	Content string `json:"content"`
 
-	Sender UserDTO `json:"sender"`
+	SenderID uuid.UUID `json:"senderId"`
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -26,31 +27,31 @@ type SongToCollectionRequest struct {
 func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) {
 	songID := chi.URLParam(r, "id")
 	if songID == "" {
-		http.Error(w, "Song ID is required", http.StatusBadRequest)
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song ID is required", nil)
 		return
 	}
 
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
-		http.Error(w, "Invalid song ID", http.StatusBadRequest)
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
 		return
 	}
 
 	var request SongToCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
-		http.Error(w, "Invalid collection ID", http.StatusBadRequest)
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
 		return
 	}
 
 	err = sh.SongService.AddToCollection(r.Context(), songUUID, collectionUUID)
 	if err != nil {
-		http.Error(w, "Failed to add song to collection", http.StatusInternalServerError)
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to add song to collection", err)
 		return
 	}
 

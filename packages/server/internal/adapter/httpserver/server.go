@@ -7,6 +7,7 @@ import (
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
@@ -27,6 +28,7 @@ func NewRouter(
 	songHandler *song.SongHandler,
 	commentHandler *comment.CommentHandler,
 	collectionHandler *collection.CollectionHandler,
+	chatHandler *chat.ChatHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -102,6 +104,11 @@ func NewRouter(
 			protected.Put("/{id}", collectionHandler.UpdateCollection)
 			protected.Delete("/{id}", collectionHandler.DeleteCollection)
 		})
+	})
+
+	router.Route("/ws", func(r chi.Router) {
+		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+		r.Get("/chat", chatHandler.ServeWs)
 	})
 
 	return router

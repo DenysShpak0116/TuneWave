@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -60,7 +59,7 @@ func CheckPasswordHash(password, hash string) bool {
 func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": userID,
-		"exp":    time.Now().Add(15 * time.Minute).Unix(),
+		"exp":    time.Now().Add(5 * time.Hour).Unix(),
 	})
 
 	accessTokenStr, err := accessToken.SignedString([]byte(ah.JWTSecret))
@@ -79,23 +78,4 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 	}
 
 	return accessTokenStr, refreshTokenStr, nil
-}
-
-func (ah *AuthHandler) ParseToken(tokenStr string) (string, error) {
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(ah.JWTSecret), nil
-	})
-	if err != nil || !token.Valid {
-		return "", err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || claims["userId"] == nil {
-		return "", errors.New("invalid token claims")
-	}
-
-	return claims["userId"].(string), nil
 }

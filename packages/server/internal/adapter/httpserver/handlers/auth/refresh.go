@@ -6,6 +6,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/render"
@@ -28,7 +29,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := ah.ParseToken(req.RefreshToken)
+	userID, err := helpers.ParseToken(ah.JWTSecret, req.RefreshToken)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid or expired refresh token", err)
 		return

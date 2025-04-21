@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/render"
 )
@@ -42,7 +43,7 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.UserService.GetUsers(context.Background(), page, limit)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get users", err)
 		return
 	}
 

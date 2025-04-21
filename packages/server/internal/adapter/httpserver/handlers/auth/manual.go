@@ -10,6 +10,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	dtoMapper "github.com/dranikpg/dto-mapper"
@@ -151,7 +152,7 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	userID, err := ah.ParseToken(tokenStr)
+	userID, err := helpers.ParseToken(ah.JWTSecret, tokenStr)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid or expired token", err)
 		return
