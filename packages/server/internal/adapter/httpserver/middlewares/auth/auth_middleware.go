@@ -3,6 +3,7 @@ package authmiddleware
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -31,14 +32,21 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 				return jwtSecret, nil
 			})
 
+			log.Printf("Parsed token: %v", token)
+
 			if err != nil || !token.Valid {
+				log.Printf("Invalid token: %v", err)
 				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid token", err)
 				return
 			}
 
+			log.Printf("Going to check claims: %v", token.Claims)
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				log.Printf("Claims: %v", claims)
 				if exp, ok := claims["exp"].(float64); ok {
+					log.Printf("Token expiration time: %v", exp)
 					if time.Now().After(time.Unix(int64(exp), 0)) {
+						log.Printf("Token expired")
 						handlers.RespondWithError(w, r, http.StatusUnauthorized, "Token expired", fmt.Errorf("token expired"))
 						return
 					}
