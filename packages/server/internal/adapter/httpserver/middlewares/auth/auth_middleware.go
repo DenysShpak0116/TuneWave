@@ -18,7 +18,7 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Authorization header missing or invalid", nil)
+				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Authorization header missing or invalid", fmt.Errorf("authorization header missing or invalid"))
 				return
 			}
 
@@ -39,7 +39,7 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				if exp, ok := claims["exp"].(float64); ok {
 					if time.Now().After(time.Unix(int64(exp), 0)) {
-						handlers.RespondWithError(w, r, http.StatusUnauthorized, "Token expired", nil)
+						handlers.RespondWithError(w, r, http.StatusUnauthorized, "Token expired", fmt.Errorf("token expired"))
 						return
 					}
 				}
@@ -48,7 +48,7 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 				return
 			}
 
-			handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid token claims", nil)
+			handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid token claims", fmt.Errorf("invalid token claims"))
 		})
 	}
 }
