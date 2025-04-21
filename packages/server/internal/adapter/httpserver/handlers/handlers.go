@@ -4,19 +4,12 @@ import (
 	"net/http"
 
 	"log"
-
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/go-chi/render"
 )
 
 func RespondWithError(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
-	var errMsg string
-	if err != nil {
-		errMsg = err.Error()
-	}
+	log.Printf("Error: %v, Status: %d, Message: %s", err, status, message)
 
-	log.Printf("Error: %s, Status: %d, Message: %s", errMsg, status, message)
-
-	render.Status(r, status)
-	render.JSON(w, r, helpers.NewErrorResponse(status, message, errMsg))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write([]byte(`{"error": "` + message + `"}`))
 }
