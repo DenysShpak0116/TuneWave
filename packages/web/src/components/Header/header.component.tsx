@@ -12,14 +12,10 @@ export const Header: FC = () => {
     const navigate = useNavigate()
     const { isAuth, user, logout } = useAuthStore()
 
-    const handleLogoClick = () => {
-        navigate(ROUTES.HOME)
-    }
-
     return (
         <Wrapper>
             <Container>
-                <LogoText onClick={handleLogoClick}>TUNE WAVE</LogoText>
+                <LogoText onClick={() => navigate(ROUTES.HOME)}>TUNE WAVE</LogoText>
                 <NavList>
                     {HeaderItems.map((element) => (
                         <NavItem
@@ -39,8 +35,9 @@ export const Header: FC = () => {
                     )}
                 </NavList>
 
-                {isAuth() ? (
+                {isAuth() && user?.id ? (
                     <UserBlock
+                        userProfileFn={() => navigate(ROUTES.USER_PROFILE.replace(":id", user?.id))}
                         profileImg={user?.profilePictureUrl}
                         username={user?.username}
                         logoutFn={logout}

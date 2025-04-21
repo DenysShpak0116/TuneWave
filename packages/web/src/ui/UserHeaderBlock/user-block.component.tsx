@@ -6,14 +6,16 @@ interface IUserBlockProps {
     profileImg: string | undefined;
     username: string | undefined;
     logoutFn: VoidFunction;
+    userProfileFn: VoidFunction
 }
 
-export const UserBlock: FC<IUserBlockProps> = ({ profileImg, username, logoutFn }) => {
+export const UserBlock: FC<IUserBlockProps> = ({ profileImg, username, logoutFn, userProfileFn }) => {
+
     return (
         <UserBlockContainer>
 
             <span>{username}</span>
-            <UserProfileImg src={profileImg} alt="user-image" />
+            <UserProfileImg onClick={userProfileFn} src={profileImg} alt="user-image" />
 
             <LogoutBlock src={logoutIcon} onClick={logoutFn} />
         </UserBlockContainer>
