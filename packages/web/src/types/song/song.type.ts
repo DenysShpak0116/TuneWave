@@ -5,6 +5,7 @@ import { IUser } from "../user/user.type";
 export interface ISong {
     id: string;
     createdAt: string;
+    title: string;
     duration: string;
     genre: string;
     songUrl: string;

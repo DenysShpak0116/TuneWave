@@ -16,7 +16,7 @@ export const checkAuth = async () => {
 
     try {
         const response = await $api.post<LoginResponse>(
-            "http://localhost:8081/auth/refresh",
+            "/auth/refresh",
             { refreshToken },
             { withCredentials: true }
         );

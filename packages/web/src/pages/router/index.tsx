@@ -5,6 +5,8 @@ import { LoginPage } from "pages/LoginPage/login.page";
 import { RegistrationPage } from "pages/RegistrationPage/registration.page";
 import { CreateTrackPage } from "pages/CreateTrackPage/create-track.page";
 import { UserProfilePage } from "pages/UserProfilePage/user-profile.page";
+import { TrackPage } from "pages/TrackPage/track.page";
+import { NotFoundPage } from "pages/NotFoundPage/not-found.page";
 
 const router = createBrowserRouter([
     {
@@ -25,7 +27,15 @@ const router = createBrowserRouter([
     },
     {
         path: ROUTES.USER_PROFILE,
-        element: <UserProfilePage/>
+        element: <UserProfilePage />
+    },
+    {
+        path: ROUTES.TRACK_PAGE,
+        element: <TrackPage />
+    },
+    {
+        path: "*",
+        element: <NotFoundPage />
     }
 ])
 

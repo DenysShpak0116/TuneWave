@@ -7,8 +7,8 @@ import { ErrorType } from "types/error/error.type";
 export const useCreateTrack = () => {
     return useMutation({
         mutationFn: async (formData: FormData) => {
-            const response = await createTrack(formData)
-            return response.data;
+            const data = await createTrack(formData)
+            return data
         },
         onSuccess: () => {
             toast.success("Трек успішно створено!");
@@ -18,6 +18,7 @@ export const useCreateTrack = () => {
                 const data = error.response.data as ErrorType;
                 toast.error(`Помилка створення треку: ${data.message}`);
             } else {
+                console.log("Error: " + error)
                 toast.error("Помилка" + error.message);
             }
         }
