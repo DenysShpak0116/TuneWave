@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -126,10 +127,32 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, r, map[string]interface{}{
+	authData := map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
 		"user":         userDTO,
+	}
+
+	authJSON, err := json.Marshal(authData)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
+		return
+	}
+
+	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_data",
+		Value:    authBase64,
+		Path:     "/",
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	render.JSON(w, r, map[string]interface{}{
+		"accessToken": accessToken,
+		"user":        userDTO,
 	})
 }
 

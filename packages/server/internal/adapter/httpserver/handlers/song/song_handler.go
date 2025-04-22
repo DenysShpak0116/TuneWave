@@ -98,13 +98,14 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Tags songs
 // @Accept multipart/form-data
 // @Produce json
-// @Param userID formData string true "User ID"
+// @Param userId formData string true "User ID"
 // @Param title formData string true "Song title"
 // @Param genre formData string true "Song genre"
 // @Param artists formData []string true "Artists" collectionFormat(multi)
 // @Param tags formData []string true "Tags" collectionFormat(multi)
 // @Param song formData file true "Song file"
 // @Param cover formData file true "Cover image"
+// @Failure 401 {object} helpers.ErrorResponse
 // @Router /songs [post]
 func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(32 << 20)
@@ -113,7 +114,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.FormValue("userID")
+	userID := r.FormValue("userId")
 	userIDuuid, err := uuid.Parse(userID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)

@@ -102,7 +102,6 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		"user":         userDTO,
 	}
 
-	fmt.Println("accessToken:", accessToken)
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
