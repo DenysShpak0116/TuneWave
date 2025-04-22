@@ -3,14 +3,23 @@ import { useAuthStore } from "@modules/LoginForm/store/store";
 import { MainLayout } from "@ui/layout/main-layout";
 import { FC } from "react";
 import { useParams } from "react-router-dom";
+import { useGetUser } from "./hooks/useGetUserById";
+import { Loader } from "@ui/Loader/loader.component";
 
 
 export const UserProfilePage: FC = () => {
-    const { id } = useParams()
-    const user = useAuthStore(state => state.user)!
-    const isMainUser = id === user.id
-    console.log(isMainUser);
+    const { id } = useParams();
+    const { data: user, isLoading } = useGetUser(id!);
+    const mainUser = useAuthStore(state => state.user)!
+    const isMainUser = id === mainUser.id
 
+    if (isLoading) {
+        return (
+            <MainLayout>
+                <Loader />
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>

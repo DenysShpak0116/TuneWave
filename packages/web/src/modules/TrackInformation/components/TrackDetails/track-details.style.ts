@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { COLORS } from "@consts/colors.consts";
+import { Link } from "react-router-dom";
 
 export const TrackDetailsContainer = styled.div`
     display: flex;
@@ -13,7 +14,7 @@ export const TrackDetailsContainer = styled.div`
     color: ${COLORS.white};
     font-family: "Inter", sans-serif;
     font-size: 14px;
-    gap: 12px;
+    gap: 5px;
     grid-column: 1;
     grid-row: 2;
 `;
@@ -26,10 +27,15 @@ export const TrackInfoBlock = styled.div`
 export const TrackInfoTitle = styled.span`
     font-weight: 600;
     color: ${COLORS.dark_additional};
-    margin-bottom: 2px;
 `;
 
 export const TrackInfoText = styled.span`
     color: ${COLORS.dark_secondary};
     font-weight: 400;
 `;
+
+export const UserInfoText = styled(Link)`
+    color: ${COLORS.dark_secondary};
+    font-weight: 400;
+    text-decoration: underline;
+`

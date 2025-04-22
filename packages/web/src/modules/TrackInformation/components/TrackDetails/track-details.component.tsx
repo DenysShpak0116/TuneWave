@@ -5,8 +5,10 @@ import {
     TrackDetailsContainer,
     TrackInfoText,
     TrackInfoTitle,
-    TrackInfoBlock
+    TrackInfoBlock,
+    UserInfoText
 } from "./track-details.style";
+import { ROUTES } from "pages/router/consts/routes.const";
 
 interface ITrackDetails {
     genre: string;
@@ -14,11 +16,17 @@ interface ITrackDetails {
     duration: string;
     date: string;
     artist: IAuthor[];
+    username: string;
+    userId: string
 }
 
-export const TrackDetails: FC<ITrackDetails> = ({ genre, tags, duration, date, artist }) => {
+export const TrackDetails: FC<ITrackDetails> = ({ genre, tags, duration, date, artist, username, userId }) => {
     return (
         <TrackDetailsContainer>
+            <TrackInfoBlock>
+                <TrackInfoTitle>Користувач</TrackInfoTitle>
+                <UserInfoText to={ROUTES.USER_PROFILE.replace(':id', userId)}>{username}</UserInfoText>
+            </TrackInfoBlock>
             <TrackInfoBlock>
                 <TrackInfoTitle>Жанри:</TrackInfoTitle>
                 <TrackInfoText>{genre}</TrackInfoText>
@@ -39,6 +47,7 @@ export const TrackDetails: FC<ITrackDetails> = ({ genre, tags, duration, date, a
                 <TrackInfoTitle>Головний виконавець:</TrackInfoTitle>
                 <TrackInfoText>{artist.map(a => a.name).join(', ')}</TrackInfoText>
             </TrackInfoBlock>
+
         </TrackDetailsContainer>
     );
 };
