@@ -143,17 +143,6 @@
                     "Auth"
                 ],
                 "summary": "Refresh access and refresh tokens",
-                "parameters": [
-                    {
-                        "description": "Refresh Token",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshRequest"
-                        }
-                    }
-                ],
                 "responses": {}
             }
         },
@@ -485,7 +474,7 @@
                     {
                         "type": "string",
                         "description": "User ID",
-                        "name": "userID",
+                        "name": "userId",
                         "in": "formData",
                         "required": true
                     },
@@ -837,14 +826,6 @@
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RefreshRequest": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
                     "type": "string"
                 }
             }

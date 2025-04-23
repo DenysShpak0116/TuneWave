@@ -128,9 +128,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authData := map[string]any{
-		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
-		"user":         userDTO,
 	}
 
 	authJSON, err := json.Marshal(authData)
@@ -142,10 +140,10 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_data",
+		Name:     "authData",
 		Value:    authBase64,
 		Path:     "/",
-		HttpOnly: false,
+		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})

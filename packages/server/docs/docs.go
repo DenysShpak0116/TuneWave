@@ -150,17 +150,6 @@ const docTemplate = `{
                     "Auth"
                 ],
                 "summary": "Refresh access and refresh tokens",
-                "parameters": [
-                    {
-                        "description": "Refresh Token",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshRequest"
-                        }
-                    }
-                ],
                 "responses": {}
             }
         },
@@ -492,7 +481,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "User ID",
-                        "name": "userID",
+                        "name": "userId",
                         "in": "formData",
                         "required": true
                     },
@@ -844,14 +833,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RefreshRequest": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
                     "type": "string"
                 }
             }

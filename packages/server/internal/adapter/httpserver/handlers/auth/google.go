@@ -111,10 +111,10 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_data",
+		Name:     "authData",
 		Value:    authBase64,
 		Path:     "/",
-		HttpOnly: false,
+		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})

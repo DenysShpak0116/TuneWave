@@ -1,9 +1,5 @@
 package dto
 
-type RefreshRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
 type ForgotPasswordRequest struct {
 	Email string `json:"email"`
 }
