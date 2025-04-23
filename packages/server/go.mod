@@ -16,6 +16,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.4.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/markbates/goth v1.81.0
 	github.com/rs/cors v1.11.1
@@ -43,7 +44,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
-	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/spec v0.20.6 // indirect
@@ -52,9 +52,7 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hajimehoshi/go-mp3 v0.3.0 // indirect
-	github.com/icza/bitio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
@@ -66,8 +64,6 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mewkiz/flac v1.0.7 // indirect
-	github.com/mewkiz/pkg v0.0.0-20190919212034-518ade7978e2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	golang.org/x/net v0.21.0 // indirect
