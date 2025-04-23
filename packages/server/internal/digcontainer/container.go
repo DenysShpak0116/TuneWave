@@ -34,35 +34,6 @@ func BuildContainer() *dig.Container {
 
 	// repository
 	container.Provide(repository.NewFileStorage)
-	// 	db *gorm.DB,
-	// ) (port.Repository[models.User],
-	// 	port.Repository[models.Token],
-	// 	port.Repository[models.Song],
-	// 	port.Repository[models.Author],
-	// 	port.Repository[models.SongAuthor],
-	// 	port.Repository[models.Tag],
-	// 	port.Repository[models.SongTag],
-	// 	port.Repository[models.UserReaction],
-	// 	port.Repository[models.Comment],
-	// 	port.Repository[models.Collection],
-	// 	port.Repository[models.CollectionSong],
-	// 	port.Repository[models.Chat],
-	// 	port.Repository[models.Message],
-	// ) {
-	// 	return repository.NewRepository[models.User](db),
-	// 		repository.NewRepository[models.Token](db),
-	// 		repository.NewRepository[models.Song](db),
-	// 		repository.NewRepository[models.Author](db),
-	// 		repository.NewRepository[models.SongAuthor](db),
-	// 		repository.NewRepository[models.Tag](db),
-	// 		repository.NewRepository[models.SongTag](db),
-	// 		repository.NewRepository[models.UserReaction](db),
-	// 		repository.NewRepository[models.Comment](db),
-	// 		repository.NewRepository[models.Collection](db),
-	// 		repository.NewRepository[models.CollectionSong](db),
-	// 		repository.NewRepository[models.Chat](db),
-	// 		repository.NewRepository[models.Message](db)
-	// })
 	container.Provide(repository.NewRepository[models.User])
 	container.Provide(repository.NewRepository[models.Token])
 	container.Provide(repository.NewRepository[models.Song])
