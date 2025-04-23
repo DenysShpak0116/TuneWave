@@ -5,6 +5,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
 )
 
@@ -12,7 +13,7 @@ type ChatService struct {
 	*GenericService[models.Chat]
 }
 
-func NewChatService(repo port.Repository[models.Chat]) *ChatService {
+func NewChatService(repo port.Repository[models.Chat]) services.ChatService {
 	return &ChatService{
 		GenericService: NewGenericService(repo),
 	}
