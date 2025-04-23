@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"gopkg.in/gomail.v2"
 )
 
@@ -13,12 +15,12 @@ type MailService struct {
 	FromPassword string
 }
 
-func NewMailService(smtpServer string, smtpPort int, fromMail string, fromPassword string) *MailService {
+func NewMailService(cfg *config.Config) services.MailService {
 	return &MailService{
-		SMTPServer:   smtpServer,
-		SMTPPort:     smtpPort,
-		FromMail:     fromMail,
-		FromPassword: fromPassword,
+		SMTPServer:   cfg.Mail.StmpServer,
+		SMTPPort:     cfg.Mail.SmtpPort,
+		FromMail:     cfg.Mail.FromMail,
+		FromPassword: cfg.Mail.FromPassword,
 	}
 }
 

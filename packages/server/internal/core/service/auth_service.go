@@ -24,7 +24,7 @@ func NewAuthService(
 	mailService services.MailService,
 	tokenRepository port.Repository[models.Token],
 	userService services.UserService,
-) *AuthService {
+) services.AuthService {
 	return &AuthService{
 		MailService:     mailService,
 		TokenRepository: tokenRepository,

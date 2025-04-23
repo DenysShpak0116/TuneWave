@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -15,17 +17,17 @@ type FileStorage struct {
 	storage *s3.Client
 }
 
-func NewFileStorage(region, accessKey, secretKey, bucket string) *FileStorage {
+func NewFileStorage(cfg *config.Config) port.FileStorage {
 	options := s3.Options{
-		Region:      region,
-		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		Region:      cfg.AWS.Region,
+		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(cfg.AWS.AccessKey, cfg.AWS.SecretKey, "")),
 	}
 
 	client := s3.New(options)
 
 	return &FileStorage{
-		region:  region,
-		bucket:  bucket,
+		region:  cfg.AWS.Region,
+		bucket:  cfg.AWS.Bucket,
 		storage: client,
 	}
 }

@@ -21,6 +21,18 @@ type SaveSongParams struct {
 	CoverHeader *multipart.FileHeader
 }
 
+type UpdateSongParams struct {
+	SongID      uuid.UUID
+	Title       string
+	Genre       string
+	Artists     []string
+	Tags        []string
+	Song        multipart.File
+	SongHeader  *multipart.FileHeader
+	Cover       multipart.File
+	CoverHeader *multipart.FileHeader
+}
+
 type SongService interface {
 	Service[models.Song]
 	GetSongs(
@@ -32,6 +44,7 @@ type SongService interface {
 		limit int,
 	) ([]dtos.SongDTO, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
+	UpdateSong(ctx context.Context, songParams UpdateSongParams) error
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)
 	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error)
 	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)

@@ -9,6 +9,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/google/uuid"
@@ -34,7 +35,7 @@ func NewSongService(
 	songTagRepository port.Repository[models.SongTag],
 	reactionsRepository port.Repository[models.UserReaction],
 	collectionSongReporitory port.Repository[models.CollectionSong],
-) *SongService {
+) services.SongService {
 	return &SongService{
 		GenericService:           service.NewGenericService(songRepo),
 		FileStorage:              fileStorage,

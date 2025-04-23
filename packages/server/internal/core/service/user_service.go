@@ -16,7 +16,7 @@ type UserService struct {
 	SongService services.SongService
 }
 
-func NewUserService(repo port.Repository[models.User], songService services.SongService) *UserService {
+func NewUserService(repo port.Repository[models.User], songService services.SongService) services.UserService {
 	return &UserService{
 		GenericService: NewGenericService(repo),
 		SongService:    songService,

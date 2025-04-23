@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
@@ -22,14 +23,12 @@ type AuthHandler struct {
 func NewAuthHandler(
 	authService services.AuthService,
 	userService services.UserService,
-	googleClientID,
-	googleClientSecret string,
-	jwtSecret string,
+	cfg *config.Config,
 ) *AuthHandler {
 	goth.UseProviders(
 		google.New(
-			googleClientID,
-			googleClientSecret,
+			cfg.Google.ClientID,
+			cfg.Google.ClientSecret,
 			"http://localhost:8081/auth/google/callback",
 			"email",
 			"profile",
@@ -39,9 +38,9 @@ func NewAuthHandler(
 	return &AuthHandler{
 		AuthService:        authService,
 		UserService:        userService,
-		GoogleClientID:     googleClientID,
-		GoogleClientSecret: googleClientSecret,
-		JWTSecret:          jwtSecret,
+		GoogleClientID:     cfg.Google.ClientID,
+		GoogleClientSecret: cfg.Google.ClientSecret,
+		JWTSecret:          cfg.JwtSecret,
 	}
 }
 

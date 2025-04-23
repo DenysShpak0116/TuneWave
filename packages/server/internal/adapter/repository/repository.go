@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -12,7 +13,7 @@ type GenericRepository[T any] struct {
 	preloads []string
 }
 
-func NewRepository[T any](db *gorm.DB) *GenericRepository[T] {
+func NewRepository[T any](db *gorm.DB) port.Repository[T] {
 	return &GenericRepository[T]{db: db}
 }
 

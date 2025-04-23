@@ -2,6 +2,7 @@ package song
 
 import (
 	"context"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 
@@ -166,9 +167,86 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, songDTO)
 }
 
+// Update godoc
+// @Summary Update a song
+// @Description Update a song by ID
+// @Security BearerAuth
+// @Tags songs
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path string true "Song ID"
+// @Param title formData string false "Song title"
+// @Param genre formData string false "Song genre"
+// @Param artists formData []string false "Artists" collectionFormat(multi)
+// @Param tags formData []string false "Tags" collectionFormat(multi)
+// @Param song formData file false "Updated song file"
+// @Param cover formData file false "Updated cover image"
+// @Router /songs/{id} [put]
 func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
-	// Implementation for updating a song
-	w.Write([]byte("Update a song"))
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
+		return
+	}
+
+	songID := chi.URLParam(r, "id")
+	songUUID, err := uuid.Parse(songID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
+		return
+	}
+
+	title := r.FormValue("title")
+	genre := r.FormValue("genre")
+	artists := r.Form["artists"]
+	tags := r.Form["tags"]
+
+	var songFile multipart.File
+	var songHeader *multipart.FileHeader
+	songFile, songHeader, err = r.FormFile("song")
+	if err != nil && err != http.ErrMissingFile {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song file", err)
+		return
+	}
+	if songFile != nil {
+		defer songFile.Close()
+	}
+
+	var coverFile multipart.File
+	var coverHeader *multipart.FileHeader
+	coverFile, coverHeader, err = r.FormFile("cover")
+	if err != nil && err != http.ErrMissingFile {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid cover image", err)
+		return
+	}
+	if coverFile != nil {
+		defer coverFile.Close()
+	}
+
+	err = sh.SongService.UpdateSong(context.Background(), services.UpdateSongParams{
+		SongID:      songUUID,
+		Title:       title,
+		Genre:       genre,
+		Artists:     artists,
+		Tags:        tags,
+		Song:        songFile,
+		SongHeader:  songHeader,
+		Cover:       coverFile,
+		CoverHeader: coverHeader,
+	})
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to update song", err)
+		return
+	}
+
+	updatedSong, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to retrieve updated song", err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, updatedSong)
 }
 
 // Delete godoc

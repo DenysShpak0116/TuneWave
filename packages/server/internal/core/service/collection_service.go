@@ -26,7 +26,7 @@ func NewCollectionService(
 	repo port.Repository[models.Collection],
 	fileStorage port.FileStorage,
 	collectionSongRepository port.Repository[models.CollectionSong],
-) *CollectionService {
+) services.CollectionService {
 	return &CollectionService{
 		GenericService:           NewGenericService(repo),
 		FileStorage:              fileStorage,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +14,7 @@ type CommentService struct {
 	*GenericService[models.Comment]
 }
 
-func NewCommentService(repo port.Repository[models.Comment]) *CommentService {
+func NewCommentService(repo port.Repository[models.Comment]) services.CommentService {
 	return &CommentService{
 		GenericService: NewGenericService(repo),
 	}
