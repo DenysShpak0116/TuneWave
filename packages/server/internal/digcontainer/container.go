@@ -29,7 +29,7 @@ func BuildContainer() *dig.Container {
 	httpserver.InitGothicSessionStore()
 
 	container.Provide(config.MustLoad)
-	container.Provide(setupLogger)
+	container.Provide(setupPrettySlog)
 	container.Provide(repository.NewGORMDB)
 
 	// repository
@@ -70,31 +70,6 @@ func BuildContainer() *dig.Container {
 	container.Provide(httpserver.NewRouter)
 
 	return container
-}
-
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
-)
-
-func setupLogger(cfg *config.Config) *slog.Logger {
-	var log *slog.Logger
-
-	switch cfg.Env {
-	case envLocal:
-		log = setupPrettySlog()
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
-	}
-
-	return log
 }
 
 func setupPrettySlog() *slog.Logger {
