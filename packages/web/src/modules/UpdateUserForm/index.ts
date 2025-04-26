@@ -1,0 +1,1 @@
+export { UpdateUserForm } from "./update-user.component"

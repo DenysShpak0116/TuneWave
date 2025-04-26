@@ -4,5 +4,6 @@ export enum ROUTES {
     SIGN_IN = "/sign-in",
     CREATE_TRACK = "/create-track",
     USER_PROFILE = "/user-profile/:id",
-    TRACK_PAGE = "/track/:id"
+    TRACK_PAGE = "/track/:id",
+    UPDATE_USER_PAGE = "/user-update-profile/:id"
 }

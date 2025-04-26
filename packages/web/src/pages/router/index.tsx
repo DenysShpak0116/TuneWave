@@ -7,6 +7,7 @@ import { CreateTrackPage } from "pages/CreateTrackPage/create-track.page";
 import { UserProfilePage } from "pages/UserProfilePage/user-profile.page";
 import { TrackPage } from "pages/TrackPage/track.page";
 import { NotFoundPage } from "pages/NotFoundPage/not-found.page";
+import { UpdateUserPage } from "pages/UpdateUserPage/update-user.page";
 
 const router = createBrowserRouter([
     {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
     {
         path: ROUTES.TRACK_PAGE,
         element: <TrackPage />
+    },
+    {
+        path: ROUTES.UPDATE_USER_PAGE,
+        element: <UpdateUserPage />
     },
     {
         path: "*",

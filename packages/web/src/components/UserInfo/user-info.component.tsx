@@ -2,6 +2,8 @@ import { FC } from "react";
 import { IUser } from "types/user/user.type";
 import { UserBlock, Wrapper, Avatar, Name, Stats, Bio, SettingsIcon } from "./user-info.style";
 import { FiSettings } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "pages/router/consts/routes.const";
 
 
 interface IUserInfoProps {
@@ -10,6 +12,8 @@ interface IUserInfoProps {
 }
 
 export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser }) => {
+    const navigate = useNavigate()
+
     return (
         <Wrapper>
             <UserBlock>
@@ -27,7 +31,7 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser }) => {
                 </div>
                 {isMainUser && (
                     <SettingsIcon>
-                        <FiSettings size={20} />
+                        <FiSettings onClick={() => navigate(ROUTES.UPDATE_USER_PAGE.replace(':id', user.id))} size={20} />
                     </SettingsIcon>
                 )}
             </UserBlock>
