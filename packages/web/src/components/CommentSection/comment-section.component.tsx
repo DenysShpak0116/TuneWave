@@ -66,9 +66,8 @@ export const CommentSection: FC<ICommentSectionProps> = ({ userAvatar, comments,
         });
     };
 
-    console.log(userId)
 
-    if (comments.length == 0) {
+    if (comments.length == 0 && !userId) {
         return (
             <CommentSectionContainer>
                 <NoContentText>Немає коментарів :( </NoContentText>
