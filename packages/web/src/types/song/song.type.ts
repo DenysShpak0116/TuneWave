@@ -1,6 +1,7 @@
 import { IAuthor } from "./author.type";
 import { ISongTags } from "./songTags.type";
 import { IUser } from "../user/user.type";
+import { IComment } from "types/comments/comment.type";
 
 export interface ISong {
     id: string;
@@ -16,6 +17,7 @@ export interface ISong {
     user: IUser
     authors: IAuthor[]
     songTags: ISongTags[]
+    comments: IComment[]
 }
 
 

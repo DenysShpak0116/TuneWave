@@ -4,6 +4,8 @@ import { useAuthStore } from "../store/store";
 import toast from "react-hot-toast";
 import { LoginResponse } from "../types/loginResponse";
 import { ErrorType } from "types/error/error.type";
+import { login } from "@api/auth.api";
+
 
 interface LoginRequest {
     email: string;
@@ -16,7 +18,7 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (data: LoginRequest) => {
-            const response = await axios.post("http://localhost:8081/auth/login", data);
+            const response = await login(data.email, data.password)
             return response.data;
         },
         onSuccess: (data: LoginResponse) => {

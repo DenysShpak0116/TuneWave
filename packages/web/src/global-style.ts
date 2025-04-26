@@ -2,6 +2,7 @@ import { createGlobalStyle } from "styled-components";
 import MontserratTTF from '@assets/fonts/Montserrat.ttf'
 import Jersey25TTF from '@assets/fonts/Jersey25-Regular.ttf'
 import { FONTS } from "@consts/fonts.enum";
+import { COLORS } from "@consts/colors.consts";
 
 
 const GlobalStyle = createGlobalStyle`
@@ -9,6 +10,10 @@ const GlobalStyle = createGlobalStyle`
       margin: 0;
       padding: 0;
       font-family: '${FONTS.MONTSERRAT}';
+  }
+
+  body{
+    background-color: ${COLORS.dark_backdrop};
   }
 
   h1,
