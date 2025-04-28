@@ -3,6 +3,8 @@ import { COLORS } from "@consts/colors.consts";
 import { Link } from "react-router-dom";
 
 export const TrackDetailsContainer = styled.div`
+    max-height: 300px;
+    grid-area: "info";
     display: flex;
     flex-direction: column;
     justify-content: space-between;

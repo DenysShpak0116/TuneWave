@@ -7,11 +7,12 @@ interface ButtonProps {
     text: string;
     onClick?: VoidFunction
     type?: "button" | "submit" | "reset";
+    isDisabled?: boolean
 }
 
-export const Button: FC<ButtonProps> = ({ style, text, onClick, type = "button" }) => {
+export const Button: FC<ButtonProps> = ({ style, text, onClick, type = "button", isDisabled }) => {
     return (
-        <StyledButton style={style} onClick={onClick} type={type}>
+        <StyledButton disabled={isDisabled} style={style} onClick={onClick} type={type}>
             {text}
         </StyledButton>
     );

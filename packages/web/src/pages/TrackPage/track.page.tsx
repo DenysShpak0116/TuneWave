@@ -10,7 +10,7 @@ export const TrackPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const { data: track, isLoading } = useGetTrack(id!);
 
-    if (isLoading) {
+    if (isLoading || !track) {
         return (
             <MainLayout>
                 <Loader />
