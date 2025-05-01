@@ -734,7 +734,40 @@ const docTemplate = `{
                         "type": "string",
                         "description": "User ID",
                         "name": "userId",
-                        "in": "path"
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/songs/{id}/listen/{userId}": {
+            "post": {
+                "description": "Add listening to song",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Add listening to song",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}

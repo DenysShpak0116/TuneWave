@@ -75,6 +75,7 @@ func NewRouter(
 		r.Get("/", songHandler.GetSongs)
 		r.Get("/{id}", songHandler.GetByID)
 		r.Get("/{id}/is-reacted/{userId}", songHandler.CheckReaction)
+		r.Post("/{id}/listen/{userId}", songHandler.ListenSong)
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))

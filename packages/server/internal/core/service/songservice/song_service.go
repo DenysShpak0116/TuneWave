@@ -194,6 +194,7 @@ func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		Genre:      song.Genre,
 		SongURL:    song.SongURL,
 		CoverURL:   song.CoverURL,
+		CreatedAt:  song.CreatedAt,
 		Duration:   formatDuration(time.Duration(song.Duration)),
 		Listenings: song.Listenings,
 		User:       songUserDTO,

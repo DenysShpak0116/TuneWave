@@ -1,10 +1,12 @@
 package song
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -65,7 +67,7 @@ func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param id path string true "Song ID"
-// @Param userId path string false "User ID"
+// @Param userId path string true "User ID"
 // @Router /songs/{id}/is-reacted/{userId} [get]
 func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
@@ -99,4 +101,45 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]string{
 		"type": reactionType,
 	})
+}
+
+// ListenSong godoc
+// @Summary      Add listening to song
+// @Description  Add listening to song
+// @Tags         songs
+// @Accept       json
+// @Produce      json
+// @Param id path string true "Song ID"
+// @Param userId path string true "User ID"
+// @Router /songs/{id}/listen/{userId} [post]
+func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userId")
+	if userID == "undefined" {
+		render.Status(r, http.StatusNoContent)
+	}
+
+	songID := chi.URLParam(r, "id")
+	songUUID, err := uuid.Parse(songID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "song id is wrong", err)
+		return
+	}
+
+	song, err := sh.SongService.GetByID(context.Background(), songUUID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "song does not exist", err)
+		return
+	}
+
+	if _, err := sh.SongService.Update(context.Background(), &models.Song{
+		BaseModel: models.BaseModel{
+			ID: song.ID,
+		},
+		Listenings: song.Listenings + 1,
+	}); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "can not add listening to song", err)
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
 }
