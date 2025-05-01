@@ -10,6 +10,7 @@ type UserDTO struct {
 	ID             uuid.UUID `json:"id"`
 	Username       string    `json:"username"`
 	ProfilePicture string    `json:"profilePictureUrl"`
+	ProfileInfo    string    `json:"profileInfo"`
 }
 
 type UserExtendedDTO struct {

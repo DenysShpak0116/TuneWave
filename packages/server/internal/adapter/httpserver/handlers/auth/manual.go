@@ -12,6 +12,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -90,8 +91,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	users, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil || len(users) == 0 {
@@ -119,10 +119,17 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO, err := ah.UserService.GetFullDTOByID(ctx, user.ID)
+	userData, err := ah.UserService.GetByID(ctx, user.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
 		return
+	}
+
+	userDTO := &dtos.UserDTO{
+		ID:             userData.ID,
+		Username:       userData.Username,
+		ProfilePicture: userData.ProfilePicture,
+		ProfileInfo:    userData.ProfileInfo,
 	}
 
 	authData := map[string]any{
