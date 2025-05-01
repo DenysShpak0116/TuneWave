@@ -17,9 +17,9 @@ export const Header: FC = () => {
             <Container>
                 <LogoText onClick={() => navigate(ROUTES.HOME)}>TUNE WAVE</LogoText>
                 <NavList>
-                    {HeaderItems.map((element) => (
+                    {HeaderItems.map((element, index) => (
                         <NavItem
-                            key={element.path}
+                            key={index}
                             title={element.title}
                             path={element.path}
                             icon={element.icon}

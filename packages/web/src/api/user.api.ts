@@ -6,6 +6,6 @@ export const getUserById = async (id: string) => {
 }
 
 export const updateUser = async (id: string, profileInfo: string, username: string) => {
-    const { data } = await $api.post("/users", { id, profileInfo, username })
+    const { data } = await $api.put(`/users/${id}`, { username: username, profileInfo: profileInfo })
     return data
-} 
+}

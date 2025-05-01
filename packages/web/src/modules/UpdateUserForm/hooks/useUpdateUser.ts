@@ -3,7 +3,7 @@ import { updateUser } from "@api/user.api"
 
 export const useUpdateUser = () => {
     return useMutation({
-        mutationFn: ({ id, profileInfo, username }: { id: string; profileInfo: string; username: string }) =>
-            updateUser(id, profileInfo, username),
+        mutationFn: async ({ id, profileInfo, username }: { id: string; profileInfo: string; username: string }) =>
+            await updateUser(id, profileInfo, username),
     });
 };

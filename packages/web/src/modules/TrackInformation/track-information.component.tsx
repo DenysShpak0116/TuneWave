@@ -7,6 +7,7 @@ import { parseDate } from "../../helpers/date-parse";
 import { CommentSection } from "@components/CommentSection/comment-section.component";
 import { useAuthStore } from "@modules/LoginForm/store/store";
 import { IComment } from "types/comments/comment.type";
+import { useGetUserReaction, useReaction } from "./hooks/useReaction";
 
 interface ITrackInformationProps {
     song: ISong;
@@ -16,9 +17,29 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
     const user = useAuthStore(state => state.user);
     const [comments, setComments] = useState<IComment[]>(song.comments);
 
+    const { mutate: songReact } = useReaction();
+    const { data: currentReaction, isLoading } = useGetUserReaction(song.id, user!.id);
+
+
+    const onReactBtnClickFn = (type: "like" | "dislike") => {
+        if (!user) return;
+        songReact(
+            { songId: song.id, reactionType: type, userId: user.id },
+        );
+    };
+
+
+
     return (
         <TrackInformationContainer>
-            <TrackLogo logo={song?.coverUrl} />
+            {!isLoading && (
+                <TrackLogo
+                    type={currentReaction ?? "none"}
+                    reactFn={onReactBtnClickFn}
+                    logo={song?.coverUrl}
+                />
+            )}
+
             <TrackDetails
                 userId={song.user.id}
                 username={song.user.username}
