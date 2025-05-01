@@ -49,4 +49,5 @@ type SongService interface {
 	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error)
 	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)
 	AddToCollection(ctx context.Context, songUUID, collectionUUID uuid.UUID) error
+	IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error)
 }

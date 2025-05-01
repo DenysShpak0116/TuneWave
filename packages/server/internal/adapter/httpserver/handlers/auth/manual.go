@@ -42,6 +42,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to check existing users", err)
 		return
 	}
+
 	if len(existingUsers) > 0 {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "User already exists", nil)
 		return

@@ -32,7 +32,7 @@ func NewRouter(
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		ExposedHeaders:   []string{"Content-Type", "Content-Length"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -74,6 +74,7 @@ func NewRouter(
 	router.Route("/songs", func(r chi.Router) {
 		r.Get("/", songHandler.GetSongs)
 		r.Get("/{id}", songHandler.GetByID)
+		r.Get("/{id}/is-reacted/{userId}", songHandler.CheckReaction)
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))

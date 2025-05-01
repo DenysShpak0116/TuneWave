@@ -23,10 +23,7 @@ func New(log *slog.Logger) func(next http.Handler) http.Handler {
 			defer func() {
 				entry.Info("request completed",
 					slog.Int("status", ww.Status()),
-					slog.Int("bytes", ww.BytesWritten()),
 					slog.String("duration", time.Since(t1).String()),
-					slog.Any("header", ww.Header()),
-					slog.String("request", r.URL.String()),
 				)
 			}()
 

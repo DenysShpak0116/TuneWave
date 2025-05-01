@@ -709,6 +709,37 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/songs/{id}/is-reacted/{userId}": {
+            "get": {
+                "description": "Check reaction to song",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Check reaction to song",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/songs/{id}/reaction": {
             "post": {
                 "security": [

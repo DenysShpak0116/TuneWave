@@ -49,3 +49,18 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 
 	return likes, dislikes, nil
 }
+
+func (ss *SongService) IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error) {
+	reactions, err := ss.ReactionsRepository.NewQuery(ctx).
+		Where("song_id = ? AND user_id = ?", songID, userID).
+		Find()
+	if err != nil {
+		return "none", err
+	}
+	if len(reactions) == 0 {
+		return "none", nil
+	}
+
+	reactionType := reactions[0].Type
+	return reactionType, nil
+}
