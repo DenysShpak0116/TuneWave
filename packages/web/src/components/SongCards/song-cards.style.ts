@@ -29,19 +29,46 @@ export const SongCard = styled.div`
         transform 0.35s ease,
         background-color 0.35s ease,
         box-shadow 0.35s ease;
-    
+
     &:hover {
         cursor: pointer;
         background-color: ${COLORS.dark_focusing};
-        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.08);
+        
     }
+
+    &:hover .play-icon {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+`;
+
+export const ImageWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
 `;
 
 export const SongImage = styled.img`
     width: 100%;
-    aspect-ratio: 1;
+    height: 100%;
     object-fit: cover;
     border-radius: 8px;
+    display: block;
+`;
+
+export const PlayIcon = styled.img`
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    z-index: 2;
 `;
 
 export const SongTitle = styled.div`

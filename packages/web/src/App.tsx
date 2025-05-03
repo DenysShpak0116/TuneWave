@@ -1,11 +1,10 @@
 import GlobalStyle from "./global-style"
-import { RouterProvider } from "react-router-dom"
-import router from "pages/router"
 import { Toaster } from "react-hot-toast"
 import { COLORS } from "@consts/colors.consts"
 import { FONTS } from "@consts/fonts.enum"
 import { checkAuth } from "helpers/Auth/check-auth"
 import { useEffect } from "react"
+import { AppRoutes } from "pages/router/app-routes"
 
 function App() {
 
@@ -28,7 +27,7 @@ function App() {
         }}
       />
       <GlobalStyle />
-      <RouterProvider router={router} />
+      <AppRoutes />
     </>
   )
 }

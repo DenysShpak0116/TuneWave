@@ -14,6 +14,7 @@ const GlobalStyle = createGlobalStyle`
 
   body{
     background-color: ${COLORS.dark_backdrop};
+    padding-bottom: 50px;
   }
 
   h1,
