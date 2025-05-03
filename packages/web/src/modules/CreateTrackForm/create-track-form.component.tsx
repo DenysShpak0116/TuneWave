@@ -26,7 +26,7 @@ export const CreateTrackForm: FC = () => {
 
         const fullFormData = {
             ...formData,
-            userID: userId,
+            userId: userId,
         };
 
         if (!validateCreateTrackFormData(fullFormData)) {
@@ -34,7 +34,7 @@ export const CreateTrackForm: FC = () => {
         }
 
         const data = new FormData();
-        data.append("userID", fullFormData.userID);
+        data.append("userId", fullFormData.userId);
         data.append("title", fullFormData.title);
         data.append("genre", fullFormData.genre);
         fullFormData.artists.forEach(artist => data.append("artists", artist));

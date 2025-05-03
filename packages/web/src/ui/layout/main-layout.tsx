@@ -4,17 +4,17 @@ import { Header } from "@components/Header/header.component"
 
 
 interface MainLayoutProps {
-    children: ReactNode
+    children?: ReactNode
 }
 
-export const MainLayout: FC<MainLayoutProps> = ({children}) => {
+export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
 
-    return(
+    return (
         <>
-        <Wrapper>
-            <Header/>
-            <Container>{children}</Container>
-        </Wrapper>
+            <Wrapper>
+                <Header />
+                <Container>{children}</Container>
+            </Wrapper>
         </>
     )
 }

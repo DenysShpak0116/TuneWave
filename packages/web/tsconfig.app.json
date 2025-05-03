@@ -47,5 +47,5 @@
   },
   "include": [
     "src"
-  ]
+, "public/playerjs.js"  ]
 }

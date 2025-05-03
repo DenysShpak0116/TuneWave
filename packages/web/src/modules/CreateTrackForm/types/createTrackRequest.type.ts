@@ -1,5 +1,5 @@
 export type CreateTrackRequest = {
-    userID: string;
+    userId: string;
     title: string;
     genre: string;
     artists: string[];

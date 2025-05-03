@@ -23,3 +23,13 @@ export const getTrackById = async (id: string) => {
     const { data } = await $api.get(`/songs/${id}`)
     return data
 }
+
+export const reactSong = async (songId: string, reactionType: "like" | "dislike", userId: string) => {
+    const { data } = await $api.post(`/songs/${songId}/reaction`, { reactionType, userId })
+    return data;
+}
+
+export const getUserReaction = async (songId: string, userId: string) => {
+    const { data } = await $api.get(`/songs/${songId}/is-reacted/${userId}`)
+    return data;
+}

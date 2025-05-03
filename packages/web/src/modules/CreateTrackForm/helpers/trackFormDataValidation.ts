@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 
 export const validateCreateTrackFormData = (data: Partial<CreateTrackRequest>): data is CreateTrackRequest => {
     const requiredFields: (keyof CreateTrackRequest)[] = [
-        "title", "genre", "artists", "tags", "song", "cover", "userID"
+        "title", "genre", "artists", "tags", "song", "cover", "userId"
     ];
 
     for (const field of requiredFields) {

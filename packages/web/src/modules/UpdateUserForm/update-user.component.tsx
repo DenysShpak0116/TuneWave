@@ -34,7 +34,7 @@ export const UpdateUserForm: FC<IUpdateUserForm> = ({ user }) => {
 
     const handleSubmit = () => {
         updateUserInfo(
-            { id: user.id, profileInfo: userInfo, username },
+            { id: user.id, profileInfo: userInfo, username: username },
             {
                 onSuccess: () => {
                     toast.success("Профіль оновлено!");

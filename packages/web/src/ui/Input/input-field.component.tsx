@@ -10,6 +10,7 @@ interface IInputFieldProps {
 }
 
 export const InputField: FC<IInputFieldProps> = ({ label, value, onChange, placeholder, type = "text" }) => {
+
     return (
         <InputContainer>
             <Label>{label}</Label>
