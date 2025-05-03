@@ -14,6 +14,14 @@ type CollectionDTO struct {
 	User UserDTO `json:"user"`
 }
 
+type UsersCollectionDTO struct {
+	ID       uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Title    string    `json:"title"`
+	Description string    `json:"description"`
+	CoverURL string    `json:"coverUrl"`
+}
+
 type CollectionExtendedDTO struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`

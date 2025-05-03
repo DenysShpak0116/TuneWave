@@ -6,7 +6,11 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -197,4 +201,39 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 	}
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, newCollection)
+}
+
+// GetUsersCollections godoc
+// @Summary      Get user's collections
+// @Description  Retrieves all collections belonging to the authenticated user
+// @Tags         collections
+// @Security     BearerAuth
+// @Produce      json
+// @Router       /collections/users-collections [get]
+func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) {
+	userID, err := helpers.GetUserID(r.Context())
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
+		return
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID format", err)
+		return
+	}
+
+	collections, err := ch.CollectionService.Where(r.Context(), &models.Collection{UserID: userUUID})
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot retrieve user's collections", err)
+		return
+	}
+
+	var usersCollectionsDTOs []dtos.UsersCollectionDTO
+	if err := dtoMapper.Map(&usersCollectionsDTOs, collections); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot get collections", err)
+		return
+	}
+
+	render.JSON(w, r, usersCollectionsDTOs)
 }

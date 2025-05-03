@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -48,9 +47,7 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 					return
 				}
 
-				ctx := context.WithValue(r.Context(), helpers.UserIDKey, userID)
-				fmt.Println("userID from token:", userID)
-				fmt.Printf("storing in context with key type: %T\n", helpers.UserIDKey)
+				ctx := context.WithValue(r.Context(), "userID", userID)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}

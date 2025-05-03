@@ -258,6 +258,24 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/collections/users-collections": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all collections belonging to the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Get user's collections",
+                "responses": {}
+            }
+        },
         "/collections/{id}": {
             "get": {
                 "security": [

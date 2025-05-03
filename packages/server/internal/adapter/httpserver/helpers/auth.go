@@ -27,12 +27,8 @@ func ParseToken(jwtSecret, tokenStr string) (string, error) {
 	return claims["userId"].(string), nil
 }
 
-type contextKey string
-
-const UserIDKey contextKey = "userId"
-
 func GetUserID(ctx context.Context) (string, error) {
-	userID, ok := ctx.Value(UserIDKey).(string)
+	userID, ok := ctx.Value("userID").(string)
 	if !ok {
 		return "", errors.New("userId not found in context")
 	}
