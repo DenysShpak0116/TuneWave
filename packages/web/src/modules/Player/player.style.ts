@@ -41,4 +41,5 @@ export const AddIcon = styled.img`
   width: 24px;
   height: 24px;
   align-self: center;
+  cursor: pointer;
 `

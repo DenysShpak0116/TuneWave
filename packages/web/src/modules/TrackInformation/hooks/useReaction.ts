@@ -17,7 +17,7 @@ export const useReaction = () => {
     });
 };
 
-export const useGetUserReaction = (songId: string, userId: string) => {
+export const useGetUserReaction = (songId: string, userId?: string) => {
     return useQuery<"like" | "dislike", "none">({
         queryKey: ["user-reaction", songId, userId],
         queryFn: () => getUserReaction(songId, userId),

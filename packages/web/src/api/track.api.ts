@@ -29,7 +29,12 @@ export const reactSong = async (songId: string, reactionType: "like" | "dislike"
     return data;
 }
 
-export const getUserReaction = async (songId: string, userId: string) => {
+export const getUserReaction = async (songId: string, userId?: string) => {
     const { data } = await $api.get(`/songs/${songId}/is-reacted/${userId}`)
     return data;
+}
+
+export const addSongToCollection = async (trackId: string, collectionId: string) => {
+    const { data } = await $api.post(`/songs/${trackId}/add-to-collection`, { collectionId: collectionId })
+    return data
 }

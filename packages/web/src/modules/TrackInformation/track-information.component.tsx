@@ -18,7 +18,8 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
     const [comments, setComments] = useState<IComment[]>(song.comments);
 
     const { mutate: songReact } = useReaction();
-    const { data: currentReaction, isLoading } = useGetUserReaction(song.id, user!.id);
+    const { data: currentReaction, isLoading } = useGetUserReaction(song.id, user?.id);
+
 
 
     const onReactBtnClickFn = (type: "like" | "dislike") => {
@@ -34,6 +35,7 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
         <TrackInformationContainer>
             {!isLoading && (
                 <TrackLogo
+                    userId={user?.id}
                     type={currentReaction ?? "none"}
                     reactFn={onReactBtnClickFn}
                     logo={song?.coverUrl}

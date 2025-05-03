@@ -9,11 +9,12 @@ type ReactionType = "like" | "dislike" | "none";
 
 interface ITrackLogo {
     logo: string | undefined;
+    userId: string | undefined;
     reactFn: (type: "like" | "dislike") => void
     type: { type: ReactionType }
 }
 
-export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type } }) => {
+export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userId }) => {
     const [reaction, setReaction] = useState<"like" | "dislike" | null>(type === 'none' ? null : type);
 
 
@@ -29,14 +30,17 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type } }) => 
     return (
         <LogoContainer>
             <Logo src={logo} />
-            <InteractionContainer>
-                <IconButton onClick={() => handleReaction("like")}>
-                    <InteractionIcon src={reaction === "like" ? likeFilledIcon : likeIcon} />
-                </IconButton>
-                <IconButton onClick={() => handleReaction("dislike")}>
-                    <InteractionIcon src={reaction === "dislike" ? dislikeFilledIcon : dislikeIcon} />
-                </IconButton>
-            </InteractionContainer>
+            {userId && (
+                <InteractionContainer>
+
+                    <IconButton onClick={() => handleReaction("like")}>
+                        <InteractionIcon src={reaction === "like" ? likeFilledIcon : likeIcon} />
+                    </IconButton>
+                    <IconButton onClick={() => handleReaction("dislike")}>
+                        <InteractionIcon src={reaction === "dislike" ? dislikeFilledIcon : dislikeIcon} />
+                    </IconButton>
+                </InteractionContainer>
+            )}
         </LogoContainer>
     );
 };

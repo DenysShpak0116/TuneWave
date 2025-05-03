@@ -20,6 +20,8 @@ export const UploadContainer = styled.div`
     align-items: center;
 `
 
+
+
 export const PreviewImage = styled.img`
     max-width: 100%;
     max-height: 100%;
