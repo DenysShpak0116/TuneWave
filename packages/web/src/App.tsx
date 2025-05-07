@@ -5,12 +5,13 @@ import { FONTS } from "@consts/fonts.enum"
 import { checkAuth } from "helpers/Auth/check-auth"
 import { useEffect } from "react"
 import { AppRoutes } from "pages/router/app-routes"
-
+import "./helpers/Player/PlayerSync";
 function App() {
 
   useEffect(() => {
     checkAuth();
   }, []);
+
 
   return (
     <>

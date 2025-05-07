@@ -8,6 +8,7 @@ import { CommentSection } from "@components/CommentSection/comment-section.compo
 import { useAuthStore } from "@modules/LoginForm/store/store";
 import { IComment } from "types/comments/comment.type";
 import { useGetUserReaction, useReaction } from "./hooks/useReaction";
+import { TrackPagePlayer } from "@components/TrackPagePlayer/track-page-player.component";
 
 interface ITrackInformationProps {
     song: ISong;
@@ -51,6 +52,10 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
                 date={parseDate(song?.createdAt)}
                 artist={song?.authors}
             />
+            <TrackPagePlayer
+                song={song}
+            />
+
             <CommentSection
                 userId={user?.id}
                 songId={song.id}

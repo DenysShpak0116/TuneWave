@@ -4,7 +4,7 @@ import { RegistrationRequest } from "../types/registrationRequest.type";
 
 export const useRegister = () => {
     return useMutation({
-        mutationFn: (data: RegistrationRequest) =>
-            register(data),
+        mutationFn: async (data: RegistrationRequest) =>
+            await register(data),
     });
 };

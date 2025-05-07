@@ -29,15 +29,25 @@ export const Player: FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        if (trackUrl && window.Playerjs) {
-            const player = new window.Playerjs({
-                id: "player",
-                file: trackUrl,
-                autoplay: 0,
+        const player = new window.Playerjs({ id: "player", file: trackUrl });
 
-            });
-            player.api("play", trackUrl)
-        }
+        player.api("play", trackUrl)
+        const syncHandler = (e: StorageEvent) => {
+            if (e.key === "player-sync" && e.newValue) {
+                const { type, value } = JSON.parse(e.newValue);
+                if (type === "play") player.api("play");
+                if (type === "pause") player.api("pause");
+                if (type === "seek") player.api("seek", value);
+                if (type === "volume") player.api("volume", value);
+            }
+        };
+        window.addEventListener("storage", syncHandler);
+
+        player.api("event", "time", (time: number) => {
+            localStorage.setItem("player-timeline", JSON.stringify({ time }));
+        });
+
+        return () => window.removeEventListener("storage", syncHandler);
     }, [trackUrl]);
 
 
