@@ -1,7 +1,6 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect } from "react";
 import { TrackPagePlayerContainer, TrackTitle } from "./track-page-player.style";
 import { ISong } from "types/song/song.type";
-import { TrackData } from "@components/SongCards/song-cards.component";
 import { usePlayerStore } from "@modules/Player/store/player.store";
 
 declare global {

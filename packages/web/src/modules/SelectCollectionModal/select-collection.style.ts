@@ -35,6 +35,7 @@ export const ModalHeaderText = styled.h3`
     justify-content: center;
     font-size: 20px;
     font-weight: 600;
+    margin-bottom: 5px;
 `
 
 export const AddCollectionIcon = styled.img`
@@ -56,8 +57,29 @@ export const ModalContent = styled.div<{ $active: boolean }>`
 `;
 
 export const ModalBody = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  max-height: 375px;
+  overflow-y: auto;
+  padding-right: 8px;
+
+      &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 `;

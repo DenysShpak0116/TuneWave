@@ -55,7 +55,7 @@ export const SelectCollectionModal: FC<ISelectCollection> = ({ active, setActive
                         />
                     ))}
                 </ModalBody>
-                <Button text="Додати до колекції" onClick={handleSubmit} />
+                <Button text="Додати до колекції" style={{ marginTop: "20px" }} onClick={handleSubmit} />
             </ModalContent>
 
             <CollectionModal
