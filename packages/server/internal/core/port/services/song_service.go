@@ -42,7 +42,7 @@ type SongService interface {
 		order string,
 		page int,
 		limit int,
-	) ([]dtos.SongDTO, error)
+	) ([]dtos.SongExtendedDTO, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	UpdateSong(ctx context.Context, songParams UpdateSongParams) error
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)

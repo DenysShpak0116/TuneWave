@@ -48,22 +48,28 @@ func NewSongService(
 	}
 }
 
-func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]dtos.SongDTO, error) {
+func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]dtos.SongExtendedDTO, error) {
 	songs, err := ss.Repository.NewQuery(ctx).
 		Where("title LIKE ?", "%"+search+"%").
 		Order(fmt.Sprintf("%s %s", sortBy, order)).
 		Skip((page - 1) * limit).
 		Take(limit).
 		Preload("User").
+		Preload("Authors").
+		Preload("Authors.Author").
+		Preload("SongTags").
+		Preload("SongTags.Tag").
+		Preload("Comments").
+		Preload("Comments.User").
 		Find()
 	if err != nil {
 		return nil, err
 	}
 	if len(songs) == 0 {
-		return nil, fmt.Errorf("no songs found for search term: %s", search)
+		return []dtos.SongExtendedDTO{}, nil
 	}
 
-	songDTOs := make([]dtos.SongDTO, len(songs))
+	songDTOs := make([]dtos.SongExtendedDTO, len(songs))
 	for i, song := range songs {
 		likes, err := ss.ReactionsRepository.NewQuery(ctx).
 			Where("song_id = ? AND type = ?", song.ID, "like").
@@ -79,7 +85,37 @@ func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order strin
 			return nil, fmt.Errorf("get dislikes: %w", err)
 		}
 
-		songDTOs[i] = dtos.SongDTO{
+		authorsDTO := make([]dtos.AuthorDTO, 0)
+		for _, songAuthor := range song.Authors {
+			authorsDTO = append(authorsDTO, dtos.AuthorDTO{
+				ID:   songAuthor.Author.ID,
+				Name: songAuthor.Author.Name,
+				Role: songAuthor.Role,
+			})
+		}
+
+		tagsDTO := make([]dtos.TagDTO, 0)
+		for _, songTag := range song.SongTags {
+			tagsDTO = append(tagsDTO, dtos.TagDTO{
+				Name: songTag.Tag.Name,
+			})
+		}
+
+		commentsDTO := make([]dtos.CommentDTO, 0)
+		for _, c := range song.Comments {
+			commentsDTO = append(commentsDTO, dtos.CommentDTO{
+				ID: c.ID,
+				Author: dtos.UserDTO{
+					ID:             c.User.ID,
+					Username:       c.User.Username,
+					ProfilePicture: c.User.ProfilePicture,
+				},
+				Content:   c.Content,
+				CreatedAt: c.CreatedAt,
+			})
+		}
+
+		songDTOs[i] = dtos.SongExtendedDTO{
 			ID:         song.ID,
 			Duration:   formatDuration(song.Duration),
 			Title:      song.Title,
@@ -93,6 +129,11 @@ func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order strin
 				Username:       song.User.Username,
 				ProfilePicture: song.User.ProfilePicture,
 			},
+			CreatedAt: song.CreatedAt,
+			Genre:     song.Genre,
+			Authors:   authorsDTO,
+			SongTags:  tagsDTO,
+			Comments:  []dtos.CommentDTO{},
 		}
 	}
 	return songDTOs, nil
@@ -113,7 +154,6 @@ func (ss *SongService) GetByID(ctx context.Context, id uuid.UUID) (*models.Song,
 		Preload("Authors.Author").
 		Preload("SongTags").
 		Preload("SongTags.Tag").
-		Preload("SongTags").
 		Preload("Comments").
 		Preload("Comments.User").
 		Preload("User").
