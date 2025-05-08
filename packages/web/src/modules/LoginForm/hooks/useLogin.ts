@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import { LoginResponse } from "../types/loginResponse";
 import { ErrorType } from "types/error/error.type";
 import { login } from "@api/auth.api";
+import { ROUTES } from "pages/router/consts/routes.const";
+import { useNavigate } from "react-router-dom";
 
 
 interface LoginRequest {
@@ -13,6 +15,7 @@ interface LoginRequest {
 }
 
 export const useLogin = () => {
+    const navigate = useNavigate()
     const setAccessToken = useAuthStore(state => state.setAccessToken);
     const setUser = useAuthStore(state => state.setUser);
 
@@ -26,6 +29,7 @@ export const useLogin = () => {
             setUser(data.user);
             localStorage.setItem("token", data.accessToken)
             toast.success("Вхід успішний");
+            navigate(ROUTES.HOME)
         },
         onError: (error) => {
             if (axios.isAxiosError(error) && error.response) {

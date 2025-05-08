@@ -7,7 +7,8 @@ import styled from "styled-components";
 interface NavItemProps {
     title: string,
     icon: string,
-    path: string,
+    path?: string,
+    onClickFn?: () => void;
 }
 
 export const TitleContainer = styled.div`
@@ -40,19 +41,21 @@ const NavText = styled.p`
     font-size: 14px;
 `
 
-export const NavItem: FC<NavItemProps> = ({ title, icon, path }) => {
+export const NavItem: FC<NavItemProps> = ({ title, icon, path, onClickFn }) => {
     const navigate = useNavigate();
     const handleClick = () => {
-        navigate(path)
+        if (path)
+            navigate(path)
     }
+
+    const clickHandler = path ? handleClick : onClickFn;
 
     return (
         <>
-            <TitleContainer onClick={handleClick}>
+            <TitleContainer onClick={clickHandler}>
                 <NavIcon src={icon} />
                 <NavText>{title}</NavText>
             </TitleContainer>
-
         </>
     )
 }

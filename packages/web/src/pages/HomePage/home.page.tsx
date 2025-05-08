@@ -2,13 +2,15 @@ import { SongCards } from "@components/SongCards/song-cards.component";
 import { useAuthStore } from "@modules/LoginForm/store/store";
 import { MainLayout } from "@ui/layout/main-layout";
 import { getUserFromCookie } from "helpers/Auth/decoder";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import { useTracks } from "./useTracks";
 
 export const HomePage: FC = () => {
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
     const setUser = useAuthStore((state) => state.setUser);
-    const { data: tracks, isLoading } = useTracks();
+    const [limit] = useState<number>(5)
+    const { data: tracks, isLoading } = useTracks({ limit: limit });
+
 
     useEffect(() => {
         const tryGetUser = async () => {

@@ -35,7 +35,6 @@ export const LoginForm: FC = () => {
         }
 
         loginMutation.mutate({ email, password });
-        navigate(ROUTES.HOME)
     };
 
     const handleGoogleButtonClick = () => {

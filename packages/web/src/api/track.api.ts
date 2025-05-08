@@ -1,3 +1,4 @@
+import { GetTracksParams } from "types/song/getTrackParams";
 import { $api } from "./base.api";
 
 export const createTrack = async (formData: FormData) => {
@@ -14,10 +15,12 @@ export const createTrack = async (formData: FormData) => {
     }
 };
 
-export const getTracks = async () => {
-    const { data } = await $api.get("/songs");
+
+export const getTracks = async (params: GetTracksParams = {}) => {
+    const { data } = await $api.get("/songs", { params });
     return data;
 };
+
 
 export const getTrackById = async (id: string) => {
     const { data } = await $api.get(`/songs/${id}`)

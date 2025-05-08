@@ -1,4 +1,4 @@
-import { FC } from "react"
+import { FC, useState } from "react"
 import { AuthBtn, Container, LogoText, NavList, Wrapper } from "./header.style"
 import { ROUTES } from "pages/router/consts/routes.const"
 import { useNavigate } from "react-router-dom"
@@ -7,16 +7,24 @@ import { NavItem } from "./nav-item"
 import { useAuthStore } from "@modules/LoginForm/store/store"
 import uploadIcon from "@assets/images/ic_upload.png"
 import { UserBlock } from "@ui/UserHeaderBlock/user-block.component"
-
+import search from "@assets/images/ic_search.png"
+import { SearchModal } from "@modules/SearchModal"
+//    { title: 'Пошук', icon: search, path: ROUTES.HOME },
 export const Header: FC = () => {
     const navigate = useNavigate()
     const { isAuth, user, logout } = useAuthStore()
+    const [isSearhModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
 
     return (
         <Wrapper>
             <Container>
                 <LogoText onClick={() => navigate(ROUTES.HOME)}>TUNE WAVE</LogoText>
                 <NavList>
+                    <NavItem
+                        title={"Пошук"}
+                        icon={search}
+                        onClickFn={() => setIsSearchModalOpen(true)} />
+
                     {HeaderItems.map((element, index) => (
                         <NavItem
                             key={index}
@@ -46,6 +54,7 @@ export const Header: FC = () => {
                     <AuthBtn to={ROUTES.SIGN_IN}>Авторизуватись</AuthBtn>
                 )}
             </Container>
+            <SearchModal active={isSearhModalOpen} setActive={setIsSearchModalOpen} />
         </Wrapper>
     )
 }
