@@ -367,6 +367,166 @@
                 "responses": {}
             }
         },
+        "/collections/{id}/{song-id}/vectors": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get song vectors",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vectors"
+                ],
+                "summary": "Get song vectors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "song-id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update song vectors",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vectors"
+                ],
+                "summary": "Update song vectors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "song-id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Vectors",
+                        "name": "vectors",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/vector.UpdateSongVectorsRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create song vectors",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vectors"
+                ],
+                "summary": "Create song vectors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "song-id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Vectors",
+                        "name": "vectors",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/vector.CreateSongVectorsRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete song vectors",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vectors"
+                ],
+                "summary": "Delete song vectors",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "song-id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/comments": {
             "post": {
                 "security": [
@@ -415,6 +575,115 @@
                     {
                         "type": "string",
                         "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/criterions/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all criterions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "criterions"
+                ],
+                "summary": "Get all criterions",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new criterion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "criterions"
+                ],
+                "summary": "Create a new criterion",
+                "parameters": [
+                    {
+                        "description": "Create criterion",
+                        "name": "criterion",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/criterion.CreateCriterionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/criterions/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a criterion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "criterions"
+                ],
+                "summary": "Update a criterion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Criterion ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update criterion",
+                        "name": "criterion",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/criterion.UpdateCriterionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a criterion",
+                "tags": [
+                    "criterions"
+                ],
+                "summary": "Delete a criterion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Criterion ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -965,6 +1234,22 @@
                 }
             }
         },
+        "criterion.CreateCriterionRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "criterion.UpdateCriterionRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.ForgotPasswordRequest": {
             "type": "object",
             "properties": {
@@ -1050,6 +1335,44 @@
                 },
                 "userId": {
                     "type": "string"
+                }
+            }
+        },
+        "vector.CreateSongVectorsRequest": {
+            "type": "object",
+            "properties": {
+                "vectors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "criterionId": {
+                                "type": "string"
+                            },
+                            "mark": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "vector.UpdateSongVectorsRequest": {
+            "type": "object",
+            "properties": {
+                "vectors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "criterionId": {
+                                "type": "string"
+                            },
+                            "mark": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         }

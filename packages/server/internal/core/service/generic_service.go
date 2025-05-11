@@ -20,26 +20,35 @@ func (s *GenericService[T]) Create(ctx context.Context, entity *T) error {
 	return s.Repository.Add(ctx, entity)
 }
 
-func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID) (*T, error) {
-	entities, err := s.Repository.NewQuery(ctx).
-		Where("id = ?", id).Take(1).
-		Find()
+func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*T, error) {
+	query := s.Repository.NewQuery(ctx).Where("id = ?", id).Take(1)
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+
+	entities, err := query.Find()
 	if err != nil {
 		return nil, err
 	}
+
 	if len(entities) == 0 {
 		return nil, fmt.Errorf("entity with id %s not found", id)
 	}
 	return &entities[0], nil
 }
 
-func (s *GenericService[T]) Where(ctx context.Context, params *T) ([]T, error) {
-	entities, err := s.Repository.NewQuery(ctx).
-		Where(params).Find()
+func (s *GenericService[T]) Where(ctx context.Context, params *T, preloads ...string) ([]T, error) {
+	query := s.Repository.NewQuery(ctx).Where(params)
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+
+	result, err := query.Find()
 	if err != nil {
 		return nil, err
 	}
-	return entities, nil
+
+	return result, nil
 }
 
 func (s *GenericService[T]) Update(ctx context.Context, entity *T) (*T, error) {

@@ -20,7 +20,7 @@ func NewCommentService(repo port.Repository[models.Comment]) services.CommentSer
 	}
 }
 
-func (cs *CommentService) GetByID(ctx context.Context, id uuid.UUID) (*models.Comment, error) {
+func (cs *CommentService) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*models.Comment, error) {
 	comment, err := cs.Repository.NewQuery(ctx).Where("id = ?", id).
 		Preload("User").Find()
 

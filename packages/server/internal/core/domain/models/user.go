@@ -6,6 +6,7 @@ type User struct {
 	Username        string `json:"username"`
 	Email           string `gorm:"unique" json:"email"`
 	PasswordHash    string `json:"passwordHash"`
+	Role            string `json:"role"`
 	ProfileInfo     string `json:"profileInfo"`
 	ProfilePicture  string `json:"profilePictureUrl"`
 	IsGoogleAccount bool   `json:"isGoogleAccount"`

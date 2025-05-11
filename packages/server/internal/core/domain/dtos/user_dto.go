@@ -9,6 +9,7 @@ import (
 type UserDTO struct {
 	ID             uuid.UUID `json:"id"`
 	Username       string    `json:"username"`
+	Role           string    `json:"role"`
 	ProfilePicture string    `json:"profilePictureUrl"`
 	ProfileInfo    string    `json:"profileInfo"`
 }
@@ -16,6 +17,7 @@ type UserDTO struct {
 type UserExtendedDTO struct {
 	ID             uuid.UUID `json:"id"`
 	Username       string    `json:"username"`
+	Role           string    `json:"role"`
 	ProfileInfo    string    `json:"profileInfo"`
 	Email          string    `json:"email"`
 	ProfilePicture string    `json:"profilePictureUrl"`

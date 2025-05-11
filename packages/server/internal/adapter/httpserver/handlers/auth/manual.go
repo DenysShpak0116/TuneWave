@@ -57,6 +57,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{
 		Email:           req.Email,
 		Username:        req.Username,
+		Role:            "user",
 		IsGoogleAccount: false,
 		PasswordHash:    hash,
 		ProfilePicture:  "https://photosrush.com/wp-content/uploads/dark-aesthetic-anime-pfp-girl-1.jpg",
@@ -129,6 +130,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	userDTO := &dtos.UserDTO{
 		ID:             userData.ID,
 		Username:       userData.Username,
+		Role:           userData.Role,
 		ProfilePicture: userData.ProfilePicture,
 		ProfileInfo:    userData.ProfileInfo,
 	}

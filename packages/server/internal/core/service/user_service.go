@@ -38,6 +38,7 @@ func (us *UserService) GetUsers(
 		usersDTOs = append(usersDTOs, dtos.UserDTO{
 			ID:             user.ID,
 			Username:       user.Username,
+			Role:           user.Role,
 			ProfilePicture: user.ProfilePicture,
 		})
 	}
@@ -109,6 +110,7 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 	userDTO := &dtos.UserExtendedDTO{
 		ID:             user.ID,
 		Username:       user.Username,
+		Role:           user.Role,
 		ProfileInfo:    user.ProfileInfo,
 		Email:          user.Email,
 		ProfilePicture: user.ProfilePicture,

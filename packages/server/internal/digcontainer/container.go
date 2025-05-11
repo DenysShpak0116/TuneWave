@@ -9,8 +9,11 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/criterion"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/vector"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
@@ -47,6 +50,9 @@ func BuildContainer() *dig.Container {
 	container.Provide(repository.NewRepository[models.CollectionSong])
 	container.Provide(repository.NewRepository[models.Chat])
 	container.Provide(repository.NewRepository[models.Message])
+	container.Provide(repository.NewRepository[models.Criterion])
+	container.Provide(repository.NewRepository[models.Vector])
+	container.Provide(repository.NewRepository[models.Result])
 
 	// service
 	container.Provide(service.NewMailService)
@@ -55,8 +61,12 @@ func BuildContainer() *dig.Container {
 	container.Provide(service.NewAuthService)
 	container.Provide(service.NewCommentService)
 	container.Provide(service.NewCollectionService)
+	container.Provide(service.NewCollectionSongService)
 	container.Provide(service.NewChatService)
 	container.Provide(service.NewMessageService)
+	container.Provide(service.NewCriterionService)
+	container.Provide(service.NewVectorService)
+	container.Provide(service.NewResultService)
 	container.Provide(ws.NewHubManager)
 
 	// handlers
@@ -66,6 +76,9 @@ func BuildContainer() *dig.Container {
 	container.Provide(song.NewSongHandler)
 	container.Provide(comment.NewCommentHandler)
 	container.Provide(collection.NewCollectionHandler)
+	container.Provide(criterion.NewCriterionHandler)
+	container.Provide(vector.NewVectorHandler)
+	container.Provide(result.NewResultHandler)
 
 	container.Provide(httpserver.NewRouter)
 

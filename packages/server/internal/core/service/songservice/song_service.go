@@ -147,7 +147,7 @@ func (r *readSeekCloser) Close() error {
 	return nil
 }
 
-func (ss *SongService) GetByID(ctx context.Context, id uuid.UUID) (*models.Song, error) {
+func (ss *SongService) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*models.Song, error) {
 	songs, err := ss.Repository.NewQuery(ctx).
 		Where("id = ?", id).
 		Preload("Authors").

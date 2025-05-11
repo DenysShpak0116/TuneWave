@@ -70,6 +70,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		currentUser = &models.User{
 			Email:           user.Email,
 			Username:        nickname,
+			Role:            "user",
 			IsGoogleAccount: true,
 			PasswordHash:    "",
 			ProfileInfo:     "",

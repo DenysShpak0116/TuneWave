@@ -42,5 +42,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Tag{},
 		&models.SongTag{},
 		&models.Token{},
+		&models.Criterion{},
+		&models.Vector{},
+		&models.Result{},
 	)
 }

@@ -273,3 +273,4 @@ func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 }
+

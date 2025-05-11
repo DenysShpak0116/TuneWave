@@ -23,4 +23,6 @@ type CollectionSong struct {
 
 	CollectionID uuid.UUID  `gorm:"type:uuid" json:"collectionId"`
 	Collection   Collection `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
+
+	Vectors []Vector `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE"`
 }
