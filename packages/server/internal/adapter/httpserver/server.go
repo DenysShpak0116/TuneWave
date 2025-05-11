@@ -10,8 +10,11 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/criterion"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/vector"
 	authmiddleware "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/auth"
 	mwLogger "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
 	"github.com/go-chi/chi/v5"
@@ -29,6 +32,9 @@ func NewRouter(
 	commentHandler *comment.CommentHandler,
 	collectionHandler *collection.CollectionHandler,
 	chatHandler *chat.ChatHandler,
+	criterionHandler *criterion.CriterionHandler,
+	vectorHandler *vector.VectorHandler,
+	resultHandler *result.ResultHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -99,15 +105,32 @@ func NewRouter(
 
 	router.Route("/collections", func(r chi.Router) {
 		r.Get("/{id}", collectionHandler.GetCollectionByID)
+		r.Get("/{id}/{song-id}/vectors", vectorHandler.GetSongVectors)
+		r.Post("/{id}/{song-id}/vectors", vectorHandler.CreateSongVectors)
+		r.Put("/{id}/{song-id}/vectors", vectorHandler.UpdateSongVectors)
+		r.Delete("/{id}/{song-id}/vectors", vectorHandler.DeleteSongVectors)
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+			protected.Post("/{id}/send-results", resultHandler.SendResult)
+			protected.Get("/{id}/get-user-results/", resultHandler.GetUserResults)
+			protected.Get("/{id}/get-results/", resultHandler.GetCollectiveResults)
 
 			protected.Post("/", collectionHandler.CreateCollection)
 			protected.Put("/{id}", collectionHandler.UpdateCollection)
 			protected.Delete("/{id}", collectionHandler.DeleteCollection)
 			protected.Get("/users-collections", collectionHandler.GetUsersCollections)
 		})
+	})
+
+	router.Route("/criterions", func(r chi.Router) {
+		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+		r.Post("/", criterionHandler.CreateCriterion)
+		r.Get("/", criterionHandler.GetCriterions)
+		r.Put("/{id}", criterionHandler.UpdateCriterion)
+		r.Delete("/{id}", criterionHandler.DeleteCriterion)
 	})
 
 	router.Route("/ws", func(r chi.Router) {
