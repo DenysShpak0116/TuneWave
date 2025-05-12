@@ -114,8 +114,8 @@ func NewRouter(
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 
 			protected.Post("/{id}/send-results", resultHandler.SendResult)
-			protected.Get("/{id}/get-user-results/", resultHandler.GetUserResults)
-			protected.Get("/{id}/get-results/", resultHandler.GetCollectiveResults)
+			protected.Get("/{id}/get-user-results", resultHandler.GetUserResults)
+			protected.Get("/{id}/get-results", resultHandler.GetCollectiveResults)
 
 			protected.Post("/", collectionHandler.CreateCollection)
 			protected.Put("/{id}", collectionHandler.UpdateCollection)

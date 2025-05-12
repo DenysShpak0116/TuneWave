@@ -25,4 +25,5 @@ type CollectionSong struct {
 	Collection   Collection `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
 
 	Vectors []Vector `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE"`
+	Results []Result `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE"`
 }

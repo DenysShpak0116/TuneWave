@@ -374,6 +374,99 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/collections/{id}/get-results": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get collective results",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "result"
+                ],
+                "summary": "Get collective results",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/collections/{id}/get-user-results": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user results",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "result"
+                ],
+                "summary": "Get user results",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/collections/{id}/send-results": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Send result",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "result"
+                ],
+                "summary": "Send result",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Send result",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/result.SendResultRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/collections/{id}/{song-id}/vectors": {
             "get": {
                 "security": [
@@ -1326,6 +1419,36 @@ const docTemplate = `{
                 }
             }
         },
+        "result.SendResultRequest": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "comparedTo": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "result": {
+                                            "type": "integer"
+                                        },
+                                        "song2Id": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "song1Id": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "song.SongToCollectionRequest": {
             "type": "object",
             "properties": {
@@ -1373,6 +1496,9 @@ const docTemplate = `{
                         "type": "object",
                         "properties": {
                             "criterionId": {
+                                "type": "string"
+                            },
+                            "id": {
                                 "type": "string"
                             },
                             "mark": {

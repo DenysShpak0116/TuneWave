@@ -8,8 +8,8 @@ type Vector struct {
 	Mark string `json:"mark"`
 
 	CriterionID uuid.UUID `gorm:"type:uuid" json:"criterionId"`
-	Criterion   Criterion `gorm:"foreignKey:CriterionID"`
+	Criterion   Criterion `gorm:"foreignKey:CriterionID;constraint:OnDelete:CASCADE;"`
 
 	CollectionSongID uuid.UUID      `gorm:"type:uuid" json:"collectionSongId"`
-	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID"`
+	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE;"`
 }

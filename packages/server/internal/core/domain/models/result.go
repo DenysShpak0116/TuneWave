@@ -8,8 +8,8 @@ type Result struct {
 	SongRang int `json:"songRang"`
 
 	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
-	User   User      `gorm:"foreignKey:UserID"`
+	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 
 	CollectionSongID uuid.UUID      `gorm:"type:uuid" json:"collectionSongId"`
-	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID"`
+	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE;"`
 }
