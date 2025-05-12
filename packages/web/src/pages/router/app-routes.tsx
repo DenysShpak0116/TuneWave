@@ -16,6 +16,7 @@ import { UpdateUserPage } from "pages/UpdateUserPage/update-user.page";
 import { Player } from "@modules/Player";
 import { CollectionPage } from "pages/CollectionPage/collection.page";
 import { UpdateTrackPage } from "pages/UpdateTrackPage/update-track.page";
+import { AddCriterionPage } from "pages/AddCriterionPage/add-criterion.page";
 
 export const AppRoutes = () => {
     return (
@@ -31,6 +32,7 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.COLLECTION_PAGE} element={<CollectionPage />} />
                 <Route path={ROUTES.UPDATE_USER_PAGE} element={<UpdateUserPage />} />
                 <Route path={ROUTES.UPDATE_TRACK_PAGE} element={<UpdateTrackPage />} />
+                <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>
