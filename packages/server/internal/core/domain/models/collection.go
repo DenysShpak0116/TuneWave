@@ -13,6 +13,7 @@ type Collection struct {
 	User   User      `gorm:"foreignKey:UserID"`
 
 	CollectionSongs []CollectionSong `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
+	UserCollections []UserCollection `gorm:"foreignKey:CollectionID;constraint:OnDelete:CASCADE"`
 }
 
 type CollectionSong struct {

@@ -45,5 +45,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Criterion{},
 		&models.Vector{},
 		&models.Result{},
+		&models.UserCollection{},
 	)
 }

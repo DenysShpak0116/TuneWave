@@ -122,6 +122,8 @@ func NewRouter(
 			protected.Put("/{id}", collectionHandler.UpdateCollection)
 			protected.Delete("/{id}", collectionHandler.DeleteCollection)
 			protected.Get("/users-collections", collectionHandler.GetUsersCollections)
+			protected.Post("/{id}/add-to-user", collectionHandler.AddCollectionToUser)
+			protected.Delete("/{id}/remove-from-user", collectionHandler.RemoveCollectionFromUser)
 		})
 	})
 

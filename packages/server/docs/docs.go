@@ -416,6 +416,33 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/collections/{id}/add-to-user": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a collection to a user. Returns the updated list of collections.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Add a collection to a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/collections/{id}/get-results": {
             "get": {
                 "security": [
@@ -458,6 +485,33 @@ const docTemplate = `{
                     "result"
                 ],
                 "summary": "Get user results",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/collections/{id}/remove-from-user": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes a collection from a user. Returns no content on success.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Remove a collection from a user",
                 "parameters": [
                     {
                         "type": "string",
@@ -1575,6 +1629,7 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+
 }
 
 func init() {
