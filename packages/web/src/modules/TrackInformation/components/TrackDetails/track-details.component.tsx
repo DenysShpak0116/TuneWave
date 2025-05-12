@@ -9,45 +9,65 @@ import {
     UserInfoText
 } from "./track-details.style";
 import { ROUTES } from "pages/router/consts/routes.const";
+import { parseDate } from "helpers/date-parse";
 
 interface ITrackDetails {
-    genre: string;
-    tags: ISongTags[];
+    genre?: string;
+    tags?: ISongTags[];
     duration: string;
     date: string;
-    artist: IAuthor[];
+    artist?: IAuthor[];
     username: string;
-    userId: string
+    userId: string;
+    type: "collection" | "track";
 }
 
-export const TrackDetails: FC<ITrackDetails> = ({ genre, tags, duration, date, artist, username, userId }) => {
+export const TrackDetails: FC<ITrackDetails> = ({
+    type,
+    genre,
+    tags,
+    duration,
+    date,
+    artist,
+    username,
+    userId
+}) => {
+    const renderBlock = (title: string, value: string | undefined) => (
+        <TrackInfoBlock>
+            <TrackInfoTitle>{title}</TrackInfoTitle>
+            <TrackInfoText>{value || "-"}</TrackInfoText>
+        </TrackInfoBlock>
+    );
+
     return (
         <TrackDetailsContainer>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Користувач</TrackInfoTitle>
-                <UserInfoText to={ROUTES.USER_PROFILE.replace(':id', userId)}>{username}</UserInfoText>
-            </TrackInfoBlock>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Жанри:</TrackInfoTitle>
-                <TrackInfoText>{genre}</TrackInfoText>
-            </TrackInfoBlock>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Теги:</TrackInfoTitle>
-                <TrackInfoText>{tags.map(tag => tag.name).join(', ')}</TrackInfoText>
-            </TrackInfoBlock>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Тривалість:</TrackInfoTitle>
-                <TrackInfoText>{duration}</TrackInfoText>
-            </TrackInfoBlock>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Дата завантаження:</TrackInfoTitle>
-                <TrackInfoText>{date}</TrackInfoText>
-            </TrackInfoBlock>
-            <TrackInfoBlock>
-                <TrackInfoTitle>Головний виконавець:</TrackInfoTitle>
-                <TrackInfoText>{artist.map(a => a.name).join(', ')}</TrackInfoText>
-            </TrackInfoBlock>
-
+            {type === "track" && (
+                <>
+                    <TrackInfoBlock>
+                        <TrackInfoTitle>Користувач</TrackInfoTitle>
+                        <UserInfoText to={ROUTES.USER_PROFILE.replace(':id', userId)}>
+                            {username}
+                        </UserInfoText>
+                    </TrackInfoBlock>
+                    {renderBlock("Жанри:", genre)}
+                    {renderBlock("Теги:", tags?.map(tag => tag.name).join(", "))}
+                    {renderBlock("Тривалість:", duration)}
+                    {renderBlock("Дата завантаження:", parseDate(date))}
+                    {renderBlock("Головний виконавець:", artist?.map(a => a.name).join(", "))}
+                </>
+            )}
+            {type === "collection" && (
+                <>
+                    {renderBlock("Тривалість:", duration)}
+                    {renderBlock("Дата завантаження:", parseDate(date))}
+                    <TrackInfoBlock>
+                        <TrackInfoTitle>Користувач</TrackInfoTitle>
+                        <UserInfoText to={ROUTES.USER_PROFILE.replace(':id', userId)}>
+                            {username}
+                        </UserInfoText>
+                    </TrackInfoBlock>
+                </>
+            )}
         </TrackDetailsContainer>
     );
 };

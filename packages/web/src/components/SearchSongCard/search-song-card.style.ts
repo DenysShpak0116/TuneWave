@@ -5,7 +5,8 @@ export const Card = styled.div`
   display: flex;
   background: ${COLORS.dark_backdrop};
   border-radius: 12px;
-  margin-bottom: 1rem;
+  margin-top: 10px;
+
   overflow: hidden;
   transition: background-color 0.4s ease;
   cursor: pointer;

@@ -43,7 +43,9 @@ export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song }) => {
 
     return (
         <TrackPagePlayerContainer>
-            <TrackTitle>{song.authors.map(s => s.name).join(',')} - {song.title}</TrackTitle>
+            <TrackTitle>
+                {song.authors?.map(s => s.name).join(', ') ?? 'Невідомий автор'} - {song.title}
+            </TrackTitle>
             <div id="trackPagePlayer" />
         </TrackPagePlayerContainer>
     );

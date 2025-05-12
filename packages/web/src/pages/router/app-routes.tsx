@@ -14,6 +14,8 @@ import { TrackPage } from "pages/TrackPage/track.page";
 import { NotFoundPage } from "pages/NotFoundPage/not-found.page";
 import { UpdateUserPage } from "pages/UpdateUserPage/update-user.page";
 import { Player } from "@modules/Player";
+import { CollectionPage } from "pages/CollectionPage/collection.page";
+import { UpdateTrackPage } from "pages/UpdateTrackPage/update-track.page";
 
 export const AppRoutes = () => {
     return (
@@ -26,7 +28,9 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.CREATE_TRACK} element={<CreateTrackPage />} />
                 <Route path={ROUTES.USER_PROFILE} element={<UserProfilePage />} />
                 <Route path={ROUTES.TRACK_PAGE} element={<TrackPage />} />
+                <Route path={ROUTES.COLLECTION_PAGE} element={<CollectionPage />} />
                 <Route path={ROUTES.UPDATE_USER_PAGE} element={<UpdateUserPage />} />
+                <Route path={ROUTES.UPDATE_TRACK_PAGE} element={<UpdateTrackPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>
