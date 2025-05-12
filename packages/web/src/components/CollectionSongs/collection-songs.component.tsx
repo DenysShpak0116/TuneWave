@@ -14,6 +14,7 @@ import {
     Duration,
     Options
 } from "./collection-songs.style";
+import { parseDate } from "helpers/date-parse";
 
 interface ICollectionSongsProps {
     songs: ISong[];
@@ -42,7 +43,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, activeSongId
                         </SongTextInfo>
                     </CoverAndInfo>
                     <Album>123</Album>
-                    <DateAdded>{song.createdAt}</DateAdded>
+                    <DateAdded>{parseDate(song.createdAt)}</DateAdded>
                     <Duration>{song.duration}</Duration>
                     <Options>⋯</Options>
                 </TableRow>

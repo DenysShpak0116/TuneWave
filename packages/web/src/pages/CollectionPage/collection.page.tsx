@@ -28,6 +28,8 @@ export const CollectionPage: FC = () => {
             <TrackInformationLayout>
                 <CollectionLogo
                     logo={collection.coverUrl}
+                    collectionSongs={collection.collectionSongs}
+                    collectionId={collection.id}
                 />
                 <TrackDetails
                     duration={total}

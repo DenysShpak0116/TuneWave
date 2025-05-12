@@ -1,0 +1,1 @@
+export { AddCriterionModal } from "./add-criterion-modal.component"
