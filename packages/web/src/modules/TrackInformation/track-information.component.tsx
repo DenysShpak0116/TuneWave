@@ -1,6 +1,5 @@
 import { FC, useState } from "react";
 import { ISong } from "types/song/song.type";
-import { TrackInformationContainer } from "./track-information.style";
 import { TrackLogo } from "@modules/TrackInformation/components/TrackLogo/track-logo.component";
 import { TrackDetails } from "./components/TrackDetails/track-details.component";
 import { parseDate } from "../../helpers/date-parse";
@@ -9,6 +8,7 @@ import { useAuthStore } from "@modules/LoginForm/store/store";
 import { IComment } from "types/comments/comment.type";
 import { useGetUserReaction, useReaction } from "./hooks/useReaction";
 import { TrackPagePlayer } from "@components/TrackPagePlayer/track-page-player.component";
+import { TrackInformationLayout } from "@ui/layout/TrackInformation/track-information-layout";
 
 interface ITrackInformationProps {
     song: ISong;
@@ -33,7 +33,7 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
 
 
     return (
-        <TrackInformationContainer>
+        <TrackInformationLayout>
             {!isLoading && (
                 <TrackLogo
                     userId={user?.id}
@@ -51,6 +51,7 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
                 duration={song?.duration}
                 date={parseDate(song?.createdAt)}
                 artist={song?.authors}
+                type="track"
             />
             <TrackPagePlayer
                 song={song}
@@ -64,6 +65,6 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
                 onNewComment={(comment) => setComments(prev => [...prev, comment])}
                 onDeleteComment={(id) => setComments(prev => prev.filter(comment => comment.id !== id))}
             />
-        </TrackInformationContainer>
+        </TrackInformationLayout>
     );
 };
