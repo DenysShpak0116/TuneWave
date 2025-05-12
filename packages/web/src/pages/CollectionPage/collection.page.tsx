@@ -1,0 +1,46 @@
+import { MainLayout } from "@ui/layout/main-layout";
+import { FC } from "react";
+import { useParams } from "react-router-dom";
+import { useGetCollection } from "./hooks/useGetCollection";
+import { Loader } from "@ui/Loader/loader.component";
+import { TrackInformationLayout } from "@ui/layout/TrackInformation/track-information-layout";
+import { CollectionLogo } from "@components/CollectionLogo/collection-logo.component";
+import { getTotalDuration } from "helpers/song/getTotalDuration";
+import { TrackDetails } from "@modules/TrackInformation/components/TrackDetails/track-details.component";
+import { TrackPagePlayer } from "@components/TrackPagePlayer/track-page-player.component";
+import { CollectionSongs } from "@components/CollectionSongs/collection-songs.component";
+
+export const CollectionPage: FC = () => {
+    const { id } = useParams();
+    const { data: collection, isLoading } = useGetCollection(id!);
+
+    if (isLoading || !collection)
+        return (
+            <MainLayout>
+                <Loader />
+            </MainLayout>
+        );
+
+    const total = getTotalDuration(collection.collectionSongs);
+
+    return (
+        <MainLayout>
+            <TrackInformationLayout>
+                <CollectionLogo
+                    logo={collection.coverUrl}
+                />
+                <TrackDetails
+                    duration={total}
+                    date={collection.createdAt}
+                    username={collection.user.username}
+                    userId={collection.user.id}
+                    type="collection" />
+                <TrackPagePlayer
+                    song={collection.collectionSongs[0]}
+                />
+                <CollectionSongs
+                    songs={collection.collectionSongs} />
+            </TrackInformationLayout>
+        </MainLayout>
+    );
+}

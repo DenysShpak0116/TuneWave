@@ -58,7 +58,6 @@ export const ModalContent = styled.div<{ $active: boolean }>`
 export const Header = styled.div`
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
   flex-wrap: wrap;
 
   @media (max-width: 480px) {

@@ -18,3 +18,8 @@ export const getByUserId = async () => {
     const { data } = await $api.get("/collections/users-collections")
     return data;
 }
+
+export const getCollectionById = async (id: string) => {
+    const { data } = await $api.get(`/collections/${id}`)
+    return data;
+}

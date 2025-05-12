@@ -9,7 +9,8 @@ import uploadIcon from "@assets/images/ic_upload.png"
 import { UserBlock } from "@ui/UserHeaderBlock/user-block.component"
 import search from "@assets/images/ic_search.png"
 import { SearchModal } from "@modules/SearchModal"
-//    { title: 'Пошук', icon: search, path: ROUTES.HOME },
+import plusIcon from "@assets/images/ic_plus.png"
+
 export const Header: FC = () => {
     const navigate = useNavigate()
     const { isAuth, user, logout } = useAuthStore()
@@ -40,6 +41,13 @@ export const Header: FC = () => {
                             path={ROUTES.CREATE_TRACK}
                             icon={uploadIcon}
                         />
+                    )}
+
+                    {isAuth() && user?.role === "admin" && (
+                        <NavItem
+                            path={ROUTES.ADD_CRITERION_PAGE}
+                            title="Додати крітерії"
+                            icon={plusIcon} />
                     )}
                 </NavList>
 

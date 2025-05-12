@@ -1,6 +1,4 @@
 import { createGlobalStyle } from "styled-components";
-import MontserratTTF from "./fonts/Montserrat.ttf"
-import Jersey25TTF from './fonts/Jersey25-Regular.ttf'
 import { FONTS } from "@consts/fonts.enum";
 import { COLORS } from "@consts/colors.consts";
 

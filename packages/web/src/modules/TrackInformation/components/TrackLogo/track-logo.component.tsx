@@ -1,23 +1,22 @@
 import { FC, useState } from "react";
 import { InteractionContainer, Logo, LogoContainer, IconButton, InteractionIcon } from "./track-logo.style";
-import likeIcon from '@assets/images/ic_like.png'
-import likeFilledIcon from '@assets/images/ic_like_filled.png'
-import dislikeIcon from '@assets/images/ic_dislike.png'
-import dislikeFilledIcon from '@assets/images/ic_dislike_filled.png'
+import likeIcon from '@assets/images/ic_like.png';
+import likeFilledIcon from '@assets/images/ic_like_filled.png';
+import dislikeIcon from '@assets/images/ic_dislike.png';
+import dislikeFilledIcon from '@assets/images/ic_dislike_filled.png';
+import 'react-medium-image-zoom/dist/styles.css';
 
 type ReactionType = "like" | "dislike" | "none";
 
 interface ITrackLogo {
     logo: string | undefined;
     userId: string | undefined;
-    reactFn: (type: "like" | "dislike") => void
-    type: { type: ReactionType }
+    reactFn: (type: "like" | "dislike") => void;
+    type: { type: ReactionType };
 }
 
 export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userId }) => {
     const [reaction, setReaction] = useState<"like" | "dislike" | null>(type === 'none' ? null : type);
-
-
 
     const handleReaction = (type: "like" | "dislike") => {
         const isSameReaction = reaction === type;
@@ -29,10 +28,9 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
 
     return (
         <LogoContainer>
-            <Logo src={logo} />
+            <Logo src={logo} alt="Track logo" />
             {userId && (
                 <InteractionContainer>
-
                     <IconButton onClick={() => handleReaction("like")}>
                         <InteractionIcon src={reaction === "like" ? likeFilledIcon : likeIcon} />
                     </IconButton>
