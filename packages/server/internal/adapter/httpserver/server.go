@@ -118,6 +118,7 @@ func NewRouter(
 			protected.Post("/{id}/send-results", resultHandler.SendResult)
 			protected.Get("/{id}/get-user-results", resultHandler.GetUserResults)
 			protected.Get("/{id}/get-results", resultHandler.GetCollectiveResults)
+			protected.Delete("/{id}/delete-user-results", resultHandler.DeleteUserResults)
 
 			protected.Post("/", collectionHandler.CreateCollection)
 			protected.Put("/{id}", collectionHandler.UpdateCollection)
