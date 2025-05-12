@@ -4,6 +4,7 @@ import (
 	"context"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
@@ -236,4 +237,74 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 	}
 
 	render.JSON(w, r, usersCollectionsDTOs)
+}
+
+// GetCollections godoc
+// @Summary Get all collections
+// @Description Get all collections. Returns a list of collections.
+// @Tags collections
+// @Security     BearerAuth
+// @Produce  json
+// @Param limit query int false "Limit"
+// @Param page query int false "Page"
+// @Param sort query string false "Sort by (title, created_at)"
+// @Param order query string false "Order (asc, desc)"
+// @Router /collections [get]
+func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Request) {
+	limitParam := r.URL.Query().Get("limit")
+	pageParam := r.URL.Query().Get("page")
+	sort := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+
+	if sort != "title" && sort != "created_at" {
+		sort = "created_at"
+	}
+
+	if order != "asc" && order != "desc" {
+		order = "asc"
+	}
+
+	var limit int
+	if limitParam == "" {
+		limit = 10
+	} else {
+		var err error
+		limit, err = strconv.Atoi(limitParam)
+		if err != nil {
+			handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid limit", err)
+			return
+		}
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	var page int
+	if pageParam == "" {
+		page = 1
+	} else {
+		var err error
+		page, err = strconv.Atoi(pageParam)
+		if err != nil {
+			handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid page", err)
+			return
+		}
+	}
+	if page <= 0 {
+		page = 1
+	}
+
+	collections, err := ch.CollectionService.GetMany(context.Background(), limit, page, sort, order)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collections", err)
+		return
+	}
+
+	var collectionsDTOs []dtos.CollectionDTO
+	if err := dtoMapper.Map(&collectionsDTOs, collections); err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot get collections", err)
+		return
+	}
+
+	render.JSON(w, r, collectionsDTOs)
 }

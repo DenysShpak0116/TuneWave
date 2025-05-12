@@ -178,3 +178,16 @@ func extractS3Key(fullURL string) string {
 	const baseURL = "https://tunewavebucket.s3.eu-west-3.amazonaws.com/"
 	return strings.TrimPrefix(fullURL, baseURL)
 }
+
+func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort, order string) ([]models.Collection, error) {
+	collections, err := cs.Repository.NewQuery(ctx).
+		Take(limit).
+		Skip(page).
+		Order(fmt.Sprintf("%s %s", sort, order)).
+		Preload("User").
+		Find()
+	if err != nil {
+		return nil, err
+	}
+	return collections, nil
+}

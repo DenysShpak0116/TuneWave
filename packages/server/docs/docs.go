@@ -208,6 +208,48 @@ const docTemplate = `{
             }
         },
         "/collections": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all collections. Returns a list of collections.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Get all collections",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by (title, created_at)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
             "post": {
                 "security": [
                     {
@@ -460,7 +502,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/result.SendResultRequest"
+                            "$ref": "#/definitions/dto.SendResultRequest"
                         }
                     }
                 ],
@@ -1394,6 +1436,39 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ResultRequest": {
+            "type": "object",
+            "properties": {
+                "comparedTo": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "result": {
+                                "type": "integer"
+                            },
+                            "song2Id": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "song1Id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SendResultRequest": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ResultRequest"
+                    }
+                }
+            }
+        },
         "dto.UserUpdateRequest": {
             "type": "object",
             "properties": {
@@ -1416,36 +1491,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
-                }
-            }
-        },
-        "result.SendResultRequest": {
-            "type": "object",
-            "properties": {
-                "results": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "comparedTo": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "result": {
-                                            "type": "integer"
-                                        },
-                                        "song2Id": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "song1Id": {
-                                "type": "string"
-                            }
-                        }
-                    }
                 }
             }
         },

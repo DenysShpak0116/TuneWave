@@ -31,7 +31,7 @@ func NewResultHandler(resultService services.ResultService, collectionSongServic
 // @Accept json
 // @Produce json
 // @Param id path string true "Collection ID"
-// @Param request body SendResultRequest true "Send result"
+// @Param request body dto.SendResultRequest true "Send result"
 // @Router /collections/{id}/send-results [post]
 func (h *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("userID").(string)

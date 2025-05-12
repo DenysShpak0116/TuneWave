@@ -27,6 +27,7 @@ type UpdateCollectionParams struct {
 
 type CollectionService interface {
 	Service[models.Collection]
+	GetMany(ctx context.Context, limit, page int, sort, order string) ([]models.Collection, error)
 	SaveCollection(ctx context.Context, saveCollectionParams SaveCollectionParams) (*models.Collection, error)
 	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error)
 	UpdateCollection(ctx context.Context, id uuid.UUID, updateCollectionParams UpdateCollectionParams) (*models.Collection, error)
