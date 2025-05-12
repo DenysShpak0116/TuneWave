@@ -497,6 +497,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/collections/{id}/has-all-vectors": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Check if all vectors are present",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vectors"
+                ],
+                "summary": "Check if all vectors are present",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/collections/{id}/remove-from-user": {
             "delete": {
                 "security": [
@@ -1629,7 +1659,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-
 }
 
 func init() {

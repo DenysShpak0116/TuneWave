@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -16,12 +17,18 @@ import (
 type VectorHandler struct {
 	VactorService         services.VectorService
 	CollectionSongService services.CollectionSongService
+	CriterionService      services.CriterionService
 }
 
-func NewVectorHandler(vectorService services.VectorService, collectionSongService services.CollectionSongService) *VectorHandler {
+func NewVectorHandler(
+	vectorService services.VectorService,
+	collectionSongService services.CollectionSongService,
+	criterionService services.CriterionService,
+) *VectorHandler {
 	return &VectorHandler{
 		VactorService:         vectorService,
 		CollectionSongService: collectionSongService,
+		CriterionService:      criterionService,
 	}
 }
 
@@ -174,7 +181,7 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 			CollectionSongID: vector.CollectionSongID,
 		})
 	}
-	
+
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, vectorsDTO)
 }
@@ -312,4 +319,58 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 
 	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+}
+
+// HasAllVectors godoc
+// @Summary Check if all vectors are present
+// @Description Check if all vectors are present
+// @Security BearerAuth
+// @Tags vectors
+// @Accept json
+// @Produce json
+// @Param id path string true "Collection ID"
+// @Router /collections/{id}/has-all-vectors [get]
+func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) {
+	collectionID := chi.URLParam(r, "id")
+	collectionUUID, err := uuid.Parse(collectionID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
+		return
+	}
+
+	criterionCount, err := h.CriterionService.CountWhere(context.Background(), &models.Criterion{})
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to count criteria", err)
+		return
+	}
+	if criterionCount == 0 {
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, "there is no criteria")
+		return
+	}
+
+	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
+		CollectionID: collectionUUID,
+	}, "Vectors")
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
+		return
+	}
+	if len(collectionSongs) == 0 {
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, "there is no collection song")
+		return
+	}
+
+	for _, collectionSong := range collectionSongs {
+		if len(collectionSong.Vectors) < int(criterionCount) {
+			render.Status(r, http.StatusOK)
+			render.JSON(w, r, map[string]bool{"hasAllVectors": false})
+			return
+		}
+	}
+	hasAllVectors := true
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]bool{"hasAllVectors": hasAllVectors})
 }

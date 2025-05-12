@@ -110,6 +110,7 @@ func NewRouter(
 		r.Post("/{id}/{song-id}/vectors", vectorHandler.CreateSongVectors)
 		r.Put("/{id}/{song-id}/vectors", vectorHandler.UpdateSongVectors)
 		r.Delete("/{id}/{song-id}/vectors", vectorHandler.DeleteSongVectors)
+		r.Get("/{id}/has-all-vectors", vectorHandler.HasAllVectors)
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
