@@ -15,3 +15,8 @@ export const updateVector = async (collectionId: string, songId: string, vectors
     const { data } = await $api.put(`collections/${collectionId}/${songId}/vectors`, { vectors })
     return data
 }
+
+export const hasAllVectors = async (collectionId: string) => {
+    const { data } = await $api.get(`collections/${collectionId}/has-all-vectors`);
+    return data.hasAllVectors as boolean;
+}
