@@ -19,6 +19,7 @@ import (
 type CollectionService struct {
 	*GenericService[models.Collection]
 	CollectionSongRepository port.Repository[models.CollectionSong]
+	ReactionRepository       port.Repository[models.UserReaction]
 	FileStorage              port.FileStorage
 }
 
@@ -26,11 +27,13 @@ func NewCollectionService(
 	repo port.Repository[models.Collection],
 	fileStorage port.FileStorage,
 	collectionSongRepository port.Repository[models.CollectionSong],
+	reactionRepository port.Repository[models.UserReaction],
 ) services.CollectionService {
 	return &CollectionService{
 		GenericService:           NewGenericService(repo),
 		FileStorage:              fileStorage,
 		CollectionSongRepository: collectionSongRepository,
+		ReactionRepository:       reactionRepository,
 	}
 }
 
@@ -64,6 +67,12 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 		Preload("CollectionSongs").
 		Preload("CollectionSongs.Song").
 		Preload("CollectionSongs.Song.User").
+		Preload("CollectionSongs.Song.Authors").
+		Preload("CollectionSongs.Song.Authors.Author").
+		Preload("CollectionSongs.Song.SongTags").
+		Preload("CollectionSongs.Song.SongTags.Tag").
+		Preload("CollectionSongs.Song.Comments").
+		Preload("CollectionSongs.Song.Comments.User").
 		Find()
 	if err != nil {
 		return nil, err
@@ -74,9 +83,53 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 
 	collection := collections[0]
 
-	collectionSongs := make([]dtos.SongDTO, len(collection.CollectionSongs))
+	collectionSongs := make([]dtos.SongExtendedDTO, len(collection.CollectionSongs))
 	for i, collectionSong := range collection.CollectionSongs {
-		collectionSongs[i] = dtos.SongDTO{
+		songLikes, err := cs.ReactionRepository.NewQuery(ctx).
+			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "like").
+			Count()
+		if err != nil {
+			return nil, err
+		}
+		songDislikes, err := cs.ReactionRepository.NewQuery(ctx).
+			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "dislike").
+			Count()
+		if err != nil {
+			return nil, err
+		}
+
+		songAuthorsDTO := make([]dtos.AuthorDTO, len(collectionSong.Song.Authors))
+		for j, author := range collectionSong.Song.Authors {
+			songAuthorsDTO[j] = dtos.AuthorDTO{
+				ID:   author.AuthorID,
+				Name: author.Author.Name,
+				Role: author.Role,
+			}
+		}
+
+		songTagsDTO := make([]dtos.TagDTO, len(collectionSong.Song.SongTags))
+		for j, tag := range collectionSong.Song.SongTags {
+			songTagsDTO[j] = dtos.TagDTO{
+				Name: tag.Tag.Name,
+			}
+		}
+
+		songCommentsDTO := make([]dtos.CommentDTO, len(collectionSong.Song.Comments))
+		for j, comment := range collectionSong.Song.Comments {
+			songCommentsDTO[j] = dtos.CommentDTO{
+				ID: comment.ID,
+				Author: dtos.UserDTO{
+					ID:             comment.User.ID,
+					Username:       comment.User.Username,
+					Role:           comment.User.Role,
+					ProfilePicture: comment.User.ProfilePicture,
+					ProfileInfo:    comment.User.ProfileInfo,
+				},
+				Content:   "",
+				CreatedAt: time.Time{},
+			}
+		}
+		collectionSongs[i] = dtos.SongExtendedDTO{
 			ID:         collectionSong.Song.ID,
 			Title:      collectionSong.Song.Title,
 			Duration:   formatDuration(time.Duration(collectionSong.Song.Duration)),
@@ -87,6 +140,14 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 				Username:       collectionSong.Song.User.Username,
 				ProfilePicture: collectionSong.Song.User.ProfilePicture,
 			},
+			CreatedAt: collectionSong.Song.CreatedAt,
+			Genre:     collectionSong.Song.Genre,
+			SongURL:   collectionSong.Song.SongURL,
+			Likes:     songLikes,
+			Dislikes:  songDislikes,
+			Authors:   songAuthorsDTO,
+			SongTags:  songTagsDTO,
+			Comments:  songCommentsDTO,
 		}
 	}
 
