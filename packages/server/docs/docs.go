@@ -443,6 +443,33 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/collections/{id}/delete-user-results": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete user results",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "result"
+                ],
+                "summary": "Delete user results",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/collections/{id}/get-results": {
             "get": {
                 "security": [
