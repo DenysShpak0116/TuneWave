@@ -17,11 +17,9 @@ interface ITrackInformationProps {
 export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
     const user = useAuthStore(state => state.user);
     const [comments, setComments] = useState<IComment[]>(song.comments);
-
+    const isMainUserTrack = user?.id === song.user.id
     const { mutate: songReact } = useReaction();
     const { data: currentReaction, isLoading } = useGetUserReaction(song.id, user?.id);
-
-
 
     const onReactBtnClickFn = (type: "like" | "dislike") => {
         if (!user) return;
@@ -30,12 +28,12 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
         );
     };
 
-
-
     return (
         <TrackInformationLayout>
             {!isLoading && (
                 <TrackLogo
+                    songId={song.id}
+                    isUserMainTrack={isMainUserTrack}
                     userId={user?.id}
                     type={currentReaction ?? "none"}
                     reactFn={onReactBtnClickFn}
@@ -44,6 +42,8 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
             )}
 
             <TrackDetails
+                isMainUserTrack={isMainUserTrack}
+                trackId={song.id}
                 userId={song.user.id}
                 username={song.user.username}
                 genre={song?.genre}

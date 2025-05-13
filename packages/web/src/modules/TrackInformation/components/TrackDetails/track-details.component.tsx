@@ -10,8 +10,12 @@ import {
 } from "./track-details.style";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { parseDate } from "helpers/date-parse";
+import { Button } from "@ui/Btn/btn.component";
+import { useNavigate } from "react-router-dom";
 
 interface ITrackDetails {
+    trackId?: string;
+    collectionId?: string;
     genre?: string;
     tags?: ISongTags[];
     duration: string;
@@ -20,9 +24,13 @@ interface ITrackDetails {
     username: string;
     userId: string;
     type: "collection" | "track";
+    isMainUserTrack?: boolean
 }
 
 export const TrackDetails: FC<ITrackDetails> = ({
+    trackId,
+    collectionId,
+    isMainUserTrack,
     type,
     genre,
     tags,
@@ -32,6 +40,8 @@ export const TrackDetails: FC<ITrackDetails> = ({
     username,
     userId
 }) => {
+    const navigate = useNavigate();
+
     const renderBlock = (title: string, value: string | undefined) => (
         <TrackInfoBlock>
             <TrackInfoTitle>{title}</TrackInfoTitle>
@@ -43,12 +53,21 @@ export const TrackDetails: FC<ITrackDetails> = ({
         <TrackDetailsContainer>
             {type === "track" && (
                 <>
+                    {isMainUserTrack && (
+                        <TrackInfoBlock>
+                            <Button
+                                onClick={() => navigate(ROUTES.UPDATE_TRACK_PAGE.replace(":id", trackId!))}
+                                text="Редагувати"
+                                style={{ padding: "5px 10px", fontSize: "14px" }} />
+                        </TrackInfoBlock>
+                    )}
                     <TrackInfoBlock>
                         <TrackInfoTitle>Користувач</TrackInfoTitle>
                         <UserInfoText to={ROUTES.USER_PROFILE.replace(':id', userId)}>
                             {username}
                         </UserInfoText>
                     </TrackInfoBlock>
+
                     {renderBlock("Жанри:", genre)}
                     {renderBlock("Теги:", tags?.map(tag => tag.name).join(", "))}
                     {renderBlock("Тривалість:", duration)}
@@ -58,6 +77,18 @@ export const TrackDetails: FC<ITrackDetails> = ({
             )}
             {type === "collection" && (
                 <>
+                    <TrackInfoBlock>
+                        <Button
+                            onClick={() => navigate(ROUTES.SONGS_CRITERIONS_PAGE.replace(":id", collectionId!))}
+                            text="Таблиця крітерієв"
+                            style={{ padding: "5px 10px", fontSize: "14px" }} />
+                    </TrackInfoBlock>
+                    <TrackInfoBlock>
+                        <Button
+                            onClick={() => navigate(ROUTES.COLLECTIVE_DECISION_PAGE.replace(":id", collectionId!))}
+                            text="Результати голусування"
+                            style={{ padding: "5px 10px", fontSize: "14px" }} />
+                    </TrackInfoBlock>
                     {renderBlock("Тривалість:", duration)}
                     {renderBlock("Дата завантаження:", parseDate(date))}
                     <TrackInfoBlock>

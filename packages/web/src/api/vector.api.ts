@@ -17,6 +17,11 @@ export const updateVector = async (collectionId: string, songId: string, vectors
 }
 
 export const hasAllVectors = async (collectionId: string) => {
-    const { data } = await $api.get(`collections/${collectionId}/has-all-vectors`);
+    const { data } = await $api.get(`/collections/${collectionId}/has-all-vectors`);
     return data.hasAllVectors as boolean;
+}
+
+export const deleteVector = async (collectionId: string, songId: string) => {
+    const { data } = await $api.delete(`/collections/${collectionId}/${songId}/vectors`)
+    return data
 }

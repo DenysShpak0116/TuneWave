@@ -8,7 +8,7 @@ export const UpdateUserPage: FC = () => {
     const user = useAuthStore(state => state.user!)
 
 
-
+    
     return (
         <MainLayout>
             <UpdateUserForm user={user}/>

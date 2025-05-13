@@ -91,7 +91,8 @@ export const SongBlock = styled.div`
         p{
             margin-bottom: 4px;
             font-size: 14px;
-            color: ${COLORS.dark_additional}
+            color: ${COLORS.dark_additional};
+            text-align: center;
         }
     }
 `;

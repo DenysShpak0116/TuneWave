@@ -34,6 +34,7 @@ export const CollectionPage: FC = () => {
                     collectionId={collection.id}
                 />
                 <TrackDetails
+                    collectionId={collection.id}
                     duration={total}
                     date={collection.createdAt}
                     username={collection.user.username}

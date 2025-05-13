@@ -2,7 +2,6 @@ import { FC, useState, KeyboardEvent, ChangeEvent } from "react";
 import { Input, Tag, Wrapper } from "./multi-input.style";
 
 interface MultiInputProps {
-    name: string;
     placeholder: string;
     value: string[];
     onChange: (values: string[]) => void;

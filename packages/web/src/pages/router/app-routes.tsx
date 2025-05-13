@@ -17,6 +17,8 @@ import { Player } from "@modules/Player";
 import { CollectionPage } from "pages/CollectionPage/collection.page";
 import { UpdateTrackPage } from "pages/UpdateTrackPage/update-track.page";
 import { AddCriterionPage } from "pages/AddCriterionPage/add-criterion.page";
+import { CollectionSongsPage } from "pages/CollectionSongsCriterionsPage/CollectionSongsCritetion.page";
+import { CollectiveDecisionPage } from "pages/CollectiveDecisionPage/collective-decision.page";
 
 export const AppRoutes = () => {
     return (
@@ -33,6 +35,8 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.UPDATE_USER_PAGE} element={<UpdateUserPage />} />
                 <Route path={ROUTES.UPDATE_TRACK_PAGE} element={<UpdateTrackPage />} />
                 <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
+                <Route path={ROUTES.SONGS_CRITERIONS_PAGE} element={<CollectionSongsPage />} />
+                <Route path={ROUTES.COLLECTIVE_DECISION_PAGE} element={<CollectiveDecisionPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>

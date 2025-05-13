@@ -10,3 +10,8 @@ export const getUserResults = async (collectionId: string) => {
     const { data } = await $api.get(`/collections/${collectionId}/get-user-results`)
     return data;
 }
+
+export const getCollectiveDecision = async (collectionId: string) => {
+    const { data } = await $api.get(`/collections/${collectionId}/get-results`)
+    return data;
+}

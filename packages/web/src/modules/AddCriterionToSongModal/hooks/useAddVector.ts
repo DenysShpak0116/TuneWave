@@ -1,4 +1,4 @@
-import { addVector, getVectorBySongId, updateVector } from "@api/vector.api";
+import { addVector, deleteVector, getVectorBySongId, updateVector } from "@api/vector.api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IVectorType } from "types/vectors/vector.type";
 interface AddVectorParams {
@@ -44,3 +44,16 @@ export const useUpdateVector = () => {
         },
     })
 }
+
+export const useDeleteVector = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ collectionId, songId }: { collectionId: string; songId: string }) =>
+            deleteVector(collectionId, songId),
+        onSuccess: (_, { collectionId }) => {
+            queryClient.invalidateQueries({ queryKey: ['collection', collectionId] });
+            queryClient.invalidateQueries({ queryKey: ['vectors'] });
+        },
+    });
+};
