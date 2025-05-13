@@ -40,6 +40,8 @@ export const Button = styled.button`
   }
 `
 
+
+
 export const List = styled.ul`
   list-style: none;
   padding: 0;
@@ -68,4 +70,18 @@ export const DeleteButton = styled.button`
     background-color: #d32f2f;
   }
 `
+export const EditButton = styled(DeleteButton)`
+    background: #ffc107;
 
+    &:hover {
+    background-color: #ffc107;
+  }
+`
+
+export const SaveButton = styled(DeleteButton)`
+    background: #28a745;
+    
+    &:hover {
+    background-color: #28a745;
+  }
+`

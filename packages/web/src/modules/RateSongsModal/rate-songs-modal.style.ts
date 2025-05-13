@@ -50,35 +50,35 @@ export const SongBlock = styled.div`
             height: 120px;
             object-fit: cover;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
         }
 
         .title {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             text-align: center;
         }
 
         .authors {
             font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
+            color: ${COLORS.dark_additional};
+            margin-bottom: 4px;
             text-align: center;
         }
 
         .genre,
         .duration {
             font-size: 13px;
-            color: #999;
-            margin-bottom: 6px;
+            color: ${COLORS.dark_additional};
+            margin-bottom: 4px;
         }
 
         .stats {
             display: flex;
             gap: 12px;
-            margin-top: 8px;
             font-size: 12px;
+            margin-top: 4px;
             color: #555;
 
             span {
@@ -86,6 +86,12 @@ export const SongBlock = styled.div`
                 align-items: center;
                 gap: 4px;
             }
+        }
+
+        p{
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: ${COLORS.dark_additional}
         }
     }
 `;
@@ -140,5 +146,45 @@ export const NextButton = styled.button`
     &:disabled {
         background: #a5b4fc;
         cursor: not-allowed;
+    }
+`;
+
+
+export const ComparisonTable = styled.table`
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+
+    th, td {
+        border: 1px solid #ccc;
+        text-align: center;
+        padding: 8px;
+        font-size: 16px;
+    }
+
+    th {
+        background-color: ${COLORS.dark_backdrop};
+    }
+`;
+
+export const Leaderboard = styled.ul`
+    list-style: none;
+    padding: 0;
+    margin: 24px 0;
+
+    li {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background: ${COLORS.dark_backdrop};
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+
+    }
+    .medal {
+        margin-right: 12px;
+        font-size: 20px;
     }
 `;
