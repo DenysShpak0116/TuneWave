@@ -49,7 +49,12 @@ export const CollectiveDecisionPage: FC = () => {
                             {Object.values(profileTable)[0] &&
                                 Object.keys(Object.values(profileTable)[0]).map((user) => (
                                     <TableCell key={user}>
-                                        <UserName>{user.split(":")[1]}</UserName>
+                                        {user.split(":")[0] === "1" ? (
+                                            <UserName>{user.split(":")[1]}</UserName>
+                                        ) : (
+                                            <UserName>{user}</UserName>
+                                        )}
+
                                     </TableCell>
                                 ))}
                         </TableRow>

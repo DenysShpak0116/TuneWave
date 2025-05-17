@@ -1,52 +1,55 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { ISong } from "types/song/song.type";
 import {
     CollectionSongsContainer,
     TableHeader,
-    TableRow,
-    IndexBox,
-    CoverAndInfo,
-    Cover,
-    SongTextInfo,
-    Title,
-    Album,
-    DateAdded,
-    Duration,
-    Options
+    PlaylistHeader,
+    PlaylistTitle,
+    PlaylistActions,
+    PlayListActionIcon,
+    PlayListActionItem
 } from "./collection-songs.style";
-import { parseDate } from "helpers/date-parse";
+import searchIcon from "@assets/images/ic_search.png"
+import sortIcon from "@assets/images/ic_sort.png"
+import { CollectionSongRow } from "./components/collection-song-row.component";
 
 interface ICollectionSongsProps {
     songs: ISong[];
-    activeSongId?: string;
 }
 
-export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, activeSongId }) => {
+export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
+    const [activeSongId, setActiveSongId] = useState<string | null>(null);
+
     return (
         <CollectionSongsContainer>
+            <PlaylistHeader>
+                <PlaylistTitle>Плейлист</PlaylistTitle>
+                <PlaylistActions>
+                    <PlayListActionItem>
+                        <PlayListActionIcon src={searchIcon} />
+                        <p>Пошук</p>
+                    </PlayListActionItem>
+                    <PlayListActionItem>
+                        <PlayListActionIcon src={sortIcon} />
+                        <p>Сортувати</p>
+                    </PlayListActionItem>
+                </PlaylistActions>
+            </PlaylistHeader>
             <TableHeader>
                 <div>#</div>
                 <div>Назва</div>
-                <div>Альбом</div>
                 <div>Дата додавання</div>
                 <div>Час</div>
-                <div></div>
+                <div style={{ textAlign: "center" }}>Дії</div>
             </TableHeader>
             {songs.map((song, index) => (
-                <TableRow key={song.id} active={song.id === activeSongId}>
-                    <IndexBox>{index + 1}</IndexBox>
-                    <CoverAndInfo>
-                        <Cover src={song.coverUrl} alt={song.title} />
-                        <SongTextInfo>
-                            <Title>{song.title}</Title>
-                            {/* <Author>{song.authors.map(a => a.name).join(", ")}</Author> */}
-                        </SongTextInfo>
-                    </CoverAndInfo>
-                    <Album>123</Album>
-                    <DateAdded>{parseDate(song.createdAt)}</DateAdded>
-                    <Duration>{song.duration}</Duration>
-                    <Options>⋯</Options>
-                </TableRow>
+                <CollectionSongRow
+                    key={song.id}
+                    song={song}
+                    index={index}
+                    active={song.id === activeSongId}
+                    onActivate={() => setActiveSongId(song.id)}
+                />
             ))}
         </CollectionSongsContainer>
     );

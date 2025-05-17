@@ -12,7 +12,8 @@ const GlobalStyle = createGlobalStyle`
 
   body{
     background-color: ${COLORS.dark_backdrop};
-    padding-bottom: 50px;
+    padding-bottom: 60px;
+    box-sizing: border-box;
   }
 
   h1,

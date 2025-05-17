@@ -12,4 +12,10 @@ export const register = async (data: {
     return await $api.post("/auth/register", data);
 };
 
+export const sendTokenToEmail = async (email: string) => {
+    return await $api.post("/auth/forgot-password", { email })
+}
 
+export const logout = async () =>{
+    return await $api.post("/auth/logout");
+}

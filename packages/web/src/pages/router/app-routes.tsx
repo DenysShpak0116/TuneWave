@@ -19,6 +19,8 @@ import { UpdateTrackPage } from "pages/UpdateTrackPage/update-track.page";
 import { AddCriterionPage } from "pages/AddCriterionPage/add-criterion.page";
 import { CollectionSongsPage } from "pages/CollectionSongsCriterionsPage/CollectionSongsCritetion.page";
 import { CollectiveDecisionPage } from "pages/CollectiveDecisionPage/collective-decision.page";
+import { ForgotPasswordPage } from "pages/ForgotPasswordPage/forgot-password.page";
+import { ResetPasswordPage } from "pages/ResetPasswordPage/reset-password.page";
 
 export const AppRoutes = () => {
     return (
@@ -28,6 +30,7 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.HOME} element={<HomePage />} />
                 <Route path={ROUTES.SIGN_IN} element={<LoginPage />} />
                 <Route path={ROUTES.SIGN_UP} element={<RegistrationPage />} />
+                <Route path={ROUTES.FORGOT_PASSWORD_PAGE} element={<ForgotPasswordPage />} />
                 <Route path={ROUTES.CREATE_TRACK} element={<CreateTrackPage />} />
                 <Route path={ROUTES.USER_PROFILE} element={<UserProfilePage />} />
                 <Route path={ROUTES.TRACK_PAGE} element={<TrackPage />} />
@@ -37,6 +40,7 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
                 <Route path={ROUTES.SONGS_CRITERIONS_PAGE} element={<CollectionSongsPage />} />
                 <Route path={ROUTES.COLLECTIVE_DECISION_PAGE} element={<CollectiveDecisionPage />} />
+                <Route path={ROUTES.RESET_PASSWORD_PAGE} element={<ResetPasswordPage/>} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>
