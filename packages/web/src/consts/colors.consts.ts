@@ -5,5 +5,8 @@ export const COLORS = Object.freeze({
     dark_secondary: '#EDEDED',
     dark_additional: '#CFCFCF',
     dark_focusing: '#7474F7',
+    chat_main: "#434345",
+    chat_focus: "#7EB6BE",
+    chat_user_message: "#E778A0",
     white: "#FFFFFF"
 })

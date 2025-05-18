@@ -21,6 +21,7 @@ import { CollectionSongsPage } from "pages/CollectionSongsCriterionsPage/Collect
 import { CollectiveDecisionPage } from "pages/CollectiveDecisionPage/collective-decision.page";
 import { ForgotPasswordPage } from "pages/ForgotPasswordPage/forgot-password.page";
 import { ResetPasswordPage } from "pages/ResetPasswordPage/reset-password.page";
+import { ChatPage } from "pages/ChatPage/chat.page";
 
 export const AppRoutes = () => {
     return (
@@ -40,7 +41,8 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
                 <Route path={ROUTES.SONGS_CRITERIONS_PAGE} element={<CollectionSongsPage />} />
                 <Route path={ROUTES.COLLECTIVE_DECISION_PAGE} element={<CollectiveDecisionPage />} />
-                <Route path={ROUTES.RESET_PASSWORD_PAGE} element={<ResetPasswordPage/>} />
+                <Route path={ROUTES.RESET_PASSWORD_PAGE} element={<ResetPasswordPage />} />
+                <Route path={ROUTES.CHAT_PAGE} element={<ChatPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>

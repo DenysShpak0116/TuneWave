@@ -10,6 +10,7 @@ import { UserBlock } from "@ui/UserHeaderBlock/user-block.component"
 import search from "@assets/images/ic_search.png"
 import { SearchModal } from "@modules/SearchModal"
 import plusIcon from "@assets/images/ic_plus.png"
+import chatIcon from "@assets/images/ic chat.png"
 
 export const Header: FC = () => {
     const navigate = useNavigate()
@@ -36,11 +37,19 @@ export const Header: FC = () => {
                     ))}
 
                     {isAuth() && (
-                        <NavItem
-                            title="Завантажити"
-                            path={ROUTES.CREATE_TRACK}
-                            icon={uploadIcon}
-                        />
+                        <>
+                            <NavItem
+                                title="Завантажити"
+                                path={ROUTES.CREATE_TRACK}
+                                icon={uploadIcon}
+                            />
+
+                            <NavItem
+                                title="Чати"
+                                path={ROUTES.CHAT_PAGE}
+                                icon={chatIcon}
+                            />
+                        </>
                     )}
 
                     {isAuth() && user?.role === "admin" && (

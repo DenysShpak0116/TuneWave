@@ -12,5 +12,6 @@ export enum ROUTES {
     SONGS_CRITERIONS_PAGE = "/collection/:id/criterions",
     COLLECTIVE_DECISION_PAGE = "/collection/:id/collective-decision",
     FORGOT_PASSWORD_PAGE = "/forgot-password",
-    RESET_PASSWORD_PAGE = "/reset-password"
+    RESET_PASSWORD_PAGE = "/reset-password",
+    CHAT_PAGE = "/chat"
 }
