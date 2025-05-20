@@ -28,7 +28,7 @@ export const HomePage: FC = () => {
         <>
             <MainLayout>
                 {!isLoading && Array.isArray(tracks) && (
-                    <SongCards songs={tracks} />
+                    <SongCards songs={tracks} text="ПОПУЛЯРНІ МУЗИЧНІ ТВОРИ"/>
                 )}
             </MainLayout>
         </>

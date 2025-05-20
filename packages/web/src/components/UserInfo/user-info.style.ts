@@ -17,6 +17,7 @@ export const UserBlock = styled.div`
     background-color: ${COLORS.dark_main};
     padding: 24px;
     position: relative;
+    margin-bottom: 24px;
 `;
 
 export const Avatar = styled.img`
