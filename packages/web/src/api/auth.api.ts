@@ -16,6 +16,10 @@ export const sendTokenToEmail = async (email: string) => {
     return await $api.post("/auth/forgot-password", { email })
 }
 
-export const logout = async () =>{
+export const resetPassword = async (newPassword: string, token: string) => {
+    return await $api.post("/auth/reset-password", { newPassword, token })
+}
+
+export const logout = async () => {
     return await $api.post("/auth/logout");
 }
