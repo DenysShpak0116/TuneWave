@@ -24,7 +24,9 @@ interface ITrackDetails {
     username: string;
     userId: string;
     type: "collection" | "track";
-    isMainUserTrack?: boolean
+    isMainUserTrack?: boolean,
+    collectionName?: string,
+    collectionDescription?:string;
 }
 
 export const TrackDetails: FC<ITrackDetails> = ({
@@ -38,7 +40,9 @@ export const TrackDetails: FC<ITrackDetails> = ({
     date,
     artist,
     username,
-    userId
+    userId,
+    collectionName,
+    collectionDescription,
 }) => {
     const navigate = useNavigate();
 
@@ -89,6 +93,8 @@ export const TrackDetails: FC<ITrackDetails> = ({
                             text="Результати голусування"
                             style={{ padding: "5px 10px", fontSize: "14px" }} />
                     </TrackInfoBlock>
+                    {renderBlock("Назва колекції:",collectionName)}
+                    {renderBlock("Опис колекції:", collectionDescription)}
                     {renderBlock("Тривалість:", duration)}
                     {renderBlock("Дата завантаження:", parseDate(date))}
                     <TrackInfoBlock>

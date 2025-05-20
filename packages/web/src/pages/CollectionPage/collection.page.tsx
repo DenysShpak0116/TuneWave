@@ -39,10 +39,14 @@ export const CollectionPage: FC = () => {
                     date={collection.createdAt}
                     username={collection.user.username}
                     userId={collection.user.id}
-                    type="collection" />
-                <TrackPagePlayer
-                    song={collection.collectionSongs[0]}
-                />
+                    type="collection"
+                    collectionName={collection.title}
+                    collectionDescription={collection.description} />
+                {collection.collectionSongs.length > 0  && (
+                    <TrackPagePlayer
+                        song={collection.collectionSongs[0]}
+                    />
+                )}
                 <CollectionSongs
                     songs={collection.collectionSongs} />
             </TrackInformationLayout>
