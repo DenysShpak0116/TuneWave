@@ -6,6 +6,6 @@ import collections from "@assets/images/ic_collections.png"
 export type NavItem = { title: string, icon: string, path: string }
 
 export const HeaderItems: NavItem[] = [
-    { title: 'Жанри', icon: genre, path: ROUTES.HOME },
+    { title: 'Жанри', icon: genre, path: ROUTES.GENRE_PAGE },
     { title: "Колекції", icon: collections, path: ROUTES.HOME }
 ]

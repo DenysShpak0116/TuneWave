@@ -58,3 +58,7 @@ export const addSongToCollection = async (trackId: string, collectionId: string)
     const { data } = await $api.post(`/songs/${trackId}/add-to-collection`, { collectionId: collectionId })
     return data
 }
+
+export const getGenres = async () => {
+    return (await $api.get("/genres")).data
+}

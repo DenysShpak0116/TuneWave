@@ -13,5 +13,6 @@ export enum ROUTES {
     COLLECTIVE_DECISION_PAGE = "/collection/:id/collective-decision",
     FORGOT_PASSWORD_PAGE = "/forgot-password",
     RESET_PASSWORD_PAGE = "/reset-password",
-    CHAT_PAGE = "/chat"
+    CHAT_PAGE = "/chat",
+    GENRE_PAGE = "/genres"
 }
