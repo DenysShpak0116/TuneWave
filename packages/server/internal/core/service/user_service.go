@@ -1,8 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -14,12 +17,18 @@ import (
 type UserService struct {
 	*GenericService[models.User]
 	SongService services.SongService
+	FileStorage port.FileStorage
 }
 
-func NewUserService(repo port.Repository[models.User], songService services.SongService) services.UserService {
+func NewUserService(
+	repo port.Repository[models.User],
+	songService services.SongService,
+	fileStorage port.FileStorage,
+) services.UserService {
 	return &UserService{
 		GenericService: NewGenericService(repo),
 		SongService:    songService,
+		FileStorage:    fileStorage,
 	}
 }
 
@@ -139,5 +148,44 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 	if err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
+	return nil
+}
+
+func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.UpdatePfpParams) error {
+	users, err := us.Repository.NewQuery(ctx).
+		Where("id = ?", pfpParams.UserID).
+		Find()
+	if err != nil {
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+	if len(users) == 0 {
+		return fmt.Errorf("user not found")
+	}
+	user := &users[0]
+
+	if pfpParams.Pfp != nil && pfpParams.PfpHeader != nil {
+		oldUserPfpKey := extractS3Key(user.ProfilePicture)
+		if err := us.FileStorage.Remove(ctx, oldUserPfpKey); err != nil {
+			return fmt.Errorf("failed to remove old user file: %w", err)
+		}
+
+		key := fmt.Sprintf("pfp/%s/%d-%s", user.ID, time.Now().Unix(), pfpParams.PfpHeader.Filename)
+		var buf bytes.Buffer
+		if _, err := io.Copy(&buf, pfpParams.Pfp); err != nil {
+			return err
+		}
+
+		url, err := us.FileStorage.Save(ctx, key, buf)
+		if err != nil {
+			return err
+		}
+
+		user.ProfilePicture = url
+	}
+
+	if _, err := us.Repository.Update(ctx, user); err != nil {
+		return err
+	}
+
 	return nil
 }

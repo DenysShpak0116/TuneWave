@@ -1403,6 +1403,36 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/users/avatar/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a user's avatar",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update user avatar",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Avatar file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/users/{id}": {
             "get": {
                 "security": [

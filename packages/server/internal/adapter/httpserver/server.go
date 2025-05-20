@@ -74,6 +74,7 @@ func NewRouter(
 		r.Get("/", userHandler.GetAll)
 		r.Get("/{id}", userHandler.GetByID)
 		r.Put("/{id}", userHandler.Update)
+		r.Put("/avatar/", userHandler.UpdateAvatar)
 		r.Delete("/{id}", userHandler.Delete)
 	})
 
