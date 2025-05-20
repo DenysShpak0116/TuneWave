@@ -5,7 +5,7 @@ import { FiUpload } from "react-icons/fi";
 import { InputField } from "@ui/Input/input-field.component";
 import { TextAreaField } from "@ui/TextArea/text-area-field.component";
 import { Button } from "@ui/Btn/btn.component";
-import { useUpdateUser } from "./hooks/useUpdateUser";
+import { useUpdateAvatar, useUpdateUser } from "./hooks/useUpdateUser";
 import toast from "react-hot-toast";
 
 interface IUpdateUserForm {
@@ -16,21 +16,32 @@ export const UpdateUserForm: FC<IUpdateUserForm> = ({ user }) => {
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [username, setUsername] = useState<string>(user.username);
     const [userInfo, setUserInfo] = useState<string>(user.profileInfo);
+    const { mutate: updateUserAvatar } = useUpdateAvatar()
 
     const inputRef = useRef<HTMLInputElement>(null);
 
     const { mutate: updateUserInfo, isPending } = useUpdateUser();
 
-    const handleCoverUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleCoverUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setCoverPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setCoverPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            updateUserAvatar(formData);
+        } catch (err: any) {
+            console.error("Ошибка при обновлении аватара:", err.response?.data || err.message);
         }
     };
+
 
     const handleSubmit = () => {
         updateUserInfo(
