@@ -148,6 +148,8 @@ func NewRouter(
 		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 		r.Get("/chats", userHandler.GetChats)
 	})
+	
+	router.Get("/genres", songHandler.GetGenres)
 
 	return router
 }

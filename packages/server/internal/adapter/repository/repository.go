@@ -50,3 +50,15 @@ func (r *GenericRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+func (r *GenericRepository[T]) Distinct(ctx context.Context, field string) []string {
+	var fieldList []string
+
+	var entities []T
+	err := r.db.WithContext(ctx).Model(&entities).Distinct(field).Pluck(field, &fieldList).Error
+	if err != nil {
+		return []string{}
+	}
+
+	return fieldList
+}

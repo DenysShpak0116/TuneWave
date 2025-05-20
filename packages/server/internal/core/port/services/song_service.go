@@ -50,4 +50,6 @@ type SongService interface {
 	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)
 	AddToCollection(ctx context.Context, songUUID, collectionUUID uuid.UUID) error
 	IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error)
+	GetGenres(context.Context) []string
+	GetGenresMostPopularSong(ctx context.Context, genre string) (*models.Song, error)
 }

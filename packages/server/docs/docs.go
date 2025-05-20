@@ -966,6 +966,19 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/genres": {
+            "get": {
+                "description": "Get genres previews",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Get genres previews",
+                "responses": {}
+            }
+        },
         "/songs": {
             "get": {
                 "description": "Get all songs",

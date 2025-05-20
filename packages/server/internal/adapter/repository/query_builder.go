@@ -79,3 +79,13 @@ func (qb *QueryBuilder[T]) Count() (int64, error) {
 func (qb *QueryBuilder[T]) Delete() error {
 	return qb.query.Delete(new(T)).Error
 }
+
+func (qb *QueryBuilder[T]) Join(query string, args ...interface{}) port.Query[T] {
+	qb.query = qb.query.Joins(query, args...)
+	return qb
+}
+
+func (qb *QueryBuilder[T]) Group(group string) port.Query[T] {
+	qb.query = qb.query.Group(group)
+	return qb
+}

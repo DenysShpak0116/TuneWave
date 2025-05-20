@@ -2,6 +2,7 @@ package song
 
 import (
 	"context"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -274,3 +275,43 @@ func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	render.NoContent(w, r)
 }
 
+type genrePreview struct {
+	GenreName  string `json:"genreName"`
+	GenreCover string `json:"genreCover"`
+}
+
+// GetGenres godoc
+// @Summary Get genres previews
+// @Description Get genres previews
+// @Tags songs
+// @Produce json
+// @Router /genres [get]
+func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
+	genres := sh.SongService.GetGenres(context.Background())
+	if len(genres) == 0 {
+		render.JSON(w, r, []string{})
+		return
+	}
+
+	fmt.Printf("genres: %+v\n\n", genres)
+
+	genrePreviews := make([]genrePreview, 0)
+	for _, genre := range genres {
+		song, err := sh.SongService.GetGenresMostPopularSong(context.Background(), genre)
+		fmt.Printf("song: %+v\n\n", song)
+		if err != nil || song == nil {
+			genrePreviews = append(genrePreviews, genrePreview{
+				GenreName:  genre,
+				GenreCover: "",
+			})
+			continue
+		}
+		genrePreviews = append(genrePreviews, genrePreview{
+			GenreName:  genre,
+			GenreCover: song.CoverURL,
+		})
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, genrePreviews)
+}
