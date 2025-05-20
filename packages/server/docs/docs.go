@@ -207,6 +207,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/chats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user chats",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Get user chats",
+                "responses": {}
+            }
+        },
         "/collections": {
             "get": {
                 "security": [
@@ -1465,6 +1486,33 @@ const docTemplate = `{
                         "description": "User ID (UUID format)",
                         "name": "id",
                         "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/ws/chat": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Setting WebSocket connection between authorised user and target user by ` + "`" + `targetUserId` + "`" + `.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chat"
+                ],
+                "summary": "WebSocket connection for privat chat",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of target user",
+                        "name": "targetUserId",
+                        "in": "query",
                         "required": true
                     }
                 ],

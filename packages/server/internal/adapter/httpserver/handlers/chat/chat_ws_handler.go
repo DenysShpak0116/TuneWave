@@ -11,7 +11,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -38,6 +37,15 @@ func NewChatHandler(
 	}
 }
 
+// ServeWs handles WebSocket connections between users for private chats.
+//
+// @Summary      WebSocket connection for privat chat
+// @Description  Setting WebSocket connection between authorised user and target user by `targetUserId`.
+// @Tags         chat
+// @Produce      json
+// @Param        targetUserId query string true "UUID of target user"
+// @Router       /ws/chat [get]
+// @Security     BearerAuth
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	log.Printf("SERVE WS WSWS\n")
 	targetID := r.URL.Query().Get("targetUserId")
@@ -47,14 +55,14 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claimsRaw := r.Context().Value("claims")
-	claims, ok := claimsRaw.(jwt.MapClaims)
-	if !ok {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Invalid claims", nil)
-		return
-	}
+	// claimsRaw := r.Context().Value("userID")
+	// claims, ok := claimsRaw.(jwt.MapClaims)
+	// if !ok {
+	// 	handlers.RespondWithError(w, r, http.StatusInternalServerError, "Invalid claims", nil)
+	// 	return
+	// }
 
-	userIDRaw, ok := claims["userId"].(string)
+	userIDRaw, ok := r.Context().Value("userID").(string)
 	if !ok {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", nil)
 		return

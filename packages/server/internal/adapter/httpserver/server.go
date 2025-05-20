@@ -143,5 +143,10 @@ func NewRouter(
 		r.Get("/chat", chatHandler.ServeWs)
 	})
 
+	router.Route("/", func(r chi.Router) {
+		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+		r.Get("/chats", userHandler.GetChats)
+	})
+
 	return router
 }
