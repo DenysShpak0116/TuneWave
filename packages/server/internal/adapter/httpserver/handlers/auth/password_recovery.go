@@ -24,13 +24,14 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ah.AuthService.HandleForgotPassword(req); err != nil {
+	token, err := ah.AuthService.HandleForgotPassword(req)
+	if err != nil {
 		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("failed to send email: %v", err)})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "Password reset link sent"})
+	render.JSON(w, r, map[string]string{"token": token})
 }
 
 // ResetPassword godoc

@@ -32,7 +32,7 @@ func NewAuthService(
 	}
 }
 
-func (as *AuthService) HandleForgotPassword(req dto.ForgotPasswordRequest) error {
+func (as *AuthService) HandleForgotPassword(req dto.ForgotPasswordRequest) (string, error) {
 	token := uuid.New().String()
 	expiresAt := time.Now().Add(1 * time.Hour)
 
@@ -42,15 +42,15 @@ func (as *AuthService) HandleForgotPassword(req dto.ForgotPasswordRequest) error
 		ExpiresAt: expiresAt,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	as.MailService.SendEmail(
 		req.Email,
 		"Password Reset",
-		fmt.Sprintf("Click here to reset your password: http://localhost:8081/auth/reset-password?token=%s", token),
+		fmt.Sprintf("Token for password: %s", token),
 	)
-	return nil
+	return token, nil
 }
 
 func (as *AuthService) HandleResetPassword(req dto.ResetPasswordRequest) error {
@@ -62,6 +62,8 @@ func (as *AuthService) HandleResetPassword(req dto.ResetPasswordRequest) error {
 		return errors.New("invalid token")
 	}
 	token := tokens[0]
+
+	print("token:%s\n", token.Token)
 
 	if time.Now().After(token.ExpiresAt) {
 		return errors.New("token expired")
