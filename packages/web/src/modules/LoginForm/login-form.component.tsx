@@ -61,7 +61,7 @@ export const LoginForm: FC = () => {
                 />
             ))}
 
-            <ForgotPasswordText to={ROUTES.HOME}>Забули пароль?</ForgotPasswordText>
+            <ForgotPasswordText to={ROUTES.FORGOT_PASSWORD_PAGE}>Забули пароль?</ForgotPasswordText>
             <Button text="Увійти" type="submit" />
             <GoogleButton onClickHandle={handleGoogleButtonClick} />
             <RegistationText onClick={() => navigate(ROUTES.SIGN_UP)}>Зареєструйтесь</RegistationText>

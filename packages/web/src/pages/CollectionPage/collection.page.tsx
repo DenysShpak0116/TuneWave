@@ -1,7 +1,7 @@
 import { MainLayout } from "@ui/layout/main-layout";
 import { FC } from "react";
 import { useParams } from "react-router-dom";
-import { useGetCollection } from "./hooks/useGetCollection";
+import { useGetCollection, useHasCollectionHaveAllVectors } from "./hooks/useGetCollection";
 import { Loader } from "@ui/Loader/loader.component";
 import { TrackInformationLayout } from "@ui/layout/TrackInformation/track-information-layout";
 import { CollectionLogo } from "@components/CollectionLogo/collection-logo.component";
@@ -13,8 +13,9 @@ import { CollectionSongs } from "@components/CollectionSongs/collection-songs.co
 export const CollectionPage: FC = () => {
     const { id } = useParams();
     const { data: collection, isLoading } = useGetCollection(id!);
+    const { data: hasAllVectors = false, isLoading: IsVectorLoading } = useHasCollectionHaveAllVectors(id!)
 
-    if (isLoading || !collection)
+    if (IsVectorLoading || isLoading || !collection)
         return (
             <MainLayout>
                 <Loader />
@@ -27,11 +28,13 @@ export const CollectionPage: FC = () => {
         <MainLayout>
             <TrackInformationLayout>
                 <CollectionLogo
+                    hasAllVectors={hasAllVectors}
                     logo={collection.coverUrl}
                     collectionSongs={collection.collectionSongs}
                     collectionId={collection.id}
                 />
                 <TrackDetails
+                    collectionId={collection.id}
                     duration={total}
                     date={collection.createdAt}
                     username={collection.user.username}

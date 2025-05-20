@@ -15,12 +15,29 @@ export const createTrack = async (formData: FormData) => {
     }
 };
 
+export const updateTrack = async (songId: string, formData: FormData) => {
+    try {
+        const { data } = await $api.put(`/songs/${songId}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        })
+        return data
+    }
+    catch (err) {
+        console.log(err)
+    }
+};
 
 export const getTracks = async (params: GetTracksParams = {}) => {
     const { data } = await $api.get("/songs", { params });
     return data;
 };
 
+export const deleteTrack = async (id: string) => {
+    const { data } = await $api.delete(`/songs/${id}`)
+    return data
+}
 
 export const getTrackById = async (id: string) => {
     const { data } = await $api.get(`/songs/${id}`)

@@ -10,7 +10,12 @@ export const createCriterion = async (name: string) => {
     return data
 }
 
+export const updateCriterion = async (criterionId: string, name: string) => {
+    const { data } = await $api.put(`/criterions/${criterionId}`, { name })
+    return data
+}
+
 export const deleteCriterion = async (id: string) => {
     const { data } = await $api.delete(`/criterions/${id}`)
     return data
-  }
+}

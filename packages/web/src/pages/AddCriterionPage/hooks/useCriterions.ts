@@ -1,4 +1,4 @@
-import { createCriterion, deleteCriterion, getAllCriterion } from "@api/criterion.api";
+import { createCriterion, deleteCriterion, getAllCriterion, updateCriterion } from "@api/criterion.api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ICriterionType } from "types/criterions/criterion.type";
 
@@ -15,8 +15,15 @@ export const useCreateCriterion = () => {
     })
 }
 
+export const useUpdateCriterion = () =>
+    useMutation({
+        mutationFn: ({ criterionId, name }: { criterionId: string; name: string }) =>
+            updateCriterion(criterionId, name),
+    });
+
+
 export const useDeleteCriterion = () => {
     return useMutation({
         mutationFn: deleteCriterion,
     })
-  }
+}
