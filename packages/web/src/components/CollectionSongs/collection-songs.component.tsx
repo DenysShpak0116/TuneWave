@@ -7,11 +7,12 @@ import {
     PlaylistTitle,
     PlaylistActions,
     PlayListActionIcon,
-    PlayListActionItem
+    PlayListActionItem,
 } from "./collection-songs.style";
-import searchIcon from "@assets/images/ic_search.png"
-import sortIcon from "@assets/images/ic_sort.png"
+import searchIcon from "@assets/images/ic_search.png";
+import sortIcon from "@assets/images/ic_sort.png";
 import { CollectionSongRow } from "./components/collection-song-row.component";
+import { usePlayerStore } from "@modules/Player/store/player.store";
 
 interface ICollectionSongsProps {
     songs: ISong[];
@@ -19,9 +20,10 @@ interface ICollectionSongsProps {
 
 export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
     const [activeSongId, setActiveSongId] = useState<string | null>(null);
+    const pausePlayer = usePlayerStore((state) => state.pausePlayer);
 
-    return (
-        <CollectionSongsContainer>
+    const renderPlaylist = () => (
+        <>
             <PlaylistHeader>
                 <PlaylistTitle>Плейлист</PlaylistTitle>
                 <PlaylistActions>
@@ -29,12 +31,17 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
                         <PlayListActionIcon src={searchIcon} />
                         <p>Пошук</p>
                     </PlayListActionItem>
+                    <PlayListActionItem onClick={pausePlayer}>
+                        <PlayListActionIcon src={searchIcon} />
+                        <p>Пауза</p>
+                    </PlayListActionItem>
                     <PlayListActionItem>
                         <PlayListActionIcon src={sortIcon} />
                         <p>Сортувати</p>
                     </PlayListActionItem>
                 </PlaylistActions>
             </PlaylistHeader>
+
             <TableHeader>
                 <div>#</div>
                 <div>Назва</div>
@@ -42,6 +49,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
                 <div>Час</div>
                 <div style={{ textAlign: "center" }}>Дії</div>
             </TableHeader>
+
             {songs.map((song, index) => (
                 <CollectionSongRow
                     key={song.id}
@@ -51,6 +59,16 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
                     onActivate={() => setActiveSongId(song.id)}
                 />
             ))}
+        </>
+    );
+
+    return (
+        <CollectionSongsContainer>
+            {songs.length > 0 ? (
+                renderPlaylist()
+            ) : (
+                <p style={{textAlign: "center", }}>У цьому плейлисті поки немає пісень.</p>
+            )}
         </CollectionSongsContainer>
     );
 };

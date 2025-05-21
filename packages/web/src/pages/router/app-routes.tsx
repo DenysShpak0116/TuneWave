@@ -22,6 +22,7 @@ import { CollectiveDecisionPage } from "pages/CollectiveDecisionPage/collective-
 import { ForgotPasswordPage } from "pages/ForgotPasswordPage/forgot-password.page";
 import { ResetPasswordPage } from "pages/ResetPasswordPage/reset-password.page";
 import { ChatPage } from "pages/ChatPage/chat.page";
+import { GenrePage } from "pages/GenrePage/genre.page";
 
 export const AppRoutes = () => {
     return (
@@ -43,6 +44,7 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.COLLECTIVE_DECISION_PAGE} element={<CollectiveDecisionPage />} />
                 <Route path={ROUTES.RESET_PASSWORD_PAGE} element={<ResetPasswordPage />} />
                 <Route path={ROUTES.CHAT_PAGE} element={<ChatPage />} />
+                <Route path={ROUTES.GENRE_PAGE} element={<GenrePage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>
