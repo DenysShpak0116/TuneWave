@@ -11,6 +11,7 @@ interface PlayerState {
     setShouldAutoPlay: (value: boolean) => void;
     isPlaying: boolean;
     setIsPlaying: (value: boolean) => void;
+    pausePlayer: () => void
 }
 
 const defaultTrack = {
@@ -36,5 +37,8 @@ export const usePlayerStore = create<PlayerState>((set) => {
         },
         setShouldAutoPlay: (value) => set({ shouldAutoPlay: value }),
         setIsPlaying: (value) => set({ isPlaying: value }),
+        pausePlayer: () => {
+            localStorage.setItem("player-sync", JSON.stringify({ type: "pause" }));
+        }
     };
 });

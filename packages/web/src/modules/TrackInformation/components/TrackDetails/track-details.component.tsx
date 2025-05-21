@@ -26,7 +26,7 @@ interface ITrackDetails {
     type: "collection" | "track";
     isMainUserTrack?: boolean,
     collectionName?: string,
-    collectionDescription?:string;
+    collectionDescription?: string;
 }
 
 export const TrackDetails: FC<ITrackDetails> = ({
@@ -75,7 +75,7 @@ export const TrackDetails: FC<ITrackDetails> = ({
                     {renderBlock("Жанри:", genre)}
                     {renderBlock("Теги:", tags?.map(tag => tag.name).join(", "))}
                     {renderBlock("Тривалість:", duration)}
-                    {renderBlock("Дата завантаження:", parseDate(date))}
+                    {renderBlock("Дата завантаження:", date)}
                     {renderBlock("Головний виконавець:", artist?.map(a => a.name).join(", "))}
                 </>
             )}
@@ -93,7 +93,7 @@ export const TrackDetails: FC<ITrackDetails> = ({
                             text="Результати голусування"
                             style={{ padding: "5px 10px", fontSize: "14px" }} />
                     </TrackInfoBlock>
-                    {renderBlock("Назва колекції:",collectionName)}
+                    {renderBlock("Назва колекції:", collectionName)}
                     {renderBlock("Опис колекції:", collectionDescription)}
                     {renderBlock("Тривалість:", duration)}
                     {renderBlock("Дата завантаження:", parseDate(date))}

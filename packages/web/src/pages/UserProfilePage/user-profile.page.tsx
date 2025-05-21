@@ -13,7 +13,7 @@ export const UserProfilePage: FC = () => {
     const { id } = useParams();
     const { data: user, isLoading } = useGetUser(id!);
     const mainUser = useAuthStore(state => state.user)!
-    const { data: collections = [], isLoading: loadCollections } = useUserCollections(id);
+    const { data: collections = [], isLoading: loadCollections } = useUserCollections(id!);
 
     const isMainUser = mainUser ? id === mainUser.id : false;
 

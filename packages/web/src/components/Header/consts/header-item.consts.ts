@@ -7,5 +7,5 @@ export type NavItem = { title: string, icon: string, path: string }
 
 export const HeaderItems: NavItem[] = [
     { title: 'Жанри', icon: genre, path: ROUTES.GENRE_PAGE },
-    { title: "Колекції", icon: collections, path: ROUTES.HOME }
+    { title: "Колекції", icon: collections, path: ROUTES.COLLECTIONS_PAGE }
 ]

@@ -10,7 +10,7 @@ interface LayoutProps {
 const Container = styled.div`
   width: 100%;
   background-color: ${COLORS.dark_main};
-  height: 100%;
+  height: 575px;
   border-radius: 5px;
   margin: 0 auto;
   padding: 0 10px;

@@ -14,5 +14,6 @@ export enum ROUTES {
     FORGOT_PASSWORD_PAGE = "/forgot-password",
     RESET_PASSWORD_PAGE = "/reset-password",
     CHAT_PAGE = "/chat",
-    GENRE_PAGE = "/genres"
+    GENRE_PAGE = "/genres", 
+    COLLECTIONS_PAGE = "/collections"
 }

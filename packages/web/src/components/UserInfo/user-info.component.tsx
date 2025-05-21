@@ -4,6 +4,7 @@ import { UserBlock, Wrapper, Avatar, Name, Stats, Bio, SettingsIcon } from "./us
 import { FiSettings } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
+import { Button } from "@ui/Btn/btn.component";
 
 
 interface IUserInfoProps {
@@ -27,6 +28,13 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser }) => {
                         <Bio>
                             <strong>О собі:</strong> {user.profileInfo || "Юзер забув це заповнити"}
                         </Bio>
+                        {!isMainUser && (
+                            <Button
+                                text="Надіслати повідомлення"
+                                style={{ padding: "5px", marginTop: "10px" }}
+                                onClick={() => navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${user.id}`)}/>
+                        )}
+
                     </div>
                 </div>
                 {isMainUser && (

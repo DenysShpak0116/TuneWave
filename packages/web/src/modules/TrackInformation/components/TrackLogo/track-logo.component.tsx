@@ -9,6 +9,8 @@ import crossIcon from "@assets/images/ic_cross.png"
 import { useDeleteTrack } from "pages/TrackPage/hooks/useGetTrack";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
+import plusIcon from "@assets/images/ic_plus.png"
+import { SelectCollectionModal } from "@modules/SelectCollectionModal";
 
 type ReactionType = "like" | "dislike" | "none";
 
@@ -25,6 +27,7 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
     const navigate = useNavigate();
     const [reaction, setReaction] = useState<"like" | "dislike" | null>(type === 'none' ? null : type);
     const { mutate: deleteTrackMutate } = useDeleteTrack();
+    const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] = useState<boolean>(false);
 
     const handleReaction = (type: "like" | "dislike") => {
         const isSameReaction = reaction === type;
@@ -50,6 +53,9 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
                     <IconButton onClick={() => handleReaction("dislike")}>
                         <InteractionIcon src={reaction === "dislike" ? dislikeFilledIcon : dislikeIcon} />
                     </IconButton>
+                    <IconButton onClick={() => setIsAddToCollectionModalOpen(true)}>
+                        <InteractionIcon src={plusIcon} />
+                    </IconButton>
                     {isUserMainTrack && (
                         <IconButton onClick={handleDelete}>
                             <InteractionIcon src={crossIcon} />
@@ -57,6 +63,13 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
                     )}
                 </InteractionContainer>
             )}
+
+            <SelectCollectionModal
+                trackId={songId}
+                userId={userId!}
+                active={isAddToCollectionModalOpen}
+                setActive={setIsAddToCollectionModalOpen}
+            />
         </LogoContainer>
     );
 };
