@@ -49,9 +49,15 @@ func NewSongService(
 }
 
 func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]dtos.SongExtendedDTO, error) {
-	songs, err := ss.Repository.NewQuery(ctx).
-		Where("title LIKE ?", "%"+search+"%").
-		Order(fmt.Sprintf("%s %s", sortBy, order)).
+	query := ss.Repository.NewQuery(ctx).
+		Join("LEFT JOIN song_authors ON song_authors.song_id = songs.id").
+		Join("LEFT JOIN authors ON authors.id = song_authors.author_id").
+		Join("LEFT JOIN song_tags ON song_tags.song_id = songs.id").
+		Join("LEFT JOIN tags ON tags.id = song_tags.tag_id").
+		Where("songs.title ILIKE ? OR authors.name ILIKE ? OR songs.genre ILIKE ? OR tags.name ILIKE ?",
+			"%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%").
+		Order(fmt.Sprintf("songs.%s %s", sortBy, order)).
+		Group("songs.id").
 		Skip((page - 1) * limit).
 		Take(limit).
 		Preload("User").
@@ -60,8 +66,9 @@ func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order strin
 		Preload("SongTags").
 		Preload("SongTags.Tag").
 		Preload("Comments").
-		Preload("Comments.User").
-		Find()
+		Preload("Comments.User")
+
+	songs, err := query.Find()
 	if err != nil {
 		return nil, err
 	}
