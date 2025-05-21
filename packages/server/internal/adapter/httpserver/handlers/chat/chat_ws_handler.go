@@ -43,7 +43,6 @@ func NewChatHandler(
 }
 
 // ServeWs handles WebSocket connections between users for private chats.
-//
 // @Summary      WebSocket connection for privat chat
 // @Description  Setting WebSocket connection between authorised user and target user by `targetUserId`.
 // @Tags         chat

@@ -92,8 +92,6 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		printChat(chat)
-
 		var (
 			userAvatar   string
 			username     string
@@ -122,8 +120,6 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 		if len(chat.Messages) == 0 {
 			continue
 		}
-
-		printChat(chat)
 
 		var (
 			userAvatar   string
