@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -23,17 +25,20 @@ type ChatHandler struct {
 	Manager        *ws.HubManager
 	ChatService    services.ChatService
 	MessageService services.MessageService
+	JWTSecret      string
 }
 
 func NewChatHandler(
 	manager *ws.HubManager,
 	chatService services.ChatService,
 	messageService services.MessageService,
+	cfg *config.Config,
 ) *ChatHandler {
 	return &ChatHandler{
 		Manager:        manager,
 		ChatService:    chatService,
 		MessageService: messageService,
+		JWTSecret:      cfg.JwtSecret,
 	}
 }
 
@@ -44,10 +49,9 @@ func NewChatHandler(
 // @Tags         chat
 // @Produce      json
 // @Param        targetUserId query string true "UUID of target user"
+// @Param        authToken query string true "Bearer auth token"
 // @Router       /ws/chat [get]
-// @Security     BearerAuth
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
-	log.Printf("SERVE WS WSWS\n")
 	targetID := r.URL.Query().Get("targetUserId")
 	targetUUID, err := uuid.Parse(targetID)
 	if err != nil {
@@ -55,16 +59,10 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// claimsRaw := r.Context().Value("userID")
-	// claims, ok := claimsRaw.(jwt.MapClaims)
-	// if !ok {
-	// 	handlers.RespondWithError(w, r, http.StatusInternalServerError, "Invalid claims", nil)
-	// 	return
-	// }
-
-	userIDRaw, ok := r.Context().Value("userID").(string)
-	if !ok {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", nil)
+	token := r.URL.Query().Get("authToken")
+	userIDRaw, err := helpers.ParseToken(ch.JWTSecret, token)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid auth token", nil)
 		return
 	}
 

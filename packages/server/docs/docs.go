@@ -1537,11 +1537,6 @@ const docTemplate = `{
         },
         "/ws/chat": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Setting WebSocket connection between authorised user and target user by ` + "`" + `targetUserId` + "`" + `.",
                 "produces": [
                     "application/json"
@@ -1555,6 +1550,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UUID of target user",
                         "name": "targetUserId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer auth token",
+                        "name": "authToken",
                         "in": "query",
                         "required": true
                     }

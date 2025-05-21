@@ -60,7 +60,10 @@ type ChatPreview struct {
 // @Produce json
 // @Router /chats [get]
 func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
-	userId := r.Context().Value("userID").(string)
+	userId, ok := r.Context().Value("userID").(string)
+	if !ok {
+		fmt.Printf("token: %+v\n", r.Context().Value("userID"))
+	}
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid user ID", err)
@@ -88,6 +91,9 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 		if len(chat.Messages) == 0 {
 			continue
 		}
+
+		printChat(chat)
+
 		var (
 			userAvatar   string
 			username     string
@@ -99,7 +105,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 			username = chat.User1.Username
 			targetUserID = chat.User1.ID
 		} else {
-			userAvatar = chat.User2.ProfileInfo
+			userAvatar = chat.User2.ProfilePicture
 			username = chat.User2.Username
 			targetUserID = chat.User2.ID
 		}
@@ -116,6 +122,9 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 		if len(chat.Messages) == 0 {
 			continue
 		}
+
+		printChat(chat)
+
 		var (
 			userAvatar   string
 			username     string
@@ -127,7 +136,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 			username = chat.User2.Username
 			targetUserID = chat.User2.ID
 		} else {
-			userAvatar = chat.User1.ProfileInfo
+			userAvatar = chat.User1.ProfilePicture
 			username = chat.User1.Username
 			targetUserID = chat.User1.ID
 		}

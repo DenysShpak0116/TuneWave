@@ -139,16 +139,13 @@ func NewRouter(
 		r.Delete("/{id}", criterionHandler.DeleteCriterion)
 	})
 
-	router.Route("/ws", func(r chi.Router) {
-		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
-		r.Get("/chat", chatHandler.ServeWs)
-	})
+	router.Get("/chat", chatHandler.ServeWs)
 
 	router.Route("/", func(r chi.Router) {
 		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 		r.Get("/chats", userHandler.GetChats)
 	})
-	
+
 	router.Get("/genres", songHandler.GetGenres)
 
 	return router
