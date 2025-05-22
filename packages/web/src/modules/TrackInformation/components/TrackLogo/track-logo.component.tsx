@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 import plusIcon from "@assets/images/ic_plus.png"
 import { SelectCollectionModal } from "@modules/SelectCollectionModal";
+import { ConfirmDeleteModal } from "@components/ConfirmDeleteModal/confirmDelete.modal";
 
 type ReactionType = "like" | "dislike" | "none";
 
@@ -28,6 +29,7 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
     const [reaction, setReaction] = useState<"like" | "dislike" | null>(type === 'none' ? null : type);
     const { mutate: deleteTrackMutate } = useDeleteTrack();
     const [isAddToCollectionModalOpen, setIsAddToCollectionModalOpen] = useState<boolean>(false);
+    const [isDeleteConfirmationModalOpen, setIsDeleteConfirmationModalOpen] = useState<boolean>(false);
 
     const handleReaction = (type: "like" | "dislike") => {
         const isSameReaction = reaction === type;
@@ -57,7 +59,7 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
                         <InteractionIcon src={plusIcon} />
                     </IconButton>
                     {isUserMainTrack && (
-                        <IconButton onClick={handleDelete}>
+                        <IconButton onClick={() => setIsDeleteConfirmationModalOpen(true)}>
                             <InteractionIcon src={crossIcon} />
                         </IconButton>
                     )}
@@ -70,6 +72,12 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
                 active={isAddToCollectionModalOpen}
                 setActive={setIsAddToCollectionModalOpen}
             />
+            <ConfirmDeleteModal
+                active={isDeleteConfirmationModalOpen}
+                setActive={setIsDeleteConfirmationModalOpen}
+                onDelete={handleDelete}
+            />
+
         </LogoContainer>
     );
 };

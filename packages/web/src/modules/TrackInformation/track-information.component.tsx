@@ -42,7 +42,7 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
             )}
 
             <TrackDetails
-                isMainUserTrack={isMainUserTrack}
+                isMainUser={isMainUserTrack}
                 trackId={song.id}
                 userId={song.user.id}
                 username={song.user.username}

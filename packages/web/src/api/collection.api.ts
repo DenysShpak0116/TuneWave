@@ -34,3 +34,17 @@ export const getCollectionById = async (id: string) => {
     const { data } = await $api.get(`/collections/${id}`)
     return data;
 }
+
+export const updateCollection = async (collectionId: string, formData: FormData) => {
+    try {
+        const { data } = await $api.put(`/collections/${collectionId}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        })
+        return data
+    }
+    catch (err) {
+        console.log(err)
+    }
+};

@@ -1,4 +1,10 @@
+import { COLORS } from "@consts/colors.consts";
 import styled from "styled-components";
+
+
+interface CardProps {
+  background: string;
+}
 
 export const Grid = styled.div`
   display: grid;
@@ -6,13 +12,15 @@ export const Grid = styled.div`
   gap: 20px;
 `;
 
-export const Card = styled.div`
+export const Card = styled.div<CardProps>`
   position: relative;
   height: 180px;
-  background-color: #4b4b4b;
+  background: ${(props) => props.background};
   border-radius: 12px;
   padding: 16px;
   overflow: hidden;
+  transition: background 0.3s ease;
+  cursor: pointer;
 `;
 
 export const GenreTitle = styled.h3`

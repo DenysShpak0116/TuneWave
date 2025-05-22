@@ -9,10 +9,12 @@ import { getTotalDuration } from "helpers/song/getTotalDuration";
 import { TrackDetails } from "@modules/TrackInformation/components/TrackDetails/track-details.component";
 import { TrackPagePlayer } from "@components/TrackPagePlayer/track-page-player.component";
 import { CollectionSongs } from "@components/CollectionSongs/collection-songs.component";
+import { useAuthStore } from "@modules/LoginForm/store/store";
 
 export const CollectionPage: FC = () => {
+    const userId = useAuthStore(store => store.user?.id)
     const { id } = useParams();
-    const { data: collection, isLoading } = useGetCollection(id!);
+    const { data: collection, isLoading, refetch } = useGetCollection(id!);
     const { data: hasAllVectors = false, isLoading: IsVectorLoading } = useHasCollectionHaveAllVectors(id!)
 
     if (IsVectorLoading || isLoading || !collection)
@@ -21,6 +23,8 @@ export const CollectionPage: FC = () => {
                 <Loader />
             </MainLayout>
         );
+
+    const isMainUserCollection = userId === collection.user.id
 
     const total = getTotalDuration(collection.collectionSongs);
 
@@ -34,6 +38,7 @@ export const CollectionPage: FC = () => {
                     collectionId={collection.id}
                 />
                 <TrackDetails
+                    isMainUser={isMainUserCollection}
                     collectionId={collection.id}
                     duration={total}
                     date={collection.createdAt}
@@ -42,12 +47,13 @@ export const CollectionPage: FC = () => {
                     type="collection"
                     collectionName={collection.title}
                     collectionDescription={collection.description} />
-                {collection.collectionSongs.length > 0  && (
+                {collection.collectionSongs.length > 0 && (
                     <TrackPagePlayer
                         song={collection.collectionSongs[0]}
                     />
                 )}
                 <CollectionSongs
+                    refetchFn={refetch}
                     songs={collection.collectionSongs} />
             </TrackInformationLayout>
         </MainLayout>

@@ -16,9 +16,10 @@ import { usePlayerStore } from "@modules/Player/store/player.store";
 
 interface ICollectionSongsProps {
     songs: ISong[];
+    refetchFn: () => void;
 }
 
-export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
+export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn }) => {
     const [activeSongId, setActiveSongId] = useState<string | null>(null);
     const pausePlayer = usePlayerStore((state) => state.pausePlayer);
 
@@ -52,6 +53,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
 
             {songs.map((song, index) => (
                 <CollectionSongRow
+                    refetchFn={refetchFn}
                     key={song.id}
                     song={song}
                     index={index}
@@ -67,7 +69,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs }) => {
             {songs.length > 0 ? (
                 renderPlaylist()
             ) : (
-                <p style={{textAlign: "center", }}>У цьому плейлисті поки немає пісень.</p>
+                <p style={{ textAlign: "center", }}>У цьому плейлисті поки немає пісень.</p>
             )}
         </CollectionSongsContainer>
     );

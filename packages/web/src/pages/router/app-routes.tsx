@@ -24,6 +24,8 @@ import { ResetPasswordPage } from "pages/ResetPasswordPage/reset-password.page";
 import { ChatPage } from "pages/ChatPage/chat.page";
 import { GenrePage } from "pages/GenrePage/genre.page";
 import { CollectionsPage } from "pages/CollectionsPage/collectionsPage";
+import { GenreSongsPage } from "pages/GenreSongsPage/genre-songs.page";
+import { UpdateCollectionPage } from "pages/UpdateCollectionPage/update-collection.page";
 
 export const AppRoutes = () => {
     return (
@@ -47,6 +49,8 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.CHAT_PAGE} element={<ChatPage />} />
                 <Route path={ROUTES.GENRE_PAGE} element={<GenrePage />} />
                 <Route path={ROUTES.COLLECTIONS_PAGE} element={<CollectionsPage />} />
+                <Route path={ROUTES.GENRE_SONGS} element={<GenreSongsPage />} />
+                <Route path={ROUTES.UPDATE_COLLECTION} element={<UpdateCollectionPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>

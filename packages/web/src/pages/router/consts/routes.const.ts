@@ -15,5 +15,7 @@ export enum ROUTES {
     RESET_PASSWORD_PAGE = "/reset-password",
     CHAT_PAGE = "/chat",
     GENRE_PAGE = "/genres", 
-    COLLECTIONS_PAGE = "/collections"
+    COLLECTIONS_PAGE = "/collections",
+    GENRE_SONGS = "/songs/:genre",
+    UPDATE_COLLECTION = "/update-collection/:id",
 }

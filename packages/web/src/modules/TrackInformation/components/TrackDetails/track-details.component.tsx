@@ -24,7 +24,7 @@ interface ITrackDetails {
     username: string;
     userId: string;
     type: "collection" | "track";
-    isMainUserTrack?: boolean,
+    isMainUser: boolean,
     collectionName?: string,
     collectionDescription?: string;
 }
@@ -32,7 +32,7 @@ interface ITrackDetails {
 export const TrackDetails: FC<ITrackDetails> = ({
     trackId,
     collectionId,
-    isMainUserTrack,
+    isMainUser,
     type,
     genre,
     tags,
@@ -57,7 +57,7 @@ export const TrackDetails: FC<ITrackDetails> = ({
         <TrackDetailsContainer>
             {type === "track" && (
                 <>
-                    {isMainUserTrack && (
+                    {isMainUser && (
                         <TrackInfoBlock>
                             <Button
                                 onClick={() => navigate(ROUTES.UPDATE_TRACK_PAGE.replace(":id", trackId!))}
@@ -91,6 +91,12 @@ export const TrackDetails: FC<ITrackDetails> = ({
                         <Button
                             onClick={() => navigate(ROUTES.COLLECTIVE_DECISION_PAGE.replace(":id", collectionId!))}
                             text="Результати голусування"
+                            style={{ padding: "5px 10px", fontSize: "14px" }} />
+                    </TrackInfoBlock>
+                    <TrackInfoBlock>
+                        <Button
+                            onClick={() => navigate(ROUTES.UPDATE_COLLECTION.replace(":id", collectionId!))}
+                            text="Редагувати"
                             style={{ padding: "5px 10px", fontSize: "14px" }} />
                     </TrackInfoBlock>
                     {renderBlock("Назва колекції:", collectionName)}

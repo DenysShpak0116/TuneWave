@@ -129,8 +129,30 @@ export const Duration = styled.div`
 `;
 
 export const Options = styled.div`
+  position: relative;
   text-align: center;
   color: ${COLORS.dark_secondary};
   font-size: 18px;
   cursor: pointer;
+`;
+
+export const OptionsPopup = styled.div`
+    position: absolute;
+    background-color: ${COLORS.dark_main};
+    border-radius: 8px;
+    padding: 5px;
+    z-index: 100;
+    right: 0;
+    top: 24px;
+`;
+
+export const OptionButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    color: ${COLORS.dark_additional};
 `;

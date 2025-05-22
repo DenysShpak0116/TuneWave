@@ -64,5 +64,11 @@ export const getGenres = async () => {
 }
 
 export const addListening = async (songId: string, userId: string) => {
-    return $api.post(`songs/${songId}/listen/${userId}`)
+    return await $api.post(`songs/${songId}/listen/${userId}`)
 }
+
+export const removeSongFromCollection = async (songId: string, collectionId: string) => {
+    return await $api.delete(`songs/${songId}/remove-from-collection`, {
+        data: { collectionId },
+    });
+};

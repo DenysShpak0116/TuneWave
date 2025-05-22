@@ -7,7 +7,8 @@ export const Wrapper = styled.div`
 
 export const SongCardsContainer = styled.div`
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
     column-gap: 28px;
     margin-top: 16px;
     margin-bottom: 24px;
