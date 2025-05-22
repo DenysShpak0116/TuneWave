@@ -69,15 +69,19 @@ func NewRouter(
 	})
 
 	router.Route("/users", func(r chi.Router) {
-		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
-
 		r.Get("/", userHandler.GetAll)
-		r.Get("/{id}", userHandler.GetByID)
-		r.Post("/{id}/follow", userHandler.FollowUser)
-		r.Delete("/{id}/unfollow", userHandler.UnfollowUser)
-		r.Put("/{id}", userHandler.Update)
-		r.Put("/avatar/", userHandler.UpdateAvatar)
-		r.Delete("/{id}", userHandler.Delete)
+		r.Get("/{id}/collections", userHandler.GetUserCollections)
+
+		r.Group(func(protected chi.Router) {
+			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
+
+			protected.Get("/{id}", userHandler.GetByID)
+			protected.Post("/{id}/follow", userHandler.FollowUser)
+			protected.Delete("/{id}/unfollow", userHandler.UnfollowUser)
+			protected.Put("/{id}", userHandler.Update)
+			protected.Put("/avatar/", userHandler.UpdateAvatar)
+			protected.Delete("/{id}", userHandler.Delete)
+		})
 	})
 
 	router.Route("/songs", func(r chi.Router) {

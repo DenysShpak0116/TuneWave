@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -159,4 +160,53 @@ func printChat(chat interface{}) {
 		return
 	}
 	fmt.Printf("Chat:\n%s\n", string(bytes))
+}
+
+// GetUserCollections godoc
+// @Tags user
+// @Produce json
+// @Param id path string true "User id"
+// @Router /users/{id}/collections [get]
+func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "id")
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "wrong user id", err)
+		return
+	}
+
+	users, err := uh.UserService.Where(context.Background(), &models.User{
+		BaseModel: models.BaseModel{
+			ID: userUUID,
+		},
+	}, "UserCollections", "UserCollections.Collection", "UserCollections.Collection.User")
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "could not find user", err)
+		return
+	}
+	if len(users) == 0 {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "user does not exist", err)
+		return
+	}
+
+	user := users[0]
+
+	collectionsDTO := make([]dtos.CollectionDTO, 0)
+	for _, userCollection := range user.UserCollections {
+		collectionsDTO = append(collectionsDTO, dtos.CollectionDTO{
+			ID:       userCollection.Collection.ID,
+			Title:    userCollection.Collection.Title,
+			CoverURL: userCollection.Collection.CoverURL,
+			User: dtos.UserDTO{
+				ID:             userCollection.Collection.User.ID,
+				Username:       userCollection.Collection.User.Username,
+				Role:           userCollection.Collection.User.Role,
+				ProfilePicture: userCollection.Collection.User.ProfilePicture,
+				ProfileInfo:    userCollection.Collection.User.ProfileInfo,
+			},
+		})
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, collectionsDTO)
 }

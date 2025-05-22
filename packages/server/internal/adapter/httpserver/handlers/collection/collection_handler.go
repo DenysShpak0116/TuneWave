@@ -366,7 +366,15 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err = ch.UserCollectionService.Create(r.Context(), &models.UserCollection{
+	if userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
+		UserID:       userUUID,
+		CollectionID: collectionUUID,
+	}); err != nil || len(userCollections) > 0 {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "could not add collection", err)
+		return
+	}
+
+	err = ch.UserCollectionService.Create(context.Background(), &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	})
@@ -375,7 +383,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userCollections, err := ch.UserCollectionService.Where(r.Context(), &models.UserCollection{
+	userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
 		UserID: userUUID,
 	}, "Collection")
 	if err != nil {

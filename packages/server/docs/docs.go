@@ -1628,6 +1628,26 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/users/{id}/collections": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/users/{id}/follow": {
             "post": {
                 "security": [
