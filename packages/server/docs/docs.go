@@ -1269,7 +1269,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/song.SongToCollectionRequest"
+                            "$ref": "#/definitions/song.SongCollectionRequest"
                         }
                     }
                 ],
@@ -1373,6 +1373,45 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/song.songReactionRequest"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/songs/{id}/remove-from-collection": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove song from collection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Remove song from collection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Collection ID",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/song.SongCollectionRequest"
                         }
                     }
                 ],
@@ -1698,7 +1737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "song.SongToCollectionRequest": {
+        "song.SongCollectionRequest": {
             "type": "object",
             "properties": {
                 "collectionId": {

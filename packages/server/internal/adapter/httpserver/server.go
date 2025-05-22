@@ -94,6 +94,7 @@ func NewRouter(
 			protected.Post("/{id}/reaction", songHandler.SetReaction)
 
 			protected.Post("/{id}/add-to-collection", songHandler.AddToCollection)
+			protected.Delete("/{id}/remove-from-collection", songHandler.RemoveFromCollection)
 		})
 	})
 

@@ -15,12 +15,14 @@ import (
 )
 
 type SongHandler struct {
-	SongService services.SongService
+	SongService           services.SongService
+	CollectionSongService services.CollectionSongService
 }
 
-func NewSongHandler(songService services.SongService) *SongHandler {
+func NewSongHandler(songService services.SongService, collectionSongService services.CollectionSongService) *SongHandler {
 	return &SongHandler{
-		SongService: songService,
+		SongService:           songService,
+		CollectionSongService: collectionSongService,
 	}
 }
 
