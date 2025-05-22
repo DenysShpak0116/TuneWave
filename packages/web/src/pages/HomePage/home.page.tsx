@@ -4,13 +4,14 @@ import { MainLayout } from "@ui/layout/main-layout";
 import { getUserFromCookie } from "helpers/Auth/decoder";
 import { FC, useEffect, useState } from "react";
 import { useTracks } from "./useTracks";
+import { useGetTopCollections } from "./hooks/useGetTopCollections";
 
 export const HomePage: FC = () => {
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
     const setUser = useAuthStore((state) => state.setUser);
     const [limit] = useState<number>(5)
     const { data: tracks, isLoading } = useTracks({ limit: limit });
-
+    const { data: collections, isLoading: collectionLoading } = useGetTopCollections({ limit: limit })
 
     useEffect(() => {
         const tryGetUser = async () => {
@@ -27,8 +28,12 @@ export const HomePage: FC = () => {
     return (
         <>
             <MainLayout>
-                {!isLoading && Array.isArray(tracks) && (
-                    <SongCards songs={tracks} text="ПОПУЛЯРНІ МУЗИЧНІ ТВОРИ"/>
+                {!isLoading && !collectionLoading && Array.isArray(tracks) && (
+                    <>
+                        <SongCards songs={tracks} text="ПОПУЛЯРНІ МУЗИЧНІ ТВОРИ" />
+                        <SongCards collections={collections} text="ПОПУЛЯРНІ ПЛЕЙЛИСТИ" />
+                    </>
+
                 )}
             </MainLayout>
         </>

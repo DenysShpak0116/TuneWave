@@ -11,10 +11,12 @@ import search from "@assets/images/ic_search.png"
 import { SearchModal } from "@modules/SearchModal"
 import plusIcon from "@assets/images/ic_plus.png"
 import chatIcon from "@assets/images/ic chat.png"
+import { useLogout } from "./hooks/useLogout"
 
 export const Header: FC = () => {
     const navigate = useNavigate()
-    const { isAuth, user, logout } = useAuthStore()
+    const { isAuth, user } = useAuthStore()
+    const { mutate: logout } = useLogout()
     const [isSearhModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
 
     return (

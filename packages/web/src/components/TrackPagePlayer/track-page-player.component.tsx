@@ -1,7 +1,8 @@
 import { FC, useEffect } from "react";
-import { TrackPagePlayerContainer, TrackTitle } from "./track-page-player.style";
+import { ListeningContainer, TrackPagePlayerContainer, TrackTitle } from "./track-page-player.style";
 import { ISong } from "types/song/song.type";
 import { usePlayerStore } from "@modules/Player/store/player.store";
+import musicNote from "@assets/images/ic_musical_note.png"
 
 interface ITrackPagePlayerProps {
     song: ISong;
@@ -69,6 +70,10 @@ export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song }) => {
 
     return (
         <TrackPagePlayerContainer>
+            <ListeningContainer>
+                <img src={musicNote} alt="note" />
+                <p>{song.listenings}</p>
+            </ListeningContainer>
             <TrackTitle>
                 {song.authors?.map((s) => s.name).join(", ") ?? "Невідомий автор"} - {song.title}
             </TrackTitle>

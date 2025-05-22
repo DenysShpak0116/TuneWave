@@ -14,6 +14,7 @@ import { ROUTES } from "pages/router/consts/routes.const";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@modules/LoginForm/store/store";
 import { SelectCollectionModal } from "@modules/SelectCollectionModal";
+import { useAddListening } from "./hooks/useAddListening";
 
 declare global {
     interface Window {
@@ -38,6 +39,7 @@ export const Player: FC = () => {
     } = usePlayerStore();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { mutate: addListening } = useAddListening()
 
     useEffect(() => {
         if (!trackUrl) {
@@ -83,6 +85,10 @@ export const Player: FC = () => {
             trackName,
             trackArtist
         }));
+
+        if (userId) {
+            addListening({ songId: trackId, userId: userId })
+        }
 
         const syncHandler = (e: StorageEvent) => {
             if (e.key === "player-sync" && e.newValue) {

@@ -1,3 +1,4 @@
+import { GetCollectionParams } from "types/collections/getCollectionParams";
 import { $api } from "./base.api";
 
 export const createCollection = async (formData: FormData) => {
@@ -19,7 +20,12 @@ export const getByUserId = async () => {
     return data;
 }
 
-export const getCollections = async () => {
+export const getCollections = async (params: Partial<GetCollectionParams> = {}) => {
+    const { data } = await $api.get("/collections/", { params })
+    return data
+}
+
+export const getTopCollections = async () => {
     const { data } = await $api.get("/collections/")
     return data
 }

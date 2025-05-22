@@ -10,6 +10,7 @@ export const SongCardsContainer = styled.div`
     grid-template-columns: repeat(5, 1fr);
     column-gap: 28px;
     margin-top: 16px;
+    margin-bottom: 24px;
 `;
 
 export const SongsText = styled.h3`

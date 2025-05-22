@@ -15,6 +15,12 @@ export const TrackPagePlayerContainer = styled.div`
   max-height: 300px;
 `;
 
+export const ListeningContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`
+
 export const TrackTitle = styled.h1`
   font-size: 48;
   font-weight: 600;
