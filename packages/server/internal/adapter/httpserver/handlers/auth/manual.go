@@ -207,6 +207,18 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "authData",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+
 	render.JSON(w, r, map[string]string{
 		"message": "Successfully logged out",
 	})
