@@ -15,7 +15,7 @@ type SongAuthor struct {
 
 	Role string `json:"role"`
 
-	SongID   uuid.UUID `gorm:"type:uuid;constraint:OnDelete:CASCADE" json:"songId"`
-	AuthorID uuid.UUID `gorm:"type:uuid;constraint:OnDelete:CASCADE" json:"authorId"`
-	Author   Author    `gorm:"foreignKey:AuthorID"`
+	SongID   uuid.UUID `gorm:"constraint:OnDelete:CASCADE" json:"songId"`
+	AuthorID uuid.UUID `gorm:"constraint:OnDelete:CASCADE" json:"authorId"`
+	Author   Author
 }

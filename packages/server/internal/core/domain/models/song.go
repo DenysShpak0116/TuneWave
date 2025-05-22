@@ -16,12 +16,12 @@ type Song struct {
 	Duration   time.Duration `json:"duration"`
 	Listenings int64         `json:"listenings"`
 
-	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
-	User   User      `gorm:"foreignKey:UserID"`
+	UserID uuid.UUID `json:"userId"`
+	User   User
 
-	SongTags        []SongTag    `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	Comments        []Comment    `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	Authors         []SongAuthor `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	CollectionSongs []CollectionSong
-	Reactions       []UserReaction `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	SongTags        []SongTag        `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	Comments        []Comment        `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	Authors         []SongAuthor     `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	CollectionSongs []CollectionSong `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	Reactions       []UserReaction   `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
 }

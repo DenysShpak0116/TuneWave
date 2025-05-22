@@ -54,6 +54,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(repository.NewRepository[models.Vector])
 	container.Provide(repository.NewRepository[models.Result])
 	container.Provide(repository.NewRepository[models.UserCollection])
+	container.Provide(repository.NewRepository[models.UserFollower])
 
 	// service
 	container.Provide(service.NewMailService)
@@ -69,6 +70,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(service.NewVectorService)
 	container.Provide(service.NewResultService)
 	container.Provide(service.NewUserCollectionService)
+	container.Provide(service.NewUserFollowerService)
 	container.Provide(ws.NewHubManager)
 
 	// handlers

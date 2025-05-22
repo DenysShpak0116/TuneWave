@@ -26,4 +26,6 @@ type UserExtendedDTO struct {
 	Songs       []SongDTO       `json:"songs"`
 	Collections []CollectionDTO `json:"collections"`
 	Chats       []ChatDTO       `json:"chats"`
+	Follows     []UserDTO       `json:"follows"`
+	Followers   []UserDTO       `json:"followers"`
 }

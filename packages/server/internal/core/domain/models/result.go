@@ -7,9 +7,9 @@ type Result struct {
 
 	SongRang int `json:"songRang"`
 
-	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
-	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	UserID uuid.UUID `json:"userId"`
+	User   User      `gorm:"constraint:OnDelete:CASCADE;"`
 
-	CollectionSongID uuid.UUID      `gorm:"type:uuid" json:"collectionSongId"`
-	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE;"`
+	CollectionSongID uuid.UUID      `json:"collectionSongId"`
+	CollectionSong   CollectionSong `gorm:"constraint:OnDelete:CASCADE;"`
 }

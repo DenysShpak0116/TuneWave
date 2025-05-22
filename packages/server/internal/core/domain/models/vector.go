@@ -7,9 +7,9 @@ type Vector struct {
 
 	Mark string `json:"mark"`
 
-	CriterionID uuid.UUID `gorm:"type:uuid" json:"criterionId"`
-	Criterion   Criterion `gorm:"foreignKey:CriterionID;constraint:OnDelete:CASCADE;"`
+	CriterionID uuid.UUID `json:"criterionId"`
+	Criterion   Criterion `gorm:"constraint:OnDelete:CASCADE;"`
 
-	CollectionSongID uuid.UUID      `gorm:"type:uuid" json:"collectionSongId"`
-	CollectionSong   CollectionSong `gorm:"foreignKey:CollectionSongID;constraint:OnDelete:CASCADE;"`
+	CollectionSongID uuid.UUID      `json:"collectionSongId"`
+	CollectionSong   CollectionSong `gorm:"constraint:OnDelete:CASCADE;"`
 }

@@ -17,7 +17,9 @@ type User struct {
 	Reactions       []UserReaction   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	UserCollections []UserCollection `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 
-	Chats1   []Chat    `gorm:"foreignKey:UserID1;references:ID" json:"chats1"`
-	Chats2   []Chat    `gorm:"foreignKey:UserID2;references:ID" json:"chats2"`
-	Messages []Message `gorm:"foreignKey:SenderID" json:"messages"`
+	Chats1    []Chat         `gorm:"foreignKey:UserID1;" json:"chats1"`
+	Chats2    []Chat         `gorm:"foreignKey:UserID2;" json:"chats2"`
+	Messages  []Message      `gorm:"foreignKey:SenderID" json:"messages"`
+	Followers []UserFollower `gorm:"foreignKey:UserID;" json:"followers"`
+	Follows   []UserFollower `gorm:"foreignKey:FollowerID;" json:"follows"`
 }

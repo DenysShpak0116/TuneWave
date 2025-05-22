@@ -13,9 +13,9 @@ type Tag struct {
 type SongTag struct {
 	BaseModel
 
-	TagID uuid.UUID `gorm:"type:uuid" json:"tagId"`
-	Tag   Tag       `gorm:"foreignKey:TagID"`
+	TagID uuid.UUID `json:"tagId"`
+	Tag   Tag
 
-	SongID uuid.UUID `gorm:"type:uuid" json:"songId"`
-	Song   Song      `gorm:"foreignKey:SongID"`
+	SongID uuid.UUID `json:"songId"`
+	Song   Song
 }

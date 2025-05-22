@@ -6,9 +6,9 @@ type UserReaction struct {
 	BaseModel
 
 	Type   string    `json:"type"`
-	UserID uuid.UUID `gorm:"type:uuid" json:"userId"`
-	User   User      `gorm:"foreignKey:UserID"`
+	UserID uuid.UUID `json:"userId"`
+	User   User
 
-	SongID uuid.UUID `gorm:"type:uuid" json:"songId"`
-	Song   Song      `gorm:"foreignKey:SongID"`
+	SongID uuid.UUID `json:"songId"`
+	Song   Song
 }

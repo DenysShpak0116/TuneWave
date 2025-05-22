@@ -60,8 +60,16 @@ func (us *UserService) GetUsers(
 
 func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.UserExtendedDTO, error) {
 	users, err := us.Repository.NewQuery(ctx).Where("id = ?", id).
-		Preload("Songs").Preload("Collections").Preload("Collections.User").
-		Preload("Chats1").Preload("Chats2").Find()
+		Preload("Songs").
+		Preload("Collections").
+		Preload("Collections.User").
+		Preload("Chats1").
+		Preload("Chats2").
+		Preload("Follows").
+		Preload("Follows.User").
+		Preload("Followers").
+		Preload("Followers.Follower").
+		Find()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by ID: %w", err)
 	}
@@ -116,6 +124,28 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		}
 	}
 
+	followersDTOs := make([]dtos.UserDTO, len(user.Followers))
+	for i, follower := range user.Followers {
+		followersDTOs[i] = dtos.UserDTO{
+			ID:             follower.Follower.ID,
+			Username:       follower.Follower.Username,
+			Role:           follower.Follower.Role,
+			ProfilePicture: follower.Follower.ProfilePicture,
+			ProfileInfo:    follower.Follower.ProfileInfo,
+		}
+	}
+
+	followsDTOs := make([]dtos.UserDTO, len(user.Follows))
+	for i, follow := range user.Follows {
+		followsDTOs[i] = dtos.UserDTO{
+			ID:             follow.User.ID,
+			Username:       follow.User.Username,
+			Role:           follow.User.Role,
+			ProfilePicture: follow.User.ProfilePicture,
+			ProfileInfo:    follow.User.ProfileInfo,
+		}
+	}
+
 	userDTO := &dtos.UserExtendedDTO{
 		ID:             user.ID,
 		Username:       user.Username,
@@ -127,6 +157,8 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		Songs:          songsDTOs,
 		Collections:    collectinsDTOs,
 		Chats:          chatDTOs,
+		Follows:        followsDTOs,
+		Followers:      followersDTOs,
 	}
 
 	return userDTO, nil
