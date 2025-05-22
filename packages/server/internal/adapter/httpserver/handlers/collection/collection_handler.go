@@ -457,3 +457,60 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 }
+
+// GetCollectionSongs godoc
+// @Tags collections
+// @Produce json
+// @Param id path string true "Collection id"
+// @Param search query string false "Search by title"
+// @Param sortBy query string false "Sort by field (added_at, title)" default(added_at)
+// @Param order query string false "Sort order (asc, desc)" default(desc)
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Number of items per page" default(10)
+// @Router /collections/{id}/songs [get]
+func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.Request) {
+	collectionID := chi.URLParam(r, "id")
+	collectionUUID, err := uuid.Parse(collectionID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "Wrong collectionID", err)
+		return
+	}
+
+	search := r.URL.Query().Get("search")
+	sortBy := r.URL.Query().Get("sortBy")
+	order := r.URL.Query().Get("order")
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
+
+	if order == "" {
+		order = "desc"
+	}
+
+	collectionSongs, err := ch.CollectionService.GetCollectionSongs(
+		context.Background(),
+		collectionUUID,
+		search,
+		sortBy,
+		order,
+		page,
+		limit,
+	)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Coult not retrieve collection songs", err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, collectionSongs)
+}

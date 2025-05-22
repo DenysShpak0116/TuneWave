@@ -31,4 +31,5 @@ type CollectionService interface {
 	SaveCollection(ctx context.Context, saveCollectionParams SaveCollectionParams) (*models.Collection, error)
 	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error)
 	UpdateCollection(ctx context.Context, id uuid.UUID, updateCollectionParams UpdateCollectionParams) (*models.Collection, error)
+	GetCollectionSongs(ctx context.Context, collectionID uuid.UUID, search, sortBy, order string, page, limit int) ([]dtos.SongExtendedDTO, error)
 }

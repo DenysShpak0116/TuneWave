@@ -110,6 +110,7 @@ func NewRouter(
 	router.Route("/collections", func(r chi.Router) {
 		r.Get("/", collectionHandler.GetCollections)
 		r.Get("/{id}", collectionHandler.GetCollectionByID)
+		r.Get("/{id}/songs", collectionHandler.GetCollectionSongs)
 		r.Get("/{id}/{song-id}/vectors", vectorHandler.GetSongVectors)
 		r.Post("/{id}/{song-id}/vectors", vectorHandler.CreateSongVectors)
 		r.Put("/{id}/{song-id}/vectors", vectorHandler.UpdateSongVectors)

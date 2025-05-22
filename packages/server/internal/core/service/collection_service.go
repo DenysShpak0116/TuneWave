@@ -252,3 +252,129 @@ func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort,
 	}
 	return collections, nil
 }
+
+func (cs *CollectionService) GetCollectionSongs(
+	ctx context.Context,
+	collectionID uuid.UUID,
+	search, sortBy, order string,
+	page, limit int,
+) ([]dtos.SongExtendedDTO, error) {
+	offset := (page - 1) * limit
+
+	query := cs.CollectionSongRepository.NewQuery(ctx).
+		Where("collection_id = ?", collectionID).
+		Preload("Song").
+		Preload("Song.User").
+		Preload("Song.Authors.Author").
+		Preload("Song.SongTags.Tag").
+		Preload("Song.Comments").
+		Preload("Song.Comments.User").
+		Preload("Song.Reactions")
+
+	query = query.Join("JOIN songs ON songs.id = collection_songs.song_id")
+
+	if search != "" {
+		query = query.Where("songs.title ILIKE ?", "%"+search+"%")
+	}
+
+	if sortBy != "" {
+		if order != "asc" && order != "desc" {
+			order = "asc"
+		}
+
+		var orderClause string
+		switch sortBy {
+		case "title":
+			orderClause = fmt.Sprintf("songs.%s %s", sortBy, order)
+		case "added_at":
+			orderClause = fmt.Sprintf("collection_songs.created_at %s", order)
+		default:
+			orderClause = "collection_songs.created_at desc"
+		}
+
+		query = query.Order(orderClause)
+	} else {
+		query = query.Order("collection_songs.created_at desc")
+	}
+
+	query = query.Skip(offset).Take(limit)
+
+	collectionSongs, err := query.Find()
+	if err != nil {
+		return nil, err
+	}
+
+	result :=  make([]dtos.SongExtendedDTO, 0)
+	for _, csong := range collectionSongs {
+		song := csong.Song
+
+		likes := int64(0)
+		dislikes := int64(0)
+		for _, reaction := range song.Reactions {
+			if reaction.Type == "like" {
+				likes++
+			} else if reaction.Type == "dislike" {
+				dislikes++
+			}
+		}
+
+		var authors []dtos.AuthorDTO
+		for _, sa := range song.Authors {
+			authors = append(authors, dtos.AuthorDTO{
+				ID:   sa.Author.ID,
+				Name: sa.Author.Name,
+				Role: sa.Role,
+			})
+		}
+
+		var tags []dtos.TagDTO
+		for _, st := range song.SongTags {
+			tags = append(tags, dtos.TagDTO{
+				Name: st.Tag.Name,
+			})
+		}
+
+		var comments []dtos.CommentDTO
+		for _, c := range song.Comments {
+			comments = append(comments, dtos.CommentDTO{
+				ID:        c.ID,
+				Content:   c.Content,
+				CreatedAt: c.CreatedAt,
+				Author: dtos.UserDTO{
+					ID:             c.User.ID,
+					Username:       c.User.Username,
+					Role:           c.User.Role,
+					ProfilePicture: c.User.ProfilePicture,
+					ProfileInfo:    c.User.ProfileInfo,
+				},
+			})
+		}
+
+		dto := dtos.SongExtendedDTO{
+			ID:         song.ID,
+			CreatedAt:  song.CreatedAt,
+			Duration:   song.Duration.String(),
+			Title:      song.Title,
+			Genre:      song.Genre,
+			SongURL:    song.SongURL,
+			CoverURL:   song.CoverURL,
+			Listenings: song.Listenings,
+			Likes:      likes,
+			Dislikes:   dislikes,
+			User: dtos.UserDTO{
+				ID:             song.User.ID,
+				Username:       song.User.Username,
+				Role:           song.User.Role,
+				ProfilePicture: song.User.ProfilePicture,
+				ProfileInfo:    song.User.ProfileInfo,
+			},
+			Authors:  authors,
+			SongTags: tags,
+			Comments: comments,
+		}
+
+		result = append(result, dto)
+	}
+
+	return result, nil
+}
