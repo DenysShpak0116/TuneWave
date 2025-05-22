@@ -54,8 +54,8 @@ func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order strin
 		Join("LEFT JOIN authors ON authors.id = song_authors.author_id").
 		Join("LEFT JOIN song_tags ON song_tags.song_id = songs.id").
 		Join("LEFT JOIN tags ON tags.id = song_tags.tag_id").
-		Where("songs.title ILIKE ? OR authors.name ILIKE ? OR songs.genre ILIKE ? OR tags.name ILIKE ?",
-			"%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%").
+		Where("songs.title ILIKE ? OR authors.name ILIKE ? OR LOWER(songs.genre) = LOWER(?)",
+			"%"+search+"%", "%"+search+"%", search).
 		Order(fmt.Sprintf("songs.%s %s", sortBy, order)).
 		Group("songs.id").
 		Skip((page - 1) * limit).
