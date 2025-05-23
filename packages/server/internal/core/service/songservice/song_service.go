@@ -11,7 +11,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
-	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/google/uuid"
 )
 
@@ -154,27 +153,6 @@ func (r *readSeekCloser) Close() error {
 	return nil
 }
 
-func (ss *SongService) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*models.Song, error) {
-	songs, err := ss.Repository.NewQuery(ctx).
-		Where("id = ?", id).
-		Preload("Authors").
-		Preload("Authors.Author").
-		Preload("SongTags").
-		Preload("SongTags.Tag").
-		Preload("Comments").
-		Preload("Comments.User").
-		Preload("User").
-		Preload("Reactions").
-		Find()
-	if err != nil {
-		return nil, err
-	}
-	if len(songs) == 0 {
-		return nil, fmt.Errorf("song not found")
-	}
-	return &songs[0], nil
-}
-
 func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error) {
 	reactionAmount, err := ss.ReactionsRepository.NewQuery(ctx).
 		Where("song_id = ? AND type = ?", id, reactionType).
@@ -186,14 +164,29 @@ func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactio
 }
 
 func (ss *SongService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error) {
-	song, err := ss.GetByID(ctx, id)
+	song, err := ss.GetByID(
+		ctx,
+		id,
+		"Authors",
+		"Authors.Author",
+		"SongTags",
+		"SongTags.Tag",
+		"Comments",
+		"Comments.User",
+		"User",
+		"Reactions",
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	var songUserDTO dtos.UserDTO
-	if err := dtoMapper.Map(&songUserDTO, song.User); err != nil {
-		return nil, fmt.Errorf("map user: %w", err)
+	songUserDTO := dtos.UserDTO{
+		ID:             song.User.ID,
+		Username:       song.User.Username,
+		Role:           song.User.Role,
+		ProfilePicture: song.User.ProfilePicture,
+		ProfileInfo:    song.User.ProfileInfo,
+		Followers:      int64(len(song.User.Followers)),
 	}
 
 	authorsDTO := make([]dtos.AuthorDTO, 0)

@@ -125,12 +125,23 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	song, err := sh.SongService.GetByID(context.Background(), songUUID)
+	song, err := sh.SongService.GetByID(
+		context.Background(),
+		songUUID,
+		"Authors",
+		"Authors.Author",
+		"SongTags",
+		"SongTags.Tag",
+		"Comments",
+		"Comments.User",
+		"User",
+		"Reactions",
+	)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "song does not exist", err)
 		return
-	}
 
+	}
 	if _, err := sh.SongService.Update(context.Background(), &models.Song{
 		BaseModel: models.BaseModel{
 			ID: song.ID,

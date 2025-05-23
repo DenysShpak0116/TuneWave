@@ -64,15 +64,18 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 	collections, err := cs.Repository.NewQuery(ctx).
 		Where("id = ?", id).
 		Preload("User").
+		Preload("User.Followers").
 		Preload("CollectionSongs").
 		Preload("CollectionSongs.Song").
 		Preload("CollectionSongs.Song.User").
+		Preload("CollectionSongs.Song.User.Followers").
 		Preload("CollectionSongs.Song.Authors").
 		Preload("CollectionSongs.Song.Authors.Author").
 		Preload("CollectionSongs.Song.SongTags").
 		Preload("CollectionSongs.Song.SongTags.Tag").
 		Preload("CollectionSongs.Song.Comments").
 		Preload("CollectionSongs.Song.Comments.User").
+		Preload("CollectionSongs.Song.Comments.User.Followers").
 		Find()
 	if err != nil {
 		return nil, err
@@ -124,6 +127,7 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 					Role:           comment.User.Role,
 					ProfilePicture: comment.User.ProfilePicture,
 					ProfileInfo:    comment.User.ProfileInfo,
+					Followers:      int64(len(comment.User.Followers)),
 				},
 				Content:   "",
 				CreatedAt: time.Time{},
@@ -139,6 +143,8 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 				ID:             collectionSong.Song.User.ID,
 				Username:       collectionSong.Song.User.Username,
 				ProfilePicture: collectionSong.Song.User.ProfilePicture,
+				ProfileInfo:    collectionSong.Song.User.ProfileInfo,
+				Followers:      int64(len(collectionSong.Song.User.Followers)),
 			},
 			CreatedAt: collectionSong.Song.CreatedAt,
 			Genre:     collectionSong.Song.Genre,
@@ -161,6 +167,8 @@ func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (
 			ID:             collection.User.ID,
 			Username:       collection.User.Username,
 			ProfilePicture: collection.User.ProfilePicture,
+			ProfileInfo:    collection.User.ProfileInfo,
+			Followers:      int64(len(collection.User.Followers)),
 		},
 		CollectionSongs: collectionSongs,
 	}
@@ -240,13 +248,17 @@ func extractS3Key(fullURL string) string {
 	return strings.TrimPrefix(fullURL, baseURL)
 }
 
-func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort, order string) ([]models.Collection, error) {
-	collections, err := cs.Repository.NewQuery(ctx).
+func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort, order string, preloads ...string) ([]models.Collection, error) {
+	query := cs.Repository.NewQuery(ctx).
 		Take(limit).
 		Skip(page).
-		Order(fmt.Sprintf("%s %s", sort, order)).
-		Preload("User").
-		Find()
+		Order(fmt.Sprintf("%s %s", sort, order))
+
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+
+	collections, err := query.Find()
 	if err != nil {
 		return nil, err
 	}
@@ -265,10 +277,12 @@ func (cs *CollectionService) GetCollectionSongs(
 		Where("collection_id = ?", collectionID).
 		Preload("Song").
 		Preload("Song.User").
+		Preload("Song.User.Followers").
 		Preload("Song.Authors.Author").
 		Preload("Song.SongTags.Tag").
 		Preload("Song.Comments").
 		Preload("Song.Comments.User").
+		Preload("Song.Comments.User.Followers").
 		Preload("Song.Reactions")
 
 	query = query.Join("JOIN songs ON songs.id = collection_songs.song_id")
@@ -304,7 +318,7 @@ func (cs *CollectionService) GetCollectionSongs(
 		return nil, err
 	}
 
-	result :=  make([]dtos.SongExtendedDTO, 0)
+	result := make([]dtos.SongExtendedDTO, 0)
 	for _, csong := range collectionSongs {
 		song := csong.Song
 
@@ -346,6 +360,7 @@ func (cs *CollectionService) GetCollectionSongs(
 					Role:           c.User.Role,
 					ProfilePicture: c.User.ProfilePicture,
 					ProfileInfo:    c.User.ProfileInfo,
+					Followers:      int64(len((c.User.Followers))),
 				},
 			})
 		}
@@ -367,6 +382,7 @@ func (cs *CollectionService) GetCollectionSongs(
 				Role:           song.User.Role,
 				ProfilePicture: song.User.ProfilePicture,
 				ProfileInfo:    song.User.ProfileInfo,
+				Followers:      int64(len((song.User.Followers))),
 			},
 			Authors:  authors,
 			SongTags: tags,

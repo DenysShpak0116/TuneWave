@@ -8,7 +8,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
-	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -64,16 +63,19 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ah.UserService.GetByID(r.Context(), userUUID)
+	user, err := ah.UserService.GetByID(r.Context(), userUUID, "Followers")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user", err)
 		return
 	}
 
-	userDTO := &dtos.UserDTO{}
-	if err := dtoMapper.Map(userDTO, user); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to map user", err)
-		return
+	userDTO := &dtos.UserDTO{
+		ID:             user.ID,
+		Username:       user.Username,
+		Role:           user.Role,
+		ProfilePicture: user.ProfilePicture,
+		ProfileInfo:    user.ProfileInfo,
+		Followers:      int64(len(user.Followers)),
 	}
 
 	newAuthData := map[string]interface{}{

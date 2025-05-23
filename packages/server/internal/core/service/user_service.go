@@ -37,7 +37,7 @@ func (us *UserService) GetUsers(
 	page int,
 	limit int,
 ) ([]dtos.UserDTO, error) {
-	users, err := us.Repository.NewQuery(ctx).Take(limit).Skip((page - 1) * limit).Find()
+	users, err := us.Repository.NewQuery(ctx).Take(limit).Skip((page - 1) * limit).Preload("Followers").Find()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
@@ -49,6 +49,7 @@ func (us *UserService) GetUsers(
 			Username:       user.Username,
 			Role:           user.Role,
 			ProfilePicture: user.ProfilePicture,
+			Followers:      int64(len(user.Followers)),
 		})
 	}
 	if len(users) == 0 {
@@ -63,6 +64,7 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		Preload("Songs").
 		Preload("Collections").
 		Preload("Collections.User").
+		Preload("Collections.User.Followers").
 		Preload("Chats1").
 		Preload("Chats2").
 		Preload("Follows").
@@ -110,6 +112,8 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 				ID:             collection.User.ID,
 				Username:       collection.User.Username,
 				ProfilePicture: collection.User.ProfilePicture,
+				ProfileInfo:    collection.User.ProfileInfo,
+				Followers:      int64(len(collection.User.Followers)),
 			},
 		}
 	}

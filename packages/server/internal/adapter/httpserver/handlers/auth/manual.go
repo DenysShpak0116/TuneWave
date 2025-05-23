@@ -121,7 +121,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userData, err := ah.UserService.GetByID(ctx, user.ID)
+	userData, err := ah.UserService.GetByID(ctx, user.ID, "Followers")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
 		return
@@ -133,6 +133,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Role:           userData.Role,
 		ProfilePicture: userData.ProfilePicture,
 		ProfileInfo:    userData.ProfileInfo,
+		Followers:      int64(len(userData.Followers)),
 	}
 
 	authData := map[string]any{
@@ -217,7 +218,6 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
-
 
 	render.JSON(w, r, map[string]string{
 		"message": "Successfully logged out",

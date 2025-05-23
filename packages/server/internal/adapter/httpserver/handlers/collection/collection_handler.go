@@ -11,7 +11,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
-	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -258,10 +257,15 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		collections[i] = userCollection.Collection
 	}
 
-	var usersCollectionsDTOs []dtos.UsersCollectionDTO
-	if err := dtoMapper.Map(&usersCollectionsDTOs, collections); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot get collections", err)
-		return
+	usersCollectionsDTOs := make([]dtos.UsersCollectionDTO, 0)
+	for _, collection := range collections {
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
+			ID:          collection.ID,
+			CreatedAt:   collection.CreatedAt,
+			Title:       collection.Title,
+			Description: collection.Description,
+			CoverURL:    collection.CoverURL,
+		})
 	}
 
 	render.JSON(w, r, usersCollectionsDTOs)
@@ -322,16 +326,35 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 		page = 1
 	}
 
-	collections, err := ch.CollectionService.GetMany(context.Background(), limit, page, sort, order)
+	collections, err := ch.CollectionService.GetMany(
+		context.Background(),
+		limit,
+		page,
+		sort,
+		order,
+		"User",
+		"User.Followers",
+	)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collections", err)
 		return
 	}
 
-	var collectionsDTOs []dtos.CollectionDTO
-	if err := dtoMapper.Map(&collectionsDTOs, collections); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot get collections", err)
-		return
+	collectionsDTOs := make([]dtos.CollectionDTO, 0)
+	for _, collection := range collections {
+		collectionsDTOs = append(collectionsDTOs, dtos.CollectionDTO{
+			ID:       collection.ID,
+			Title:    collection.Title,
+			CoverURL: collection.CoverURL,
+			User: dtos.UserDTO{
+				ID:             collection.User.ID,
+				Username:       collection.User.Username,
+				Role:           collection.User.Role,
+				ProfilePicture: collection.User.ProfilePicture,
+				ProfileInfo:    collection.User.ProfileInfo,
+				Followers:      int64(len(collection.User.Followers)),
+			},
+		})
 	}
 
 	render.JSON(w, r, collectionsDTOs)
@@ -403,9 +426,14 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 	}
 
 	var usersCollectionsDTOs []dtos.UsersCollectionDTO
-	if err := dtoMapper.Map(&usersCollectionsDTOs, collections); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Cannot get collections", err)
-		return
+	for _, collection := range collections {
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
+			ID:          collection.ID,
+			CreatedAt:   collection.CreatedAt,
+			Title:       collection.Title,
+			Description: collection.Description,
+			CoverURL:    collection.CoverURL,
+		})
 	}
 
 	render.Status(r, http.StatusCreated)

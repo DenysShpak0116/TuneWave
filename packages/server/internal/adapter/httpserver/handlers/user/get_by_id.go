@@ -175,11 +175,18 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	users, err := uh.UserService.Where(context.Background(), &models.User{
-		BaseModel: models.BaseModel{
-			ID: userUUID,
+	users, err := uh.UserService.Where(
+		context.Background(),
+		&models.User{
+			BaseModel: models.BaseModel{
+				ID: userUUID,
+			},
 		},
-	}, "UserCollections", "UserCollections.Collection", "UserCollections.Collection.User")
+		"UserCollections",
+		"UserCollections.Collection",
+		"UserCollections.Collection.User",
+		"UserCollections.Collection.User.Followers",
+	)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "could not find user", err)
 		return
@@ -203,6 +210,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 				Role:           userCollection.Collection.User.Role,
 				ProfilePicture: userCollection.Collection.User.ProfilePicture,
 				ProfileInfo:    userCollection.Collection.User.ProfileInfo,
+				Followers:      int64(len(userCollection.Collection.User.Followers)),
 			},
 		})
 	}

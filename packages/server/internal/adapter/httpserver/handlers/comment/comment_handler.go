@@ -68,7 +68,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	commentWithPreload, err := ch.CommentService.GetByID(r.Context(), comment.ID)
+	commentWithPreload, err := ch.CommentService.GetByID(r.Context(), comment.ID, "User", "User.Followers")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get comment", err)
 		return
@@ -80,6 +80,8 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 			ID:             commentWithPreload.User.ID,
 			Username:       commentWithPreload.User.Username,
 			ProfilePicture: commentWithPreload.User.ProfilePicture,
+			ProfileInfo:    commentWithPreload.User.ProfileInfo,
+			Followers:      int64(len(commentWithPreload.User.Followers)),
 		},
 		Content:   commentWithPreload.Content,
 		CreatedAt: commentWithPreload.CreatedAt,

@@ -63,7 +63,7 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		BaseModel: models.BaseModel{
 			ID: userFollower.ID,
 		},
-	}, "User", "Follower")
+	}, "User", "User.Followers", "Follower", "Follower.Followers")
 	userFollowerToReturn := userFollowersToReturn[0]
 
 	userDTO := dtos.UserFollowerDTO{
@@ -74,6 +74,7 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			Role:           userFollowerToReturn.User.Role,
 			ProfilePicture: userFollowerToReturn.User.ProfilePicture,
 			ProfileInfo:    userFollowerToReturn.User.ProfileInfo,
+			Followers:      int64(len(userFollowerToReturn.User.Followers)),
 		},
 		Follower: dtos.UserDTO{
 			ID:             userFollowerToReturn.Follower.ID,
@@ -81,6 +82,7 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			Role:           userFollowerToReturn.Follower.Role,
 			ProfilePicture: userFollowerToReturn.Follower.ProfilePicture,
 			ProfileInfo:    userFollowerToReturn.Follower.ProfileInfo,
+			Followers:      int64(len(userFollowerToReturn.Follower.Followers)),
 		},
 	}
 

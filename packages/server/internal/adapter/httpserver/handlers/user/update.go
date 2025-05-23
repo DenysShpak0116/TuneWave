@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"mime/multipart"
 	"net/http"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
-	dtoMapper "github.com/dranikpg/dto-mapper"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -64,12 +62,15 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO := &dtos.UserDTO{}
+	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
 
-	if err := dtoMapper.Map(userDTO, updatedUser); err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("Failed to map user to DTO: %v", err)})
-		return
+	userDTO := &dtos.UserDTO{
+		ID:             uuidID,
+		Username:       updatedUser.Username,
+		Role:           updatedUser.Role,
+		ProfilePicture: updatedUser.ProfilePicture,
+		ProfileInfo:    updatedUser.ProfileInfo,
+		Followers:      int64(len(updatedUser.Followers)),
 	}
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
