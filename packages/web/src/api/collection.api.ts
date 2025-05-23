@@ -1,5 +1,6 @@
 import { GetCollectionParams } from "types/collections/getCollectionParams";
 import { $api } from "./base.api";
+import { CollectionSongsParams } from "types/collections/collectionSongsParams.type";
 
 export const createCollection = async (formData: FormData) => {
     try {
@@ -48,3 +49,8 @@ export const updateCollection = async (collectionId: string, formData: FormData)
         console.log(err)
     }
 };
+
+export const getCollectionSongs = async (collectionId: string, params: Partial<CollectionSongsParams> = {}) => {
+    const { data } = await $api.get(`collections/${collectionId}/songs`, { params });
+    return data;
+}

@@ -16,11 +16,15 @@ import {
     SongsText,
     ImageWrapper,
     PlayIcon,
+    FollowsImage,
+    FollowTitle,
 } from "./song-cards.style";
+import { FollowType } from "types/user/follow.type";
 
 interface ISongCardsProps {
     songs?: ISong[];
     collections?: ICollection[];
+    followings?: FollowType[]
     text: string;
 }
 
@@ -32,7 +36,7 @@ export interface TrackData {
     trackArtist: string;
 }
 
-export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text }) => {
+export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, followings }) => {
     const navigate = useNavigate();
     const setTrack = usePlayerStore((state) => state.setTrack);
 
@@ -84,9 +88,23 @@ export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text }) => 
         </SongCard>
     );
 
+    const renderFollowsCard = (user: FollowType) => (
+        <SongCard
+            key={user.id}
+            onClick={() => handleNavigate(ROUTES.USER_PROFILE.replace(":id", user.id))}
+        >
+            <ImageWrapper>
+                <FollowsImage src={user.profilePictureUrl} alt={user.username} />
+            </ImageWrapper>
+            <FollowTitle>{user.username}</FollowTitle>
+            <p style={{fontSize: "10px", textAlign:"center"}}>{user.followers} підписників</p>
+        </SongCard>
+    )
+
     const renderCards = () => {
         if (songs) return songs.map(renderSongCard);
         if (collections) return collections.map(renderCollectionCard);
+        if (followings) return followings.map(renderFollowsCard)
         return <p>Loading...</p>;
     };
 

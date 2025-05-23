@@ -29,6 +29,7 @@ export const UserProfilePage: FC = () => {
         <MainLayout>
             <UserInfo collectionsCount={collections.length} user={user} isMainUser={isMainUser} />
             <SongCards collections={collections} text="КОЛЛЕКЦІЇ КОРИСТУВАЧА" />
+            <SongCards followings={user.follows.slice(0, 5)} text="ПІДПИСКИ" />
         </MainLayout>
     )
 }

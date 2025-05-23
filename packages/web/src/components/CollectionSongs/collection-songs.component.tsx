@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { ISong } from "types/song/song.type";
 import {
     CollectionSongsContainer,
@@ -16,12 +16,32 @@ import { usePlayerStore } from "@modules/Player/store/player.store";
 
 interface ICollectionSongsProps {
     songs: ISong[];
-    refetchFn: () => void;
+    refetchFn: (params: { search: string; sortBy: string; order: string }) => void;
 }
 
 export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn }) => {
     const [activeSongId, setActiveSongId] = useState<string | null>(null);
     const pausePlayer = usePlayerStore((state) => state.pausePlayer);
+
+    const [search, setSearch] = useState('');
+    const [sortBy, setSortBy] = useState<'title' | 'added_at'>('added_at');
+    const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
+    useEffect(() => {
+        refetchFn({ search, sortBy, order });
+    }, [search, sortBy, order]);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+    };
+
+    const handleSortToggle = () => {
+        setSortBy(prev => prev === 'title' ? 'added_at' : 'title');
+    };
+
+    const handleOrderToggle = () => {
+        setOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    };
 
     const renderPlaylist = () => (
         <>
@@ -30,15 +50,27 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn })
                 <PlaylistActions>
                     <PlayListActionItem>
                         <PlayListActionIcon src={searchIcon} />
-                        <p>Пошук</p>
+                        <input
+                            type="text"
+                            placeholder="Пошук"
+                            value={search}
+                            onChange={handleSearchChange}
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                color: "white",
+                                outline: "none",
+                                fontSize: 14,
+                            }}
+                        />
                     </PlayListActionItem>
-                    <PlayListActionItem onClick={pausePlayer}>
-                        <PlayListActionIcon src={searchIcon} />
-                        <p>Пауза</p>
-                    </PlayListActionItem>
-                    <PlayListActionItem>
+                    <PlayListActionItem onClick={handleSortToggle}>
                         <PlayListActionIcon src={sortIcon} />
-                        <p>Сортувати</p>
+                        <p>Сортувати: {sortBy === 'title' ? 'Назва' : 'Дата'}</p>
+                    </PlayListActionItem>
+                    <PlayListActionItem onClick={handleOrderToggle}>
+                        <PlayListActionIcon src={sortIcon} />
+                        <p>Порядок: {order === 'asc' ? '↑' : '↓'}</p>
                     </PlayListActionItem>
                 </PlaylistActions>
             </PlaylistHeader>
@@ -54,7 +86,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn })
             {songs.map((song, index) => (
                 <CollectionSongRow
                     collectionSongs={songs}
-                    refetchFn={refetchFn}
+                    refetchFn={() => refetchFn({ search, sortBy, order })}
                     key={song.id}
                     song={song}
                     index={index}
@@ -67,10 +99,42 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn })
 
     return (
         <CollectionSongsContainer>
-            {songs.length > 0 ? (
-                renderPlaylist()
+            {!songs || songs.length <= 0 ? (
+                <>
+                    <PlaylistHeader>
+                        <PlaylistTitle>Плейлист</PlaylistTitle>
+                        <PlaylistActions>
+                            <PlayListActionItem>
+                                <PlayListActionIcon src={searchIcon} />
+                                <input
+                                    type="text"
+                                    placeholder="Пошук"
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                    style={{
+                                        background: "transparent",
+                                        border: "none",
+                                        color: "white",
+                                        outline: "none",
+                                        fontSize: 14,
+                                    }}
+                                />
+                            </PlayListActionItem>
+                            <PlayListActionItem onClick={handleSortToggle}>
+                                <PlayListActionIcon src={sortIcon} />
+                                <p>Сортувати: {sortBy === 'title' ? 'Назва' : 'Дата'}</p>
+                            </PlayListActionItem>
+                            <PlayListActionItem onClick={handleOrderToggle}>
+                                <PlayListActionIcon src={sortIcon} />
+                                <p>Порядок: {order === 'asc' ? '↑' : '↓'}</p>
+                            </PlayListActionItem>
+                        </PlaylistActions>
+                    </PlaylistHeader>
+                    <p>Пісні не знайдено або їх нема</p>
+                </>
+
             ) : (
-                <p style={{ textAlign: "center", }}>У цьому плейлисті поки немає пісень.</p>
+                renderPlaylist()
             )}
         </CollectionSongsContainer>
     );

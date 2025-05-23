@@ -14,7 +14,7 @@ import {
     OptionsPopup,
     OptionButton,
 } from "../collection-songs.style";
-import { parseDate } from "helpers/date-parse";
+import { parseDate, parseTime } from "helpers/date-parse";
 import playIcon from "@assets/images/ic_play.png";
 import pauseIcon from "@assets/images/ic_pause.png";
 import { usePlayerStore } from "@modules/Player/store/player.store";
@@ -109,7 +109,7 @@ export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, 
                 </SongTextInfo>
             </CoverAndInfo>
             <DateAdded>{parseDate(song.createdAt)}</DateAdded>
-            <Duration>{song.duration}</Duration>
+            <Duration>{parseTime(song.duration)}</Duration>
             <Options onClick={(e) => {
                 console.log("dadas");
 

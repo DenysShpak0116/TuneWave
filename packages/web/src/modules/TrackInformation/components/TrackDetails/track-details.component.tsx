@@ -93,12 +93,15 @@ export const TrackDetails: FC<ITrackDetails> = ({
                             text="Результати голусування"
                             style={{ padding: "5px 10px", fontSize: "14px" }} />
                     </TrackInfoBlock>
-                    <TrackInfoBlock>
-                        <Button
-                            onClick={() => navigate(ROUTES.UPDATE_COLLECTION.replace(":id", collectionId!))}
-                            text="Редагувати"
-                            style={{ padding: "5px 10px", fontSize: "14px" }} />
-                    </TrackInfoBlock>
+                    {isMainUser && (
+                        <TrackInfoBlock>
+                            <Button
+                                onClick={() => navigate(ROUTES.UPDATE_COLLECTION.replace(":id", collectionId!))}
+                                text="Редагувати"
+                                style={{ padding: "5px 10px", fontSize: "14px" }} />
+                        </TrackInfoBlock>
+                    )}
+
                     {renderBlock("Назва колекції:", collectionName)}
                     {renderBlock("Опис колекції:", collectionDescription)}
                     {renderBlock("Тривалість:", duration)}

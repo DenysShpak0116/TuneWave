@@ -31,7 +31,7 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCoun
                     <div>
                         <Name>{user.username}</Name>
                         <Stats>
-                            {user.followers.length} підписників/ {user.follows.length} підпискок/ {collectionsCount} плейлистів
+                            {user.followers.length} підписників/ {user.follows.length} підписок/ {collectionsCount} плейлистів
                         </Stats>
                         <Bio>
                             <strong>О собі:</strong> {user.profileInfo || "Юзер забув це заповнити"}

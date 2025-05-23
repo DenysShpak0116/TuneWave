@@ -4,4 +4,5 @@ export interface FollowType {
     role: string;
     profilePictureUrl: string;
     profileInfo: string;
+    followers: number;
 }

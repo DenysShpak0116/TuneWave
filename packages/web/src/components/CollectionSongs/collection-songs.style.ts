@@ -37,6 +37,7 @@ export const PlaylistActions = styled.div`
 export const PlayListActionItem = styled.div`
   display: flex;
   gap: 4px;
+  cursor: pointer;
 
   p{
     font-size: 14px;

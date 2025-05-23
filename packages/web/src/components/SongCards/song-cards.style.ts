@@ -60,6 +60,14 @@ export const SongImage = styled.img`
     display: block;
 `;
 
+export const FollowsImage = styled.img`
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+`
+
 export const PlayIcon = styled.img`
     position: absolute;
     top: 50%;
@@ -77,6 +85,14 @@ export const SongTitle = styled.div`
     margin-top: 12px;
     font-weight: 600;
     font-size: 16px;
+    color: white;
+`;
+
+export const FollowTitle = styled.div`
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    text-align: center;
     color: white;
 `;
 
