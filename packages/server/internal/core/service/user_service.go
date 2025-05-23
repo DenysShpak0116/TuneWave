@@ -67,8 +67,10 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 		Preload("Chats2").
 		Preload("Follows").
 		Preload("Follows.User").
+		Preload("Follows.User.Followers").
 		Preload("Followers").
 		Preload("Followers.Follower").
+		Preload("Followers.Follower.Followers").
 		Find()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by ID: %w", err)
@@ -132,6 +134,7 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 			Role:           follower.Follower.Role,
 			ProfilePicture: follower.Follower.ProfilePicture,
 			ProfileInfo:    follower.Follower.ProfileInfo,
+			Followers:      int64(len(follower.Follower.Followers)),
 		}
 	}
 
@@ -143,6 +146,7 @@ func (us *UserService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.
 			Role:           follow.User.Role,
 			ProfilePicture: follow.User.ProfilePicture,
 			ProfileInfo:    follow.User.ProfileInfo,
+			Followers:      int64(len(follow.User.Followers)),
 		}
 	}
 

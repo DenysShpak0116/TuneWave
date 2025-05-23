@@ -12,6 +12,7 @@ type UserDTO struct {
 	Role           string    `json:"role"`
 	ProfilePicture string    `json:"profilePictureUrl"`
 	ProfileInfo    string    `json:"profileInfo"`
+	Followers      int64     `json:"followers"`
 }
 
 type UserExtendedDTO struct {
