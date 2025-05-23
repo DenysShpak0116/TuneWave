@@ -12,6 +12,8 @@ import { SearchModal } from "@modules/SearchModal"
 import plusIcon from "@assets/images/ic_plus.png"
 import chatIcon from "@assets/images/ic chat.png"
 import { useLogout } from "./hooks/useLogout"
+import { DropdownMenu } from "@ui/DropDownMenu/drop-down-menu"
+import friendsIcon from "@assets/images/ic_friends.png"
 
 export const Header: FC = () => {
     const navigate = useNavigate()
@@ -38,28 +40,35 @@ export const Header: FC = () => {
                         />
                     ))}
 
-                    {isAuth() && (
-                        <>
-                            <NavItem
-                                title="Завантажити"
-                                path={ROUTES.CREATE_TRACK}
-                                icon={uploadIcon}
-                            />
+                    <DropdownMenu>
+                        {isAuth() && (
+                            <>
+                                <NavItem
+                                    title="Завантажити"
+                                    path={ROUTES.CREATE_TRACK}
+                                    icon={uploadIcon}
+                                />
 
-                            <NavItem
-                                title="Чати"
-                                path={ROUTES.CHAT_PAGE}
-                                icon={chatIcon}
-                            />
-                        </>
-                    )}
+                                <NavItem
+                                    title="Чати"
+                                    path={ROUTES.CHAT_PAGE}
+                                    icon={chatIcon}
+                                />
+                                <NavItem
+                                    path={ROUTES.USER_LIST.replace(":id", user!.id)}
+                                    title="Підписки"
+                                    icon={friendsIcon}
+                                />
+                            </>
+                        )}
 
-                    {isAuth() && user?.role === "admin" && (
-                        <NavItem
-                            path={ROUTES.ADD_CRITERION_PAGE}
-                            title="Додати крітерії"
-                            icon={plusIcon} />
-                    )}
+                        {isAuth() && user?.role === "admin" && (
+                            <NavItem
+                                path={ROUTES.ADD_CRITERION_PAGE}
+                                title="Додати крітерії"
+                                icon={plusIcon} />
+                        )}
+                    </DropdownMenu>
                 </NavList>
 
                 {isAuth() && user?.id ? (

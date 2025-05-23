@@ -5,15 +5,23 @@ import { FiSettings } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { Button } from "@ui/Btn/btn.component";
-
+import { useFollow, useIsFollowed } from "./hooks/useFollowing";
 
 interface IUserInfoProps {
     user: IUser;
-    isMainUser: boolean
+    isMainUser: boolean;
+    collectionsCount: number;
 }
 
-export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser }) => {
+export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCount }) => {
     const navigate = useNavigate()
+    const { data: isFollowed, isLoading, refetch } = useIsFollowed(user.id)
+    const { mutate: follow } = useFollow()
+
+    const handleFollow = (id: string) => {
+        follow(id)
+        refetch()
+    }
 
     return (
         <Wrapper>
@@ -23,16 +31,28 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser }) => {
                     <div>
                         <Name>{user.username}</Name>
                         <Stats>
-                            0 підписник(ів)/0 підписка(ок)/0 плейлист(ів)
+                            {user.followers.length} підписників/ {user.follows.length} підпискок/ {collectionsCount} плейлистів
                         </Stats>
                         <Bio>
                             <strong>О собі:</strong> {user.profileInfo || "Юзер забув це заповнити"}
                         </Bio>
                         {!isMainUser && (
-                            <Button
-                                text="Надіслати повідомлення"
-                                style={{ padding: "5px", marginTop: "10px" }}
-                                onClick={() => navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${user.id}`)}/>
+                            <>
+                                <Button
+                                    text="Надіслати повідомлення"
+                                    style={{ padding: "5px", marginTop: "10px" }}
+                                    onClick={() => navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${user.id}`)}
+                                />
+                                {!isLoading && !isFollowed && (
+                                    <Button
+                                        text="Підписатися"
+                                        style={{ padding: "5px", marginTop: "10px" }}
+                                        onClick={() => {
+                                            handleFollow(user.id)
+                                        }}
+                                    />
+                                )}
+                            </>
                         )}
 
                     </div>

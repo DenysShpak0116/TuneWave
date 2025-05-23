@@ -26,6 +26,7 @@ import { GenrePage } from "pages/GenrePage/genre.page";
 import { CollectionsPage } from "pages/CollectionsPage/collectionsPage";
 import { GenreSongsPage } from "pages/GenreSongsPage/genre-songs.page";
 import { UpdateCollectionPage } from "pages/UpdateCollectionPage/update-collection.page";
+import { UserListPage } from "pages/UserListPage/user-list.page";
 
 export const AppRoutes = () => {
     return (
@@ -51,6 +52,7 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.COLLECTIONS_PAGE} element={<CollectionsPage />} />
                 <Route path={ROUTES.GENRE_SONGS} element={<GenreSongsPage />} />
                 <Route path={ROUTES.UPDATE_COLLECTION} element={<UpdateCollectionPage />} />
+                <Route path={ROUTES.USER_LIST} element={<UserListPage />} />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>

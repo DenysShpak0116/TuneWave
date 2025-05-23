@@ -2,12 +2,15 @@ import { FC, useEffect, useRef, useState } from "react";
 import { IMessageType } from "types/chat/message.type";
 import { Avatar, Container, Header, Input, InputWrapper, MessageBubble, MessageRow, SendButton, Timestamp, Username, Wrapper } from "./main-chat.style";
 import sendIcon from "@assets/images/ic_send.png"
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "pages/router/consts/routes.const";
 
 interface MainChatProps {
     messages: IMessageType[];
     currentUserId: string;
     partnerUsername: string;
     partnerAvatar: string;
+    targetUserId: string;
     onSendMessage: (msg: string) => void
 }
 
@@ -16,8 +19,10 @@ export const MainChat: FC<MainChatProps> = ({
     currentUserId,
     partnerUsername,
     partnerAvatar,
-    onSendMessage
+    onSendMessage,
+    targetUserId
 }) => {
+    const navigate = useNavigate()
     const [input, setInput] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +43,7 @@ export const MainChat: FC<MainChatProps> = ({
     return (
         <Wrapper>
             <Header>
-                <Avatar src={partnerAvatar} />
+                <Avatar onClick={() => navigate(ROUTES.USER_PROFILE.replace(":id", targetUserId))} src={partnerAvatar} />
                 <Username>@{partnerUsername}</Username>
             </Header>
             <Container ref={containerRef}>

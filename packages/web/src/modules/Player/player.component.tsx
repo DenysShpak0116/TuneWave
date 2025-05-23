@@ -36,10 +36,11 @@ export const Player: FC = () => {
         setTrack,
         setShouldAutoPlay,
         setIsPlaying,
+        playlist
     } = usePlayerStore();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const { mutate: addListening } = useAddListening()
+    const { mutate: addListening } = useAddListening();
 
     useEffect(() => {
         if (!trackUrl) {
@@ -51,6 +52,7 @@ export const Player: FC = () => {
             return;
         }
 
+        console.log(playlist)
         const player = new window.Playerjs({
             id: "player",
             file: trackUrl,
@@ -60,6 +62,7 @@ export const Player: FC = () => {
         if (shouldAutoPlay) {
             setShouldAutoPlay(false);
         }
+
 
         window.PlayerjsEvents = function (event: string, id: string, info: any) {
             if (id !== "player") return;
@@ -76,6 +79,20 @@ export const Player: FC = () => {
             if (event === "pause") {
                 setIsPlaying(false);
             }
+
+            if (event === "ended") {
+                const currentIndex = playlist.findIndex(p => p.file === trackUrl);
+                const nextTrack = playlist[currentIndex + 1];
+                if (nextTrack) {
+                    setTrack({
+                        trackUrl: nextTrack.file,
+                        trackName: nextTrack.title,
+                        trackArtist: nextTrack.artist || "",
+                        trackId: nextTrack.id, 
+                        trackLogo: nextTrack.logo || "",
+                    });
+                }
+            }
         };
 
         localStorage.setItem("current-track", JSON.stringify({
@@ -87,7 +104,7 @@ export const Player: FC = () => {
         }));
 
         if (userId) {
-            addListening({ songId: trackId, userId: userId })
+            addListening({ songId: trackId, userId: userId });
         }
 
         const syncHandler = (e: StorageEvent) => {
@@ -107,7 +124,7 @@ export const Player: FC = () => {
         return () => {
             window.removeEventListener("storage", syncHandler);
         };
-    }, [trackUrl]);
+    }, [trackUrl, playlist]);
 
     if (!trackUrl) return null;
 

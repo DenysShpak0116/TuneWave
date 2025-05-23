@@ -66,6 +66,7 @@ export const ChatPage: FC = () => {
                 </div>
             ) : (
                 <MainChat
+                    targetUserId={user.id}
                     messages={messages}
                     currentUserId={currentUserId}
                     partnerUsername={user.username}

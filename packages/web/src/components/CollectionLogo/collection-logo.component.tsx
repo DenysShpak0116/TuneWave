@@ -16,7 +16,7 @@ interface ICollectionLogoProps {
 export const CollectionLogo: FC<ICollectionLogoProps> = ({ logo, collectionSongs, collectionId, hasAllVectors }) => {
     const [isAddCriterionModalOpen, setIsAddCriterionModalOpen] = useState<boolean>(false);
     const [isRateModalOpen, setIsRateModalOpen] = useState<boolean>(false)
-    console.log(hasAllVectors)
+    
     return (
         <LogoContainer>
             <Logo src={logo} />

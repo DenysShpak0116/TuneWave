@@ -5,15 +5,15 @@ import { FC } from "react";
 import { useParams } from "react-router-dom";
 import { useGetUser } from "./hooks/useGetUserById";
 import { Loader } from "@ui/Loader/loader.component";
-import { useUserCollections } from "@modules/SelectCollectionModal/hooks/useUserCollections";
 import { SongCards } from "@components/SongCards/song-cards.component";
+import { useGetUserCollections } from "./hooks/useGetUserCollections";
 
 
 export const UserProfilePage: FC = () => {
     const { id } = useParams();
     const { data: user, isLoading } = useGetUser(id!);
     const mainUser = useAuthStore(state => state.user)!
-    const { data: collections = [], isLoading: loadCollections } = useUserCollections(id!);
+    const { data: collections = [], isLoading: loadCollections } = useGetUserCollections(id!);
 
     const isMainUser = mainUser ? id === mainUser.id : false;
 
@@ -27,7 +27,7 @@ export const UserProfilePage: FC = () => {
 
     return (
         <MainLayout>
-            <UserInfo user={user} isMainUser={isMainUser} />
+            <UserInfo collectionsCount={collections.length} user={user} isMainUser={isMainUser} />
             <SongCards collections={collections} text="КОЛЛЕКЦІЇ КОРИСТУВАЧА" />
         </MainLayout>
     )

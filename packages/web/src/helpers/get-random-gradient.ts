@@ -8,6 +8,15 @@ export const getRandomGradient = () => {
         ['#2193b0', '#6dd5ed'],
         ['#cc2b5e', '#753a88'],
         ['#ee9ca7', '#ffdde1'],
+        ['#00c6ff', '#0072ff'],
+        ['#f7971e', '#ffd200'],
+        ['#c94b4b', '#4b134f'],
+        ['#396afc', '#2948ff'],
+        ['#ff6a00', '#ee0979'],
+        ['#7f00ff', '#e100ff'],
+        ['#00b09b', '#96c93d'],
+        ['#ff5f6d', '#ffc371'],
+        ['#41295a', '#2F0743'],
     ];
     const pair = colors[Math.floor(Math.random() * colors.length)];
     return `linear-gradient(135deg, ${pair[0]}, ${pair[1]})`;

@@ -53,6 +53,7 @@ export const CollectionSongs: FC<ICollectionSongsProps> = ({ songs, refetchFn })
 
             {songs.map((song, index) => (
                 <CollectionSongRow
+                    collectionSongs={songs}
                     refetchFn={refetchFn}
                     key={song.id}
                     song={song}

@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+export interface PlaylistItem {
+    title: string;
+    file: string;
+    artist?: string;
+    logo?: string;
+    id?: string;
+}
+
 interface PlayerState {
     trackId: string;
     trackUrl: string;
@@ -7,11 +15,13 @@ interface PlayerState {
     trackLogo: string;
     trackArtist: string;
     shouldAutoPlay: boolean;
+    isPlaying: boolean;
+    playlist: PlaylistItem[];
     setTrack: (payload: Partial<PlayerState>) => void;
     setShouldAutoPlay: (value: boolean) => void;
-    isPlaying: boolean;
     setIsPlaying: (value: boolean) => void;
-    pausePlayer: () => void
+    setPlaylist: (playlist: PlaylistItem[]) => void;
+    pausePlayer: () => void;
 }
 
 const defaultTrack = {
@@ -30,6 +40,7 @@ export const usePlayerStore = create<PlayerState>((set) => {
         ...initial,
         shouldAutoPlay: false,
         isPlaying: false,
+        playlist: [],
         setTrack: (payload) => {
             const newTrack = { ...initial, ...payload };
             localStorage.setItem("current-track", JSON.stringify(newTrack));
@@ -37,6 +48,7 @@ export const usePlayerStore = create<PlayerState>((set) => {
         },
         setShouldAutoPlay: (value) => set({ shouldAutoPlay: value }),
         setIsPlaying: (value) => set({ isPlaying: value }),
+        setPlaylist: (playlist) => set({ playlist }),
         pausePlayer: () => {
             localStorage.setItem("player-sync", JSON.stringify({ type: "pause" }));
         }

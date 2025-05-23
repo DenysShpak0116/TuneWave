@@ -23,6 +23,7 @@ import { useParams } from "react-router-dom";
 import { useDeleteTrackFromCollection } from "../hooks/useDeleteSongFromCollection";
 
 interface Props {
+    collectionSongs: ISong[]
     song: ISong;
     index: number;
     active: boolean;
@@ -30,22 +31,29 @@ interface Props {
     refetchFn: () => void
 }
 
-export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, refetchFn }) => {
+export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, refetchFn, collectionSongs }) => {
     const { id } = useParams()
     const { mutate: removeSongFromCollection } = useDeleteTrackFromCollection()
     const [isHovered, setIsHovered] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
     const optionsRef = useRef<HTMLDivElement>(null);
-    const { setTrack, setIsPlaying } = usePlayerStore();
+    const { setPlaylist, setTrack, setIsPlaying } = usePlayerStore();
 
     const handlePlay = (trackData: TrackData) => {
-        if (active) {
-            setIsPlaying(false);
-        }
         onActivate();
-        setTrack(trackData);
-    };
+        const mappedPlaylist = collectionSongs.map(song => ({
+            id: song.id,
+            file: encodeURI(song.songUrl),
+            logo: song.coverUrl,
+            title: song.title,
+            artist: song.user.username,
+        }));
 
+        setPlaylist(mappedPlaylist);
+        setTrack(trackData);
+        setIsPlaying(true);
+    };
+    
     const handleDelete = () => {
         removeSongFromCollection({ songId: song.id, collectionId: id! })
         refetchFn()
