@@ -1675,6 +1675,31 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/users/{id}/is-followed": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The user ID you use to check if you are followed",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/users/{id}/unfollow": {
             "delete": {
                 "security": [

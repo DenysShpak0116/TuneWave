@@ -78,6 +78,7 @@ func NewRouter(
 			protected.Get("/{id}", userHandler.GetByID)
 			protected.Post("/{id}/follow", userHandler.FollowUser)
 			protected.Delete("/{id}/unfollow", userHandler.UnfollowUser)
+			protected.Get("/{id}/is-followed", userHandler.IsFollowed)
 			protected.Put("/{id}", userHandler.Update)
 			protected.Put("/avatar/", userHandler.UpdateAvatar)
 			protected.Delete("/{id}", userHandler.Delete)

@@ -76,11 +76,11 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			ProfileInfo:    userFollowerToReturn.User.ProfileInfo,
 		},
 		Follower: dtos.UserDTO{
-			ID:             userFollowerToReturn.User.ID,
-			Username:       userFollowerToReturn.User.Username,
-			Role:           userFollowerToReturn.User.Role,
-			ProfilePicture: userFollowerToReturn.User.ProfilePicture,
-			ProfileInfo:    userFollowerToReturn.User.ProfileInfo,
+			ID:             userFollowerToReturn.Follower.ID,
+			Username:       userFollowerToReturn.Follower.Username,
+			Role:           userFollowerToReturn.Follower.Role,
+			ProfilePicture: userFollowerToReturn.Follower.ProfilePicture,
+			ProfileInfo:    userFollowerToReturn.Follower.ProfileInfo,
 		},
 	}
 
@@ -138,4 +138,43 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.NoContent(w, r)
+}
+
+// IsFollowed godoc
+// @Tags		user
+// @Security	BearerAuth
+// @Produce json
+// @Param id path string true "The user ID you use to check if you are followed"
+// @Router /users/{id}/is-followed [get]
+func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) {
+	userID, _ := helpers.GetUserID(r.Context())
+	userUUID, _ := uuid.Parse(userID)
+
+	targetID := chi.URLParam(r, "id")
+	targetUUID, err := uuid.Parse(targetID)
+	if err != nil {
+		handlers.RespondWithError(w, r, http.StatusBadRequest, "wrong target user id", err)
+		return
+	}
+
+	if userFollower, err := uh.UserFollowerService.Where(context.Background(), &models.UserFollower{
+		UserID:     targetUUID,
+		FollowerID: userUUID,
+	}); err != nil || len(userFollower) < 1 {
+		if err != nil {
+			handlers.RespondWithError(w, r, http.StatusInternalServerError, "troubles to check if you followed", err)
+			return
+		}
+
+		render.Status(r, http.StatusOK)
+		render.JSON(w, r, map[string]bool{
+			"isFollowed": false,
+		})
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]bool{
+		"isFollowed": true,
+	})
 }
