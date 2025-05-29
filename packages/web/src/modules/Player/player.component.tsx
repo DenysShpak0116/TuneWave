@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { PlayerContainer } from "@components/PlayerContainer/player-container.component";
 import {
     TrackLogo,
@@ -19,6 +19,7 @@ import { useAddListening } from "./hooks/useAddListening";
 declare global {
     interface Window {
         Playerjs: any;
+        PlayerjsEvents: any;
     }
 }
 
@@ -36,64 +37,126 @@ export const Player: FC = () => {
         setTrack,
         setShouldAutoPlay,
         setIsPlaying,
-        playlist
+        playlist,
+        isPlaying,
     } = usePlayerStore();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { mutate: addListening } = useAddListening();
+    const playerRef = useRef<any>(null);
+    const prevTrackRef = useRef<string | null>(null);
+
+    const mappedPlaylist = playlist.length > 0
+        ? playlist.map(song => ({ title: song.title, file: song.file }))
+        : [];
 
     useEffect(() => {
-        if (!trackUrl) {
-            const savedTrack = localStorage.getItem("current-track");
-            if (savedTrack) {
-                const track = JSON.parse(savedTrack);
-                setTrack(track);
-            }
-            return;
+        if (!trackUrl) return;
+
+        if (!playerRef.current) {
+            playerRef.current = new window.Playerjs({
+                id: "player",
+                playlist: mappedPlaylist.length > 0 ? mappedPlaylist : [{ title: trackName, file: trackUrl }],
+                autoplay: shouldAutoPlay ? 1 : 0,
+            });
+
+            window.PlayerjsEvents = (event: string, id: string, info: any) => {
+                if (id !== "player") return;
+
+                if (event === "time") {
+                    localStorage.setItem("player-timeline", JSON.stringify({ time: info }));
+                }
+
+                if (event === "play" || event === "userplay") {
+                    localStorage.setItem("player-sync", JSON.stringify({ type: "pauseOthers", excludeId: "player" }));
+                    setIsPlaying(true);
+                }
+
+                if (event === "pause") {
+                    setIsPlaying(false);
+                }
+
+                if (event === "ended") {
+                    const currentIndex = playlist.findIndex(p => p.file === trackUrl);
+                    const nextTrack = playlist[currentIndex + 1];
+                    if (nextTrack) {
+                        setTrack({
+                            trackUrl: nextTrack.file,
+                            trackName: nextTrack.title,
+                            trackArtist: nextTrack.artist || "",
+                            trackId: nextTrack.id,
+                            trackLogo: nextTrack.logo || "",
+                        });
+                    }
+                }
+
+                if (event === "playlist") {
+                    const index = info;
+                    const currentTrack = playlist[index];
+                    if (currentTrack) {
+                        setTrack({
+                            trackUrl: currentTrack.file,
+                            trackName: currentTrack.title,
+                            trackArtist: currentTrack.artist || "",
+                            trackId: currentTrack.id,
+                            trackLogo: currentTrack.logo || "",
+                        });
+                    }
+                }
+            };
+
+            const syncHandler = (e: StorageEvent) => {
+                if (e.key === "player-sync" && e.newValue) {
+                    const { type, value, excludeId } = JSON.parse(e.newValue);
+                    if (!playerRef.current) return;
+                    if (type === "play") playerRef.current.api("play");
+                    if (type === "pause") playerRef.current.api("pause");
+                    if (type === "seek") playerRef.current.api("seek", value);
+                    if (type === "volume") playerRef.current.api("volume", value);
+                    if (type === "pauseOthers" && excludeId !== "player") {
+                        playerRef.current.api("pause");
+                    }
+                }
+            };
+
+            window.addEventListener("storage", syncHandler);
+
+            return () => {
+                window.removeEventListener("storage", syncHandler);
+            };
+        }
+    }, [trackUrl]);
+
+    useEffect(() => {
+        if (!playerRef.current || !trackUrl) return;
+
+        const player = playerRef.current;
+        const isNewTrack = prevTrackRef.current !== trackUrl;
+        const playerTimeLine = isNewTrack ? 0 : player.api("time");
+
+        if (playlist.length > 0) {
+            const mapped = playlist.map(song => ({
+                title: song.title,
+                file: song.file,
+            }));
+            player.api("playlist", mapped);
+        } else {
+            player.api("playlist", [{ title: trackName, file: trackUrl }]);
         }
 
-        console.log(playlist)
-        const player = new window.Playerjs({
-            id: "player",
-            file: trackUrl,
-            autoplay: shouldAutoPlay ? 1 : 0,
-        });
+        if (isNewTrack) {
+            player.api("file", trackUrl);
+            prevTrackRef.current = trackUrl;
+        }
+
+        player.api("seek", playerTimeLine);
 
         if (shouldAutoPlay) {
+            player.api("play");
             setShouldAutoPlay(false);
+        } else if (!isPlaying) {
+            player.api("pause");
         }
-
-
-        window.PlayerjsEvents = function (event: string, id: string, info: any) {
-            if (id !== "player") return;
-
-            if (event === "time") {
-                localStorage.setItem("player-timeline", JSON.stringify({ time: info }));
-            }
-
-            if (event === "play" || event === "userplay") {
-                localStorage.setItem("player-sync", JSON.stringify({ type: "pauseOthers", excludeId: "player" }));
-                setIsPlaying(true);
-            }
-
-            if (event === "pause") {
-                setIsPlaying(false);
-            }
-
-            if (event === "ended") {
-                const currentIndex = playlist.findIndex(p => p.file === trackUrl);
-                const nextTrack = playlist[currentIndex + 1];
-                if (nextTrack) {
-                    setTrack({
-                        trackUrl: nextTrack.file,
-                        trackName: nextTrack.title,
-                        trackArtist: nextTrack.artist || "",
-                        trackId: nextTrack.id, 
-                        trackLogo: nextTrack.logo || "",
-                    });
-                }
-            }
-        };
 
         localStorage.setItem("current-track", JSON.stringify({
             trackId,
@@ -104,27 +167,28 @@ export const Player: FC = () => {
         }));
 
         if (userId) {
-            addListening({ songId: trackId, userId: userId });
+            addListening({ songId: trackId, userId });
         }
 
-        const syncHandler = (e: StorageEvent) => {
-            if (e.key === "player-sync" && e.newValue) {
-                const { type, value, excludeId } = JSON.parse(e.newValue);
-                if (type === "play") player.api("play");
-                if (type === "pause") player.api("pause");
-                if (type === "seek") player.api("seek", value);
-                if (type === "volume") player.api("volume", value);
-                if (type === "pauseOthers" && excludeId !== "player") {
-                    player.api("pause");
-                }
-            }
-        };
-        window.addEventListener("storage", syncHandler);
+        const interval = setInterval(() => {
+            const playlistIdRaw = player.api("playlist_id");
+            const currentIndex = Number(playlistIdRaw?.split("-")[1]);
+            const currentTrack = playlist[currentIndex];
 
-        return () => {
-            window.removeEventListener("storage", syncHandler);
-        };
-    }, [trackUrl, playlist]);
+            if (currentTrack && currentTrack.file !== prevTrackRef.current) {
+                setTrack({
+                    trackUrl: currentTrack.file,
+                    trackName: currentTrack.title,
+                    trackArtist: currentTrack.artist || "",
+                    trackId: currentTrack.id,
+                    trackLogo: currentTrack.logo || "",
+                });
+                prevTrackRef.current = currentTrack.file;
+            }
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, [trackUrl, isPlaying, playlist]);
 
     if (!trackUrl) return null;
 

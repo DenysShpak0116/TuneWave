@@ -27,6 +27,8 @@ interface ITrackDetails {
     isMainUser: boolean,
     collectionName?: string,
     collectionDescription?: string;
+    likes: number;
+    dislikes: number;
 }
 
 export const TrackDetails: FC<ITrackDetails> = ({
@@ -43,6 +45,8 @@ export const TrackDetails: FC<ITrackDetails> = ({
     userId,
     collectionName,
     collectionDescription,
+    likes,
+    dislikes
 }) => {
     const navigate = useNavigate();
 
@@ -77,6 +81,8 @@ export const TrackDetails: FC<ITrackDetails> = ({
                     {renderBlock("Тривалість:", duration)}
                     {renderBlock("Дата завантаження:", date)}
                     {renderBlock("Головний виконавець:", artist?.map(a => a.name).join(", "))}
+                    {renderBlock("Лайки", likes.toString())}
+                    {renderBlock("Дизлайки", dislikes.toString())}
                 </>
             )}
             {type === "collection" && (

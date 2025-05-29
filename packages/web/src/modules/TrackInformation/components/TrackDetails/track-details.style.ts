@@ -16,6 +16,7 @@ export const TrackDetailsContainer = styled.div`
   grid-column: 1;
   grid-row: 2;
   align-self: start;
+  margin-bottom: 20px;
 `;
 
 export const TrackInfoBlock = styled.div`

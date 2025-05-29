@@ -23,49 +23,53 @@ import { useParams } from "react-router-dom";
 import { useDeleteTrackFromCollection } from "../hooks/useDeleteSongFromCollection";
 
 interface Props {
-    collectionSongs: ISong[]
+    collectionSongs: ISong[];
     song: ISong;
     index: number;
-    active: boolean;
-    onActivate: () => void;
-    refetchFn: () => void
+    refetchFn: () => void;
 }
 
-export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, refetchFn, collectionSongs }) => {
-    const { id } = useParams()
-    const { mutate: removeSongFromCollection } = useDeleteTrackFromCollection()
+export const CollectionSongRow: FC<Props> = ({ song, index, refetchFn, collectionSongs }) => {
+    const { id } = useParams();
+    const { mutate: removeSongFromCollection } = useDeleteTrackFromCollection();
     const [isHovered, setIsHovered] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
     const optionsRef = useRef<HTMLDivElement>(null);
-    const { setPlaylist, setTrack, setIsPlaying } = usePlayerStore();
+    const { trackId: currentTrackId, isPlaying, pausePlayer, setTrack, setPlaylist } = usePlayerStore();
+    const isActive = song.id === currentTrackId;
 
-    const handlePlay = (trackData: TrackData) => {
-        onActivate();
-        const mappedPlaylist = collectionSongs.map(song => ({
-            id: song.id,
-            file: encodeURI(song.songUrl),
-            logo: song.coverUrl,
-            title: song.title,
-            artist: song.user.username,
-        }));
-
-        setPlaylist(mappedPlaylist);
-        setTrack(trackData);
-        setIsPlaying(true);
+    const handlePlay = () => {
+        if (isActive && isPlaying) {
+            pausePlayer();
+        } else {
+            const trackData: TrackData = {
+                trackId: song.id,
+                trackUrl: encodeURI(song.songUrl),
+                trackLogo: song.coverUrl,
+                trackName: song.title,
+                trackArtist: song.user.username,
+            };
+            const playlist = collectionSongs.map(s => ({
+                id: s.id,
+                file: encodeURI(s.songUrl),
+                logo: s.coverUrl,
+                title: s.title,
+                artist: s.user.username,
+            }));
+            setPlaylist(playlist);
+            setTrack(trackData);
+        }
     };
-    
+
     const handleDelete = () => {
-        removeSongFromCollection({ songId: song.id, collectionId: id! })
-        refetchFn()
+        removeSongFromCollection({ songId: song.id, collectionId: id! });
+        refetchFn();
         setShowOptions(false);
     };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (
-                optionsRef.current &&
-                !optionsRef.current.contains(event.target as Node)
-            ) {
+            if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
                 setShowOptions(false);
             }
         };
@@ -78,25 +82,16 @@ export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, 
 
     return (
         <TableRow
-            active={active}
+            active={isActive}
             isHovered={isHovered}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             <IndexBox>
-                {(isHovered || active) ? (
+                {(isHovered || isActive) ? (
                     <PlayListActionIcon
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlay({
-                                trackId: song.id,
-                                trackUrl: encodeURI(song.songUrl),
-                                trackLogo: song.coverUrl,
-                                trackName: song.title,
-                                trackArtist: song.user.username,
-                            });
-                        }}
-                        src={active ? pauseIcon : playIcon}
+                        onClick={handlePlay}
+                        src={isActive && isPlaying ? pauseIcon : playIcon}
                     />
                 ) : (
                     index + 1
@@ -111,8 +106,6 @@ export const CollectionSongRow: FC<Props> = ({ song, index, active, onActivate, 
             <DateAdded>{parseDate(song.createdAt)}</DateAdded>
             <Duration>{parseTime(song.duration)}</Duration>
             <Options onClick={(e) => {
-                console.log("dadas");
-
                 e.stopPropagation();
                 setShowOptions(!showOptions);
             }}>

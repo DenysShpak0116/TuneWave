@@ -20,7 +20,8 @@ interface PlayerState {
     setTrack: (payload: Partial<PlayerState>) => void;
     setShouldAutoPlay: (value: boolean) => void;
     setIsPlaying: (value: boolean) => void;
-    setPlaylist: (playlist: PlaylistItem[]) => void;
+    setPlaylist: (playlist: PlaylistItem[] | null) => void;
+    playPlayer: () => void;
     pausePlayer: () => void;
 }
 
@@ -48,9 +49,8 @@ export const usePlayerStore = create<PlayerState>((set) => {
         },
         setShouldAutoPlay: (value) => set({ shouldAutoPlay: value }),
         setIsPlaying: (value) => set({ isPlaying: value }),
-        setPlaylist: (playlist) => set({ playlist }),
-        pausePlayer: () => {
-            localStorage.setItem("player-sync", JSON.stringify({ type: "pause" }));
-        }
+        setPlaylist: (playlist: PlaylistItem[] | null) => set({ playlist: playlist || [] }),
+        pausePlayer: () => set({isPlaying: false}),
+        playPlayer: () => set({isPlaying: true}),
     };
 });

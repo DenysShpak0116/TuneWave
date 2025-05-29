@@ -1,5 +1,14 @@
 import { FC, useState } from "react"
-import { AuthBtn, Container, LogoText, NavList, Wrapper } from "./header.style"
+import {
+    AuthBtn,
+    Burger,
+    BurgerLine,
+    Container,
+    LogoText,
+    MobileMenu,
+    NavList,
+    Wrapper
+} from "./header.style"
 import { ROUTES } from "pages/router/consts/routes.const"
 import { useNavigate } from "react-router-dom"
 import { HeaderItems } from "./consts/header-item.consts"
@@ -19,18 +28,69 @@ export const Header: FC = () => {
     const navigate = useNavigate()
     const { isAuth, user } = useAuthStore()
     const { mutate: logout } = useLogout()
-    const [isSearhModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
+    const [isSearhModalOpen, setIsSearchModalOpen] = useState(false)
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+    const handleNavigate = (fn: () => void) => {
+        setIsMenuOpen(false)
+        fn()
+    }
 
     return (
         <Wrapper>
             <Container>
-                <LogoText onClick={() => navigate(ROUTES.HOME)}>TUNE WAVE</LogoText>
-                <NavList>
-                    <NavItem
-                        title={"Пошук"}
-                        icon={search}
-                        onClickFn={() => setIsSearchModalOpen(true)} />
+                <LogoText onClick={() => handleNavigate(() => navigate(ROUTES.HOME))}>
+                    TUNE WAVE
+                </LogoText>
 
+                <Burger onClick={() => setIsMenuOpen(prev => !prev)}>
+                    <BurgerLine />
+                    <BurgerLine />
+                    <BurgerLine />
+                </Burger>
+
+                <NavList>
+                    <NavItem title="Пошук" icon={search} onClickFn={() => setIsSearchModalOpen(true)} />
+                    {HeaderItems.map((element, index) => (
+                        <NavItem key={index} title={element.title} path={element.path} icon={element.icon} />
+                    ))}
+                    <DropdownMenu>
+                        {isAuth() && (
+                            <>
+                                <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
+                                <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
+                                <NavItem
+                                    path={ROUTES.USER_LIST.replace(":id", user!.id)}
+                                    title="Підписки"
+                                    icon={friendsIcon}
+                                />
+                            </>
+                        )}
+                        {isAuth() && user?.role === "admin" && (
+                            <NavItem
+                                path={ROUTES.ADD_CRITERION_PAGE}
+                                title="Додати крітерії"
+                                icon={plusIcon}
+                            />
+                        )}
+                    </DropdownMenu>
+                </NavList>
+
+                {isAuth() && user?.id ? (
+                    <UserBlock
+                        userProfileFn={() => handleNavigate(() => navigate(ROUTES.USER_PROFILE.replace(":id", user.id)))}
+                        profileImg={user.profilePictureUrl}
+                        username={user.username}
+                        logoutFn={logout}
+                    />
+                ) : (
+                    <AuthBtn to={ROUTES.SIGN_IN}>Авторизуватись</AuthBtn>
+                )}
+            </Container>
+
+            {isMenuOpen && (
+                <MobileMenu>
+                    <NavItem title="Пошук" icon={search} onClickFn={() => setIsSearchModalOpen(true)} />
                     {HeaderItems.map((element, index) => (
                         <NavItem
                             key={index}
@@ -39,49 +99,27 @@ export const Header: FC = () => {
                             icon={element.icon}
                         />
                     ))}
-
-                    <DropdownMenu>
-                        {isAuth() && (
-                            <>
-                                <NavItem
-                                    title="Завантажити"
-                                    path={ROUTES.CREATE_TRACK}
-                                    icon={uploadIcon}
-                                />
-
-                                <NavItem
-                                    title="Чати"
-                                    path={ROUTES.CHAT_PAGE}
-                                    icon={chatIcon}
-                                />
-                                <NavItem
-                                    path={ROUTES.USER_LIST.replace(":id", user!.id)}
-                                    title="Підписки"
-                                    icon={friendsIcon}
-                                />
-                            </>
-                        )}
-
-                        {isAuth() && user?.role === "admin" && (
+                    {isAuth() && (
+                        <>
+                            <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
+                            <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
                             <NavItem
-                                path={ROUTES.ADD_CRITERION_PAGE}
-                                title="Додати крітерії"
-                                icon={plusIcon} />
-                        )}
-                    </DropdownMenu>
-                </NavList>
+                                path={ROUTES.USER_LIST.replace(":id", user!.id)}
+                                title="Підписки"
+                                icon={friendsIcon}
+                            />
+                        </>
+                    )}
+                    {isAuth() && user?.role === "admin" && (
+                        <NavItem
+                            path={ROUTES.ADD_CRITERION_PAGE}
+                            title="Додати крітерії"
+                            icon={plusIcon}
+                        />
+                    )}
+                </MobileMenu>
+            )}
 
-                {isAuth() && user?.id ? (
-                    <UserBlock
-                        userProfileFn={() => navigate(ROUTES.USER_PROFILE.replace(":id", user?.id))}
-                        profileImg={user?.profilePictureUrl}
-                        username={user?.username}
-                        logoutFn={logout}
-                    />
-                ) : (
-                    <AuthBtn to={ROUTES.SIGN_IN}>Авторизуватись</AuthBtn>
-                )}
-            </Container>
             <SearchModal active={isSearhModalOpen} setActive={setIsSearchModalOpen} />
         </Wrapper>
     )

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { Button } from "@ui/Btn/btn.component";
 import { useFollow, useIsFollowed } from "./hooks/useFollowing";
+import { useUnfollow } from "@modules/UserList/hooks/useDeleteUser";
 
 interface IUserInfoProps {
     user: IUser;
@@ -16,11 +17,15 @@ interface IUserInfoProps {
 export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCount }) => {
     const navigate = useNavigate()
     const { data: isFollowed, isLoading, refetch } = useIsFollowed(user.id)
-    const { mutate: follow } = useFollow()
+    const { mutate: follow } = useFollow(() => refetch())
+    const { mutate: unfollow } = useUnfollow(() => refetch())
 
     const handleFollow = (id: string) => {
         follow(id)
-        refetch()
+    }
+
+    const handleUnfollow = (id: string) => {
+        unfollow(id);
     }
 
     return (
@@ -49,6 +54,15 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCoun
                                         style={{ padding: "5px", marginTop: "10px" }}
                                         onClick={() => {
                                             handleFollow(user.id)
+                                        }}
+                                    />
+                                )}
+                                {isFollowed && (
+                                    <Button
+                                        text="Відписатись"
+                                        style={{ padding: "5px", marginTop: "10px", backgroundColor: "rgb(236, 94, 120)" }}
+                                        onClick={() => {
+                                            handleUnfollow(user.id)
                                         }}
                                     />
                                 )}

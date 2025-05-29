@@ -6,9 +6,10 @@ import musicNote from "@assets/images/ic_musical_note.png"
 
 interface ITrackPagePlayerProps {
     song: ISong;
+    songs?: ISong[];
 }
 
-export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song }) => {
+export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song, songs }) => {
     const setTrack = usePlayerStore((state) => state.setTrack);
 
     useEffect(() => {
@@ -51,7 +52,7 @@ export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song }) => {
                 if (type === "volume") player.api("volume", value);
             }
         };
-        
+
         const timeSyncHandler = (e: StorageEvent) => {
             if (e.key === "player-timeline" && e.newValue) {
                 const { time } = JSON.parse(e.newValue);
@@ -59,14 +60,14 @@ export const TrackPagePlayer: FC<ITrackPagePlayerProps> = ({ song }) => {
             }
         };
         window.addEventListener("storage", timeSyncHandler);
-        
+
         return () => {
             window.removeEventListener("storage", syncHandler);
             window.removeEventListener("storage", timeSyncHandler);
         };
     }, [song.songUrl]);
 
-    
+
 
     return (
         <TrackPagePlayerContainer>

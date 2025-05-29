@@ -10,11 +10,12 @@ export const useIsFollowed = (userId: string) => {
     });
 };
 
-export const useFollow = () => {
+export const useFollow = (onSuccess?: () => void) => {
     return useMutation({
         mutationFn: followUser,
         onSuccess: () => {
             toast.success("Ви підписалися на користувача")
+            if (onSuccess) onSuccess()
         }
-    })
-}
+    });
+};

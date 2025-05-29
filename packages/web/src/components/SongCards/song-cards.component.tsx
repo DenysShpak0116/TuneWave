@@ -39,9 +39,11 @@ export interface TrackData {
 export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, followings }) => {
     const navigate = useNavigate();
     const setTrack = usePlayerStore((state) => state.setTrack);
+    const setPlaylist = usePlayerStore((state) =>  state.setPlaylist)
 
     const handlePlay = (trackData: TrackData) => {
         setTrack(trackData);
+        setPlaylist(null)
     };
 
     const handleNavigate = (path: string) => {

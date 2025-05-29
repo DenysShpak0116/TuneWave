@@ -73,6 +73,7 @@ export const TrackLogo: FC<ITrackLogo> = ({ logo, reactFn, type: { type }, userI
                 setActive={setIsAddToCollectionModalOpen}
             />
             <ConfirmDeleteModal
+                text="Ви впевнені, що хочете видалити пісню?"
                 active={isDeleteConfirmationModalOpen}
                 setActive={setIsDeleteConfirmationModalOpen}
                 onDelete={handleDelete}

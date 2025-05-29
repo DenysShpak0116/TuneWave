@@ -54,3 +54,11 @@ export const getCollectionSongs = async (collectionId: string, params: Partial<C
     const { data } = await $api.get(`collections/${collectionId}/songs`, { params });
     return data;
 }
+
+export const deleteCollection = async (id: string) => {
+    return await $api.delete(`collections/${id}`)
+}
+
+export const addCollectionToUser = async (collectionId: string) => {
+    return await $api.post(`collections/${collectionId}/add-to-user`)
+}

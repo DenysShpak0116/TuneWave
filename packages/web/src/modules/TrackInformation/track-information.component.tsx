@@ -52,6 +52,8 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
                 date={parseDate(song?.createdAt)}
                 artist={song?.authors}
                 type="track"
+                likes={song?.likes}
+                dislikes={song?.dislikes}
             />
             <TrackPagePlayer
                 song={song}

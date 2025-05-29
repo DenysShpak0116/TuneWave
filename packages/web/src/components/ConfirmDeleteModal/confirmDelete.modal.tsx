@@ -6,14 +6,15 @@ interface IConfirmDeleteModal {
     active: boolean;
     setActive: (value: boolean) => void;
     onDelete: () => void
+    text: string;
 }
 
-export const ConfirmDeleteModal: FC<IConfirmDeleteModal> = ({ active, setActive, onDelete }) => {
+export const ConfirmDeleteModal: FC<IConfirmDeleteModal> = ({ active, setActive, onDelete, text }) => {
 
     return (
         <Overlay $active={active} onClick={() => setActive(false)}>
             <ModalContent $active={active} onClick={(e) => e.stopPropagation()}>
-                <p style={{ textAlign: "center" }}>Ви впевнені, що хочете видалити пісню</p>
+                <p style={{ textAlign: "center" }}>{text}</p>
                 <div style={{ display: "flex", justifyContent: "space-around", marginTop: "14px" }}>
                     <Button text="Так" onClick={onDelete} />
                     <Button text="Ні" onClick={() => setActive(false)} />

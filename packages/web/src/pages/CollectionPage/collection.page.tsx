@@ -17,8 +17,8 @@ export const CollectionPage: FC = () => {
     const { id } = useParams();
     const [params, setParams] = useState({ search: "", sortBy: "createdAt", order: "desc" });
 
-    const { data: collection, isLoading, refetch } = useGetCollection(id!);
-    const { data: collectionSongs, isLoading: loadingSongs } = useGetCollectionSongs(id, params);
+    const { data: collection, isLoading } = useGetCollection(id!);
+    const { data: collectionSongs } = useGetCollectionSongs(id, params);
     const { data: hasAllVectors = false, isLoading: IsVectorLoading } = useHasCollectionHaveAllVectors(id!)
 
     const updateSearchSortParams = (updatedParams: { search: string; sortBy: string; order: string }) => {
@@ -39,6 +39,7 @@ export const CollectionPage: FC = () => {
         <MainLayout>
             <TrackInformationLayout>
                 <CollectionLogo
+                    isMainUserCollection={isMainUserCollection}
                     hasAllVectors={hasAllVectors}
                     logo={collection.coverUrl}
                     collectionSongs={collection.collectionSongs}
