@@ -1,0 +1,1 @@
+export { SelectCollectionModal } from "./select-collection.component"

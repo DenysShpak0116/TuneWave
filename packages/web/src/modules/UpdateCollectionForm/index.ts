@@ -1,0 +1,1 @@
+export { UpdateCollectionForm } from "./update-collection.component";

@@ -1,0 +1,1 @@
+export { CollectionModal } from "./collection-modal.component"
