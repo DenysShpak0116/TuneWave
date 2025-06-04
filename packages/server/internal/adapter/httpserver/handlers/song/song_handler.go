@@ -31,7 +31,7 @@ func NewSongHandler(songService services.SongService, collectionSongService serv
 // @Description Get all songs
 // @Tags songs
 // @Param search query string false "Search by title, artist, or genre"
-// @Param sortBy query string false "Sort by field (created_at, title, artist, genre)" default(created_at)
+// @Param sortBy query string false "Sort by field (created_at, title, artist, genre, listenings)" default(created_at)
 // @Param order query string false "Sort order (asc, desc)" default(desc)
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Number of items per page" default(10)

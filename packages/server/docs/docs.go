@@ -1053,7 +1053,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "created_at",
-                        "description": "Sort by field (created_at, title, artist, genre)",
+                        "description": "Sort by field (created_at, title, artist, genre, listenings)",
                         "name": "sortBy",
                         "in": "query"
                     },
