@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
@@ -96,6 +97,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
 	render.JSON(w, r, map[string]interface{}{

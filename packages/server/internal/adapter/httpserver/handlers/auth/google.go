@@ -116,6 +116,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
 	http.Redirect(w, r, "http://localhost:5173/", http.StatusSeeOther)

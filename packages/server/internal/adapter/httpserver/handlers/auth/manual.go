@@ -155,6 +155,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
 	render.JSON(w, r, map[string]interface{}{
