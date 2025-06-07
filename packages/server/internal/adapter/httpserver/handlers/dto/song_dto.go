@@ -1,4 +1,4 @@
-package dtos
+package dto
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type SongExtendedDTO struct {
+type SongDTO struct {
 	ID         uuid.UUID    `json:"id"`
 	CreatedAt  time.Time    `json:"createdAt"`
 	Duration   string       `json:"duration"`

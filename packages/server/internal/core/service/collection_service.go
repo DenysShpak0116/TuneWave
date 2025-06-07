@@ -60,121 +60,121 @@ func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParam
 	return collection, nil
 }
 
-func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error) {
-	collections, err := cs.Repository.NewQuery(ctx).
-		Where("id = ?", id).
-		Preload("User").
-		Preload("User.Followers").
-		Preload("CollectionSongs").
-		Preload("CollectionSongs.Song").
-		Preload("CollectionSongs.Song.User").
-		Preload("CollectionSongs.Song.User.Followers").
-		Preload("CollectionSongs.Song.Authors").
-		Preload("CollectionSongs.Song.Authors.Author").
-		Preload("CollectionSongs.Song.SongTags").
-		Preload("CollectionSongs.Song.SongTags.Tag").
-		Preload("CollectionSongs.Song.Comments").
-		Preload("CollectionSongs.Song.Comments.User").
-		Preload("CollectionSongs.Song.Comments.User.Followers").
-		Find()
-	if err != nil {
-		return nil, err
-	}
-	if len(collections) == 0 {
-		return nil, fmt.Errorf("collection with id %s not found", id)
-	}
+// func (cs *CollectionService) GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.CollectionExtendedDTO, error) {
+// 	collections, err := cs.Repository.NewQuery(ctx).
+// 		Where("id = ?", id).
+// 		Preload("User").
+// 		Preload("User.Followers").
+// 		Preload("CollectionSongs").
+// 		Preload("CollectionSongs.Song").
+// 		Preload("CollectionSongs.Song.User").
+// 		Preload("CollectionSongs.Song.User.Followers").
+// 		Preload("CollectionSongs.Song.Authors").
+// 		Preload("CollectionSongs.Song.Authors.Author").
+// 		Preload("CollectionSongs.Song.SongTags").
+// 		Preload("CollectionSongs.Song.SongTags.Tag").
+// 		Preload("CollectionSongs.Song.Comments").
+// 		Preload("CollectionSongs.Song.Comments.User").
+// 		Preload("CollectionSongs.Song.Comments.User.Followers").
+// 		Find()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if len(collections) == 0 {
+// 		return nil, fmt.Errorf("collection with id %s not found", id)
+// 	}
 
-	collection := collections[0]
+// 	collection := collections[0]
 
-	collectionSongs := make([]dtos.SongExtendedDTO, len(collection.CollectionSongs))
-	for i, collectionSong := range collection.CollectionSongs {
-		songLikes, err := cs.ReactionRepository.NewQuery(ctx).
-			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "like").
-			Count()
-		if err != nil {
-			return nil, err
-		}
-		songDislikes, err := cs.ReactionRepository.NewQuery(ctx).
-			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "dislike").
-			Count()
-		if err != nil {
-			return nil, err
-		}
+// 	collectionSongs := make([]dtos.SongExtendedDTO, len(collection.CollectionSongs))
+// 	for i, collectionSong := range collection.CollectionSongs {
+// 		songLikes, err := cs.ReactionRepository.NewQuery(ctx).
+// 			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "like").
+// 			Count()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		songDislikes, err := cs.ReactionRepository.NewQuery(ctx).
+// 			Where("song_id = ? AND type = ?", collectionSong.Song.ID, "dislike").
+// 			Count()
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		songAuthorsDTO := make([]dtos.AuthorDTO, len(collectionSong.Song.Authors))
-		for j, author := range collectionSong.Song.Authors {
-			songAuthorsDTO[j] = dtos.AuthorDTO{
-				ID:   author.AuthorID,
-				Name: author.Author.Name,
-				Role: author.Role,
-			}
-		}
+// 		songAuthorsDTO := make([]dtos.AuthorDTO, len(collectionSong.Song.Authors))
+// 		for j, author := range collectionSong.Song.Authors {
+// 			songAuthorsDTO[j] = dtos.AuthorDTO{
+// 				ID:   author.AuthorID,
+// 				Name: author.Author.Name,
+// 				Role: author.Role,
+// 			}
+// 		}
 
-		songTagsDTO := make([]dtos.TagDTO, len(collectionSong.Song.SongTags))
-		for j, tag := range collectionSong.Song.SongTags {
-			songTagsDTO[j] = dtos.TagDTO{
-				Name: tag.Tag.Name,
-			}
-		}
+// 		songTagsDTO := make([]dtos.TagDTO, len(collectionSong.Song.SongTags))
+// 		for j, tag := range collectionSong.Song.SongTags {
+// 			songTagsDTO[j] = dtos.TagDTO{
+// 				Name: tag.Tag.Name,
+// 			}
+// 		}
 
-		songCommentsDTO := make([]dtos.CommentDTO, len(collectionSong.Song.Comments))
-		for j, comment := range collectionSong.Song.Comments {
-			songCommentsDTO[j] = dtos.CommentDTO{
-				ID: comment.ID,
-				Author: dtos.UserDTO{
-					ID:             comment.User.ID,
-					Username:       comment.User.Username,
-					Role:           comment.User.Role,
-					ProfilePicture: comment.User.ProfilePicture,
-					ProfileInfo:    comment.User.ProfileInfo,
-					Followers:      int64(len(comment.User.Followers)),
-				},
-				Content:   "",
-				CreatedAt: time.Time{},
-			}
-		}
-		collectionSongs[i] = dtos.SongExtendedDTO{
-			ID:         collectionSong.Song.ID,
-			Title:      collectionSong.Song.Title,
-			Duration:   formatDuration(time.Duration(collectionSong.Song.Duration)),
-			CoverURL:   collectionSong.Song.CoverURL,
-			Listenings: collectionSong.Song.Listenings,
-			User: dtos.UserDTO{
-				ID:             collectionSong.Song.User.ID,
-				Username:       collectionSong.Song.User.Username,
-				ProfilePicture: collectionSong.Song.User.ProfilePicture,
-				ProfileInfo:    collectionSong.Song.User.ProfileInfo,
-				Followers:      int64(len(collectionSong.Song.User.Followers)),
-			},
-			CreatedAt: collectionSong.Song.CreatedAt,
-			Genre:     collectionSong.Song.Genre,
-			SongURL:   collectionSong.Song.SongURL,
-			Likes:     songLikes,
-			Dislikes:  songDislikes,
-			Authors:   songAuthorsDTO,
-			SongTags:  songTagsDTO,
-			Comments:  songCommentsDTO,
-		}
-	}
+// 		songCommentsDTO := make([]dtos.CommentDTO, len(collectionSong.Song.Comments))
+// 		for j, comment := range collectionSong.Song.Comments {
+// 			songCommentsDTO[j] = dtos.CommentDTO{
+// 				ID: comment.ID,
+// 				Author: dtos.UserDTO{
+// 					ID:             comment.User.ID,
+// 					Username:       comment.User.Username,
+// 					Role:           comment.User.Role,
+// 					ProfilePicture: comment.User.ProfilePicture,
+// 					ProfileInfo:    comment.User.ProfileInfo,
+// 					Followers:      int64(len(comment.User.Followers)),
+// 				},
+// 				Content:   "",
+// 				CreatedAt: time.Time{},
+// 			}
+// 		}
+// 		collectionSongs[i] = dtos.SongExtendedDTO{
+// 			ID:         collectionSong.Song.ID,
+// 			Title:      collectionSong.Song.Title,
+// 			Duration:   formatDuration(time.Duration(collectionSong.Song.Duration)),
+// 			CoverURL:   collectionSong.Song.CoverURL,
+// 			Listenings: collectionSong.Song.Listenings,
+// 			User: dtos.UserDTO{
+// 				ID:             collectionSong.Song.User.ID,
+// 				Username:       collectionSong.Song.User.Username,
+// 				ProfilePicture: collectionSong.Song.User.ProfilePicture,
+// 				ProfileInfo:    collectionSong.Song.User.ProfileInfo,
+// 				Followers:      int64(len(collectionSong.Song.User.Followers)),
+// 			},
+// 			CreatedAt: collectionSong.Song.CreatedAt,
+// 			Genre:     collectionSong.Song.Genre,
+// 			SongURL:   collectionSong.Song.SongURL,
+// 			Likes:     songLikes,
+// 			Dislikes:  songDislikes,
+// 			Authors:   songAuthorsDTO,
+// 			SongTags:  songTagsDTO,
+// 			Comments:  songCommentsDTO,
+// 		}
+// 	}
 
-	collectionDTO := &dtos.CollectionExtendedDTO{
-		ID:          collection.ID,
-		Title:       collection.Title,
-		Description: collection.Description,
-		CoverURL:    collection.CoverURL,
-		CreatedAt:   collection.CreatedAt,
-		User: dtos.UserDTO{
-			ID:             collection.User.ID,
-			Username:       collection.User.Username,
-			ProfilePicture: collection.User.ProfilePicture,
-			ProfileInfo:    collection.User.ProfileInfo,
-			Followers:      int64(len(collection.User.Followers)),
-		},
-		CollectionSongs: collectionSongs,
-	}
+// 	collectionDTO := &dtos.CollectionExtendedDTO{
+// 		ID:          collection.ID,
+// 		Title:       collection.Title,
+// 		Description: collection.Description,
+// 		CoverURL:    collection.CoverURL,
+// 		CreatedAt:   collection.CreatedAt,
+// 		User: dtos.UserDTO{
+// 			ID:             collection.User.ID,
+// 			Username:       collection.User.Username,
+// 			ProfilePicture: collection.User.ProfilePicture,
+// 			ProfileInfo:    collection.User.ProfileInfo,
+// 			Followers:      int64(len(collection.User.Followers)),
+// 		},
+// 		CollectionSongs: collectionSongs,
+// 	}
 
-	return collectionDTO, nil
-}
+// 	return collectionDTO, nil
+// }
 
 func formatDuration(d time.Duration) string {
 	minutes := int(d.Minutes())

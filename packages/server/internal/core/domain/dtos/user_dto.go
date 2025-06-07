@@ -16,17 +16,17 @@ type UserDTO struct {
 }
 
 type UserExtendedDTO struct {
-	ID             uuid.UUID `json:"id"`
-	Username       string    `json:"username"`
-	Role           string    `json:"role"`
-	ProfileInfo    string    `json:"profileInfo"`
-	Email          string    `json:"email"`
-	ProfilePicture string    `json:"profilePictureUrl"`
-
-	CreatedAt   time.Time       `json:"createdAt"`
-	Songs       []SongDTO       `json:"songs"`
-	Collections []CollectionDTO `json:"collections"`
-	Chats       []ChatDTO       `json:"chats"`
-	Follows     []UserDTO       `json:"follows"`
-	Followers   []UserDTO       `json:"followers"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	Songs          []SongDTO       `json:"songs"`
+	Collections    []CollectionDTO `json:"collections"`
+	Chats          []ChatDTO       `json:"chats"`
+	Follows        []UserDTO       `json:"follows"`
+	Followers      []UserDTO       `json:"followers"`
+	
+	ID             uuid.UUID       `json:"id"`
+	Username       string          `json:"username"`
+	Role           string          `json:"role"`
+	ProfileInfo    string          `json:"profileInfo"`
+	Email          string          `json:"email"`
+	ProfilePicture string          `json:"profilePictureUrl"`
 }

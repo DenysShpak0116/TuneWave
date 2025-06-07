@@ -39,7 +39,6 @@ func main() {
 		log.Fatalf("Failed to invoke DB migration: %s", err)
 	}
 
-	//invoke http server
 	err = container.Invoke(func(router *chi.Mux, cfg *config.Config) {
 		log.Println("Starting server on port", cfg.Http.Port)
 

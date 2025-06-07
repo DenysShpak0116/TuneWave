@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -19,15 +20,18 @@ import (
 type CollectionHandler struct {
 	CollectionService     services.CollectionService
 	UserCollectionService services.UserCollectionService
+	UserReactionService   services.UserReactionService
 }
 
 func NewCollectionHandler(
 	collectionService services.CollectionService,
 	userCollectionService services.UserCollectionService,
+	userReactionService services.UserReactionService,
 ) *CollectionHandler {
 	return &CollectionHandler{
 		CollectionService:     collectionService,
 		UserCollectionService: userCollectionService,
+		UserReactionService:   userReactionService,
 	}
 }
 
@@ -109,6 +113,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [get]
 func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -116,13 +121,13 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	collectionDTO, err := ch.CollectionService.GetFullDTOByID(r.Context(), collectionUUID)
+	collection, err := ch.CollectionService.GetByID(ctx, collectionUUID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
 
-	render.JSON(w, r, collectionDTO)
+	render.JSON(w, r, dto.NewCollectionDTO(collection))
 }
 
 // DeleteCollection godoc
