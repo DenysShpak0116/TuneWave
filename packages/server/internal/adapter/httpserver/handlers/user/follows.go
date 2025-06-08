@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -64,28 +64,9 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 			ID: userFollower.ID,
 		},
 	}, "User", "User.Followers", "Follower", "Follower.Followers")
-	userFollowerToReturn := userFollowersToReturn[0]
+	userFollowerToReturn := &userFollowersToReturn[0]
 
-	userDTO := dtos.UserFollowerDTO{
-		ID: userFollowerToReturn.ID,
-		User: dtos.UserDTO{
-			ID:             userFollowerToReturn.User.ID,
-			Username:       userFollowerToReturn.User.Username,
-			Role:           userFollowerToReturn.User.Role,
-			ProfilePicture: userFollowerToReturn.User.ProfilePicture,
-			ProfileInfo:    userFollowerToReturn.User.ProfileInfo,
-			Followers:      int64(len(userFollowerToReturn.User.Followers)),
-		},
-		Follower: dtos.UserDTO{
-			ID:             userFollowerToReturn.Follower.ID,
-			Username:       userFollowerToReturn.Follower.Username,
-			Role:           userFollowerToReturn.Follower.Role,
-			ProfilePicture: userFollowerToReturn.Follower.ProfilePicture,
-			ProfileInfo:    userFollowerToReturn.Follower.ProfileInfo,
-			Followers:      int64(len(userFollowerToReturn.Follower.Followers)),
-		},
-	}
-
+	userDTO := dto.NewUserFollowerDTO(userFollowerToReturn)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, userDTO)
 }

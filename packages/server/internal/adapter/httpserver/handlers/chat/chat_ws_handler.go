@@ -8,9 +8,9 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -101,12 +101,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
 	if err == nil {
 		for _, msg := range messages {
-			msgDTO := &dtos.MessageDTO{
-				ID:        msg.ID,
-				Content:   msg.Content,
-				CreatedAt: msg.CreatedAt,
-				SenderID:  msg.SenderID,
-			}
+			msgDTO := dto.NewMessageDTO(&msg)
 			b, _ := json.Marshal(msgDTO)
 			client.Send <- b
 		}

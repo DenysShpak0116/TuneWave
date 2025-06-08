@@ -4,7 +4,6 @@ import (
 	"context"
 	"mime/multipart"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/google/uuid"
 )
@@ -42,11 +41,10 @@ type SongService interface {
 		order string,
 		page int,
 		limit int,
-	) ([]dtos.SongExtendedDTO, error)
+	) ([]models.Song, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	UpdateSong(ctx context.Context, songParams UpdateSongParams) error
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)
-	GetFullDTOByID(ctx context.Context, id uuid.UUID) (*dtos.SongExtendedDTO, error)
 	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)
 	AddToCollection(ctx context.Context, songUUID, collectionUUID uuid.UUID) error
 	IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error)

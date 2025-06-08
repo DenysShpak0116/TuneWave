@@ -85,7 +85,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	songDTO, err := sh.SongService.GetByID(r.Context(), songUUID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
 		return
@@ -160,7 +160,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), song.ID)
+	songDTO, err := sh.SongService.GetByID(r.Context(), song.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
 		return
@@ -242,7 +242,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedSong, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	updatedSong, err := sh.SongService.GetByID(r.Context(), songUUID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to retrieve updated song", err)
 		return

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -60,22 +60,17 @@ func (c *Client) ReadPump() {
 		}
 		log.Printf("[ReadPump] Parsed content: %s", payload.Content)
 
-		message := models.Message{
+		message := &models.Message{
 			Content:  payload.Content,
 			ChatID:   c.ChatID,
 			SenderID: c.UserID,
 		}
 
-		if err := c.MessageService.Create(context.Background(), &message); err != nil {
+		if err := c.MessageService.Create(context.Background(), message); err != nil {
 			continue
 		}
 
-		messageDTO := &dtos.MessageDTO{
-			ID:        message.ID,
-			CreatedAt: message.CreatedAt,
-			Content:   message.Content,
-			SenderID:  message.SenderID,
-		}
+		messageDTO := dto.NewMessageDTO(message)
 		outgoing, _ := json.Marshal(messageDTO)
 		c.Hub.Broadcast <- outgoing
 	}

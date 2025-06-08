@@ -94,14 +94,14 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	collectionDTO, err := ch.CollectionService.GetFullDTOByID(context.Background(), collection.ID)
+	newCollection, err := ch.CollectionService.GetByID(context.Background(), collection.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, collectionDTO)
+	render.JSON(w, r, dto.NewCollectionDTO(newCollection))
 }
 
 // GetCollectionByID godoc
@@ -194,7 +194,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
-	prevCollection, err := ch.CollectionService.GetFullDTOByID(r.Context(), collectionUUID)
+	prevCollection, err := ch.CollectionService.GetByID(r.Context(), collectionUUID, "User")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
@@ -214,13 +214,13 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	newCollection, err := ch.CollectionService.GetFullDTOByID(r.Context(), prevCollection.ID)
+	newCollection, err := ch.CollectionService.GetByID(r.Context(), prevCollection.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, newCollection)
+	render.JSON(w, r, dto.NewCollectionDTO(newCollection))
 }
 
 // GetUsersCollections godoc
@@ -345,21 +345,9 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	collectionsDTOs := make([]dtos.CollectionDTO, 0)
+	collectionsDTOs := make([]dto.CollectionDTO, 0)
 	for _, collection := range collections {
-		collectionsDTOs = append(collectionsDTOs, dtos.CollectionDTO{
-			ID:       collection.ID,
-			Title:    collection.Title,
-			CoverURL: collection.CoverURL,
-			User: dtos.UserDTO{
-				ID:             collection.User.ID,
-				Username:       collection.User.Username,
-				Role:           collection.User.Role,
-				ProfilePicture: collection.User.ProfilePicture,
-				ProfileInfo:    collection.User.ProfileInfo,
-				Followers:      int64(len(collection.User.Followers)),
-			},
-		})
+		collectionsDTOs = append(collectionsDTOs, *dto.NewCollectionDTO(&collection))
 	}
 
 	render.JSON(w, r, collectionsDTOs)

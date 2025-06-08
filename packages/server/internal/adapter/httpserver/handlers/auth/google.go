@@ -89,7 +89,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO, err := ah.UserService.GetFullDTOByID(ctx, currentUser.ID)
+	userDTO, err := ah.UserService.GetByID(ctx, currentUser.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
 		return

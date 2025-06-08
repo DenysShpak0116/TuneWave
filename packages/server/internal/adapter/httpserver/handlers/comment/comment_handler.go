@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -74,18 +74,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	commentDTO := &dtos.CommentDTO{
-		ID: commentWithPreload.ID,
-		Author: dtos.UserDTO{
-			ID:             commentWithPreload.User.ID,
-			Username:       commentWithPreload.User.Username,
-			ProfilePicture: commentWithPreload.User.ProfilePicture,
-			ProfileInfo:    commentWithPreload.User.ProfileInfo,
-			Followers:      int64(len(commentWithPreload.User.Followers)),
-		},
-		Content:   commentWithPreload.Content,
-		CreatedAt: commentWithPreload.CreatedAt,
-	}
+	commentDTO := dto.NewCommentDTO(commentWithPreload)
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, commentDTO)

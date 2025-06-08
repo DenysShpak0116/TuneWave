@@ -8,7 +8,6 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -64,14 +63,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
 
-	userDTO := &dtos.UserDTO{
-		ID:             uuidID,
-		Username:       updatedUser.Username,
-		Role:           updatedUser.Role,
-		ProfilePicture: updatedUser.ProfilePicture,
-		ProfileInfo:    updatedUser.ProfileInfo,
-		Followers:      int64(len(updatedUser.Followers)),
-	}
+	userDTO := dto.NewUserDTO(updatedUser)
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
 		"user": userDTO,

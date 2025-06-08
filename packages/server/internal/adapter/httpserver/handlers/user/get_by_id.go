@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -30,7 +30,7 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid user ID", err)
 		return
 	}
-	user, err := uh.UserService.GetFullDTOByID(context.Background(), userIDuuid)
+	user, err := uh.UserService.GetByID(context.Background(), userIDuuid)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusNotFound, "user not found", err)
 		return
@@ -198,21 +198,9 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	user := users[0]
 
-	collectionsDTO := make([]dtos.CollectionDTO, 0)
+	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {
-		collectionsDTO = append(collectionsDTO, dtos.CollectionDTO{
-			ID:       userCollection.Collection.ID,
-			Title:    userCollection.Collection.Title,
-			CoverURL: userCollection.Collection.CoverURL,
-			User: dtos.UserDTO{
-				ID:             userCollection.Collection.User.ID,
-				Username:       userCollection.Collection.User.Username,
-				Role:           userCollection.Collection.User.Role,
-				ProfilePicture: userCollection.Collection.User.ProfilePicture,
-				ProfileInfo:    userCollection.Collection.User.ProfileInfo,
-				Followers:      int64(len(userCollection.Collection.User.Followers)),
-			},
-		})
+		collectionsDTO = append(collectionsDTO, *dto.NewCollectionDTO(&userCollection.Collection))
 	}
 
 	render.Status(r, http.StatusOK)

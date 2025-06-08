@@ -12,7 +12,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -68,7 +67,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO, err := ah.UserService.GetFullDTOByID(ctx, user.ID)
+	userDTO, err := ah.UserService.GetByID(ctx, user.ID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
 		return
@@ -127,14 +126,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO := &dtos.UserDTO{
-		ID:             userData.ID,
-		Username:       userData.Username,
-		Role:           userData.Role,
-		ProfilePicture: userData.ProfilePicture,
-		ProfileInfo:    userData.ProfileInfo,
-		Followers:      int64(len(userData.Followers)),
-	}
+	userDTO := dto.NewUserDTO(userData)
 
 	authData := map[string]any{
 		"refreshToken": refreshToken,
