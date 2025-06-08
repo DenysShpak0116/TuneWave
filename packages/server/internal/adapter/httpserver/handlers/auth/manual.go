@@ -18,14 +18,14 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
-// Register godoc
-// @Summary Register a new user
-// @Description Registers a new user with email, password, and username. Returns the created user object.
-// @Tags Auth
-// @Accept  json
-// @Produce  json
-// @Param user body dto.RegisterRequest true "User registration data"
-// @Router /auth/register [post]
+// Register		godoc
+// @Summary		Register a new user
+// @Description	Registers a new user with email, password, and username. Returns the created user object.
+// @Tags		Auth
+// @Accept		json
+// @Produce		json
+// @Param		user body dto.RegisterRequest true "User registration data"
+// @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -67,24 +67,20 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO, err := ah.UserService.GetByID(ctx, user.ID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
-		return
-	}
+	userDTO := dto.NewUserDTO(user)
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, userDTO)
 }
 
-// Login godoc
-// @Summary Login an existing user
-// @Description Logs in an existing user with email and password, and returns access and refresh tokens.
-// @Tags Auth
-// @Accept  json
-// @Produce  json
-// @Param login body dto.LoginRequest true "User login data"
-// @Router /auth/login [post]
+// Login		godoc
+// @Summary		Login an existing user
+// @Description	Logs in an existing user with email and password, and returns access and refresh tokens.
+// @Tags		Auth
+// @Accept		json
+// @Produce		json
+// @Param		login body dto.LoginRequest true "User login data"
+// @Router		/auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

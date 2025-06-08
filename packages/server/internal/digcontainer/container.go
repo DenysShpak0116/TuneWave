@@ -71,6 +71,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(service.NewResultService)
 	container.Provide(service.NewUserCollectionService)
 	container.Provide(service.NewUserFollowerService)
+	container.Provide(service.NewUserReactionService)
 	container.Provide(ws.NewHubManager)
 
 	// handlers

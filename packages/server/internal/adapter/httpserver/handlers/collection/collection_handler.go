@@ -42,7 +42,6 @@ func NewCollectionHandler(
 // @Security     BearerAuth
 // @Accept  multipart/form-data
 // @Produce  json
-// @Param userId formData string true "User ID"
 // @Param title formData string true "Collection title"
 // @Param description formData string true "Collection description"
 // @Param cover formData file true "Collection cover image"
@@ -54,7 +53,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	userID := r.FormValue("userId")
+	userID := r.Context().Value("userID").(string)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
@@ -94,7 +93,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	newCollection, err := ch.CollectionService.GetByID(context.Background(), collection.ID)
+	newCollection, err := ch.CollectionService.GetByID(context.Background(), collection.ID, "User")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return

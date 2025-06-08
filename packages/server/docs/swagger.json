@@ -284,13 +284,6 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
-                        "name": "userId",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "Collection title",
                         "name": "title",
                         "in": "formData",
