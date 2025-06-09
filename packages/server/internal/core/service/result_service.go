@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -29,7 +28,7 @@ func NewResultService(repo port.Repository[models.Result], collectionSongReposit
 	}
 }
 
-func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collectionID uuid.UUID, request dto.SendResultRequest) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collectionID uuid.UUID, request dto.SendResultRequest) ([]models.Result, error) {
 	matrix, err := buildComparisonMatrix(request.Results)
 	if err != nil {
 		return nil, err
@@ -136,6 +135,7 @@ func (rs *ResultService) saveUserRanks(ctx context.Context, userID, collectionID
 	return nil
 }
 
+// TODO: change the user results retrieval
 func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collectionID uuid.UUID) ([]dtos.UserResultsDTO, error) {
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
@@ -144,7 +144,7 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 		return nil, err
 	}
 
-	var userResults []dtos.UserResultsDTO
+	var userResults []models.Result
 	for _, cs := range collectionSongs {
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
@@ -158,9 +158,9 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 		}
 
 		result := results[0]
-		userResults = append(userResults, dtos.UserResultsDTO{
+		userResults = append(userResults, models.Result{
 			CollectionSongID: result.CollectionSongID,
-			SongID:           result.CollectionSong.SongID,
+			SongID:           result.CollectionSong.ID,
 			SongName:         result.CollectionSong.Song.Title,
 			UserID:           userID,
 			UserName:         result.User.Username,
@@ -204,7 +204,6 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 
 	return userResults, nil
 }
-
 
 func (rs *ResultService) GetCollectiveResults(ctx context.Context, collectionID uuid.UUID) (map[string]interface{}, error) {
 	collectionSongs, err := rs.fetchCollectionSongsWithResults(ctx, collectionID)
