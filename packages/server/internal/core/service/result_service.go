@@ -135,8 +135,7 @@ func (rs *ResultService) saveUserRanks(ctx context.Context, userID, collectionID
 	return nil
 }
 
-// TODO: change the user results retrieval
-func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collectionID uuid.UUID) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collectionID uuid.UUID) ([]models.Result, error) {
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
 	}).Find()
@@ -159,18 +158,32 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 
 		result := results[0]
 		userResults = append(userResults, models.Result{
-			CollectionSongID: result.CollectionSongID,
-			SongID:           result.CollectionSong.ID,
-			SongName:         result.CollectionSong.Song.Title,
-			UserID:           userID,
-			UserName:         result.User.Username,
-			SongRang:         result.SongRang,
+			BaseModel: models.BaseModel{
+				ID:        result.ID,
+				CreatedAt: result.CreatedAt,
+			},
+			SongRang: result.SongRang,
+			UserID:   userID,
+			User: models.User{
+				BaseModel: models.BaseModel{
+					ID:        userID,
+					CreatedAt: result.User.CreatedAt,
+				},
+				Username:       result.User.Username,
+				Email:          result.User.Email,
+				PasswordHash:   result.User.PasswordHash,
+				Role:           result.User.Role,
+				ProfileInfo:    result.User.ProfileInfo,
+				ProfilePicture: result.User.ProfilePicture,
+			},
+			CollectionSongID: collectionID,
+			CollectionSong:   cs,
 		})
 	}
 	return userResults, nil
 }
 
-func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionID uuid.UUID) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionID uuid.UUID) ([]models.Result, error) {
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
 	}).Find()
@@ -178,7 +191,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		return nil, err
 	}
 
-	userResults := make([]dtos.UserResultsDTO, 0)
+	userResults := make([]models.Result, 0)
 	for _, cs := range collectionSongs {
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
@@ -192,13 +205,27 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		}
 
 		result := results[0]
-		userResults = append(userResults, dtos.UserResultsDTO{
-			CollectionSongID: result.CollectionSongID,
-			SongID:           result.CollectionSong.SongID,
-			SongName:         result.CollectionSong.Song.Title,
-			UserID:           userID,
-			UserName:         result.User.Username,
-			SongRang:         result.SongRang,
+		userResults = append(userResults, models.Result{
+			BaseModel: models.BaseModel{
+				ID:        result.ID,
+				CreatedAt: result.CreatedAt,
+			},
+			SongRang: result.SongRang,
+			UserID:   userID,
+			User: models.User{
+				BaseModel: models.BaseModel{
+					ID:        userID,
+					CreatedAt: result.User.CreatedAt,
+				},
+				Username:       result.User.Username,
+				Email:          result.User.Email,
+				PasswordHash:   result.User.PasswordHash,
+				Role:           result.User.Role,
+				ProfileInfo:    result.User.ProfileInfo,
+				ProfilePicture: result.User.ProfilePicture,
+			},
+			CollectionSongID: collectionID,
+			CollectionSong:   cs,
 		})
 	}
 

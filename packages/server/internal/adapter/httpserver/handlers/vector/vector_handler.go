@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -79,9 +79,9 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) {
 	}
 	collectionSong := collectionSongs[0]
 
-	vectorsDTO := make([]*dtos.VectorDTO, 0)
+	vectorsDTO := make([]*dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, &dtos.VectorDTO{
+		vectorsDTO = append(vectorsDTO, &dto.VectorDTO{
 			ID:               vector.ID,
 			Mark:             vector.Mark,
 			CriterionID:      vector.CriterionID,
@@ -171,9 +171,9 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	vectorsDTO := make([]*dtos.VectorDTO, 0)
+	vectorsDTO := make([]*dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, &dtos.VectorDTO{
+		vectorsDTO = append(vectorsDTO, &dto.VectorDTO{
 			ID:               vector.ID,
 			Mark:             vector.Mark,
 			CriterionID:      vector.CriterionID,
@@ -254,9 +254,9 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 	collectionSong := collectionSongs[0]
 
-	vectorsDTO := make([]*dtos.VectorDTO, 0)
+	vectorsDTO := make([]*dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, &dtos.VectorDTO{
+		vectorsDTO = append(vectorsDTO, &dto.VectorDTO{
 			ID:               vector.ID,
 			Mark:             vector.Mark,
 			CriterionID:      vector.CriterionID,

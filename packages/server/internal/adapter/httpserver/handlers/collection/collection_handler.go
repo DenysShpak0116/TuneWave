@@ -9,7 +9,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -252,7 +251,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 
 	if len(userCollections) == 0 {
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dtos.UsersCollectionDTO{})
+		render.JSON(w, r, []dto.UsersCollectionDTO{})
 		return
 	}
 
@@ -261,9 +260,9 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		collections[i] = userCollection.Collection
 	}
 
-	usersCollectionsDTOs := make([]dtos.UsersCollectionDTO, 0)
+	usersCollectionsDTOs := make([]dto.UsersCollectionDTO, 0)
 	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.UsersCollectionDTO{
 			ID:          collection.ID,
 			CreatedAt:   collection.CreatedAt,
 			Title:       collection.Title,
@@ -408,7 +407,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 
 	if len(userCollections) == 0 {
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dtos.UsersCollectionDTO{})
+		render.JSON(w, r, []dto.UsersCollectionDTO{})
 		return
 	}
 
@@ -417,9 +416,9 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		collections[i] = userCollection.Collection
 	}
 
-	var usersCollectionsDTOs []dtos.UsersCollectionDTO
+	var usersCollectionsDTOs []dto.UsersCollectionDTO
 	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.UsersCollectionDTO{
 			ID:          collection.ID,
 			CreatedAt:   collection.CreatedAt,
 			Title:       collection.Title,
