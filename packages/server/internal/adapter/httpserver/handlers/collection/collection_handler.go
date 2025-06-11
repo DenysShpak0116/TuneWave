@@ -251,7 +251,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 
 	if len(userCollections) == 0 {
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dto.UsersCollectionDTO{})
+		render.JSON(w, r, []dto.UserCollectionDTO{})
 		return
 	}
 
@@ -260,15 +260,9 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		collections[i] = userCollection.Collection
 	}
 
-	usersCollectionsDTOs := make([]dto.UsersCollectionDTO, 0)
+	usersCollectionsDTOs := make([]dto.UserCollectionDTO, 0)
 	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.UsersCollectionDTO{
-			ID:          collection.ID,
-			CreatedAt:   collection.CreatedAt,
-			Title:       collection.Title,
-			Description: collection.Description,
-			CoverURL:    collection.CoverURL,
-		})
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.NewUserCollectionDTO(&collection))
 	}
 
 	render.JSON(w, r, usersCollectionsDTOs)
@@ -345,7 +339,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 
 	collectionsDTOs := make([]dto.CollectionDTO, 0)
 	for _, collection := range collections {
-		collectionsDTOs = append(collectionsDTOs, *dto.NewCollectionDTO(&collection))
+		collectionsDTOs = append(collectionsDTOs, dto.NewCollectionDTO(&collection))
 	}
 
 	render.JSON(w, r, collectionsDTOs)
@@ -407,7 +401,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 
 	if len(userCollections) == 0 {
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dto.UsersCollectionDTO{})
+		render.JSON(w, r, []dto.UserCollectionDTO{})
 		return
 	}
 
@@ -416,15 +410,9 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		collections[i] = userCollection.Collection
 	}
 
-	var usersCollectionsDTOs []dto.UsersCollectionDTO
+	var usersCollectionsDTOs []dto.UserCollectionDTO
 	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.UsersCollectionDTO{
-			ID:          collection.ID,
-			CreatedAt:   collection.CreatedAt,
-			Title:       collection.Title,
-			Description: collection.Description,
-			CoverURL:    collection.CoverURL,
-		})
+		usersCollectionsDTOs = append(usersCollectionsDTOs, dto.NewUserCollectionDTO(&collection))
 	}
 
 	render.Status(r, http.StatusCreated)

@@ -14,12 +14,12 @@ type CollectionDTO struct {
 	CoverURL    string    `json:"coverUrl"`
 	Description string    `json:"description"`
 
-	User *UserDTO `json:"user"`
+	User UserDTO `json:"user"`
 
 	CollectionSongs []SongDTO `json:"collectionSongs,omitempty"`
 }
 
-func NewCollectionDTO(collection *models.Collection) *CollectionDTO {
+func NewCollectionDTO(collection *models.Collection) CollectionDTO {
 	collectionSongs := []SongDTO{}
 	for _, collectionSong := range collection.CollectionSongs {
 		collectionSongs = append(collectionSongs, *NewSongDTO(&collectionSong.Song))
@@ -29,7 +29,7 @@ func NewCollectionDTO(collection *models.Collection) *CollectionDTO {
 		collectionSongs = nil
 	}
 
-	return &CollectionDTO{
+	return CollectionDTO{
 		ID:              collection.ID,
 		Title:           collection.Title,
 		CoverURL:        collection.CoverURL,

@@ -19,7 +19,7 @@ type SongDTO struct {
 	Listenings int64        `json:"listenings"`
 	Likes      int64        `json:"likes"`
 	Dislikes   int64        `json:"dislikes"`
-	User       *UserDTO     `json:"user"`
+	User       UserDTO      `json:"user"`
 	Authors    []AuthorDTO  `json:"authors"`
 	SongTags   []TagDTO     `json:"songTags"`
 	Comments   []CommentDTO `json:"comments"`
@@ -38,7 +38,7 @@ func NewSongDTO(song *models.Song) *SongDTO {
 
 	comments := []CommentDTO{}
 	for _, comment := range song.Comments {
-		comments = append(comments, *NewCommentDTO(&comment))
+		comments = append(comments, NewCommentDTO(&comment))
 	}
 
 	return &SongDTO{

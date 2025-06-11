@@ -14,8 +14,8 @@ type UserDTO struct {
 	Followers      int64     `json:"followers"`
 }
 
-func NewUserDTO(user *models.User) *UserDTO {
-	return &UserDTO{
+func NewUserDTO(user *models.User) UserDTO {
+	return UserDTO{
 		ID:             user.ID,
 		Username:       user.Username,
 		Role:           user.Role,

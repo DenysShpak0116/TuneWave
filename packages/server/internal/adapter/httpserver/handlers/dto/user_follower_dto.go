@@ -11,11 +11,11 @@ type UserFollowerDTO struct {
 	Follower UserDTO   `json:"follower"`
 }
 
-func NewUserFollowerDTO(userFollower *models.UserFollower) *UserFollowerDTO {
-	return &UserFollowerDTO{
+func NewUserFollowerDTO(userFollower *models.UserFollower) UserFollowerDTO {
+	return UserFollowerDTO{
 		ID:       userFollower.ID,
-		User:     *NewUserDTO(&userFollower.User),
-		Follower: *NewUserDTO(&userFollower.Follower),
+		User:     NewUserDTO(&userFollower.User),
+		Follower: NewUserDTO(&userFollower.Follower),
 	}
 
 }

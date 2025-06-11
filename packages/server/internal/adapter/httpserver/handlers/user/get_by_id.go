@@ -200,7 +200,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {
-		collectionsDTO = append(collectionsDTO, *dto.NewCollectionDTO(&userCollection.Collection))
+		collectionsDTO = append(collectionsDTO, dto.NewCollectionDTO(&userCollection.Collection))
 	}
 
 	render.Status(r, http.StatusOK)
