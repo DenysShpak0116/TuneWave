@@ -1,6 +1,9 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/google/uuid"
+)
 
 type VectorDTO struct {
 	ID uuid.UUID `json:"id"`
@@ -11,4 +14,14 @@ type VectorDTO struct {
 	Criterion   string    `json:"criterion"`
 
 	CollectionSongID uuid.UUID `json:"collectionSongId"`
+}
+
+func NewVectorDTO(vector models.Vector) VectorDTO {
+	return VectorDTO{
+		ID:               vector.ID,
+		Mark:             vector.Mark,
+		CriterionID:      vector.CriterionID,
+		Criterion:        vector.Criterion.Name,
+		CollectionSongID: vector.CollectionSongID,
+	}
 }
