@@ -14,13 +14,14 @@ type UserDTO struct {
 	Followers      int64     `json:"followers"`
 }
 
-func NewUserDTO(user *models.User, followersCountFuncs ...func(uuid.UUID) int64) UserDTO {
+func NewUserDTO(user *models.User, followersCountFunc func(uuid.UUID) int64) UserDTO {
 	var followers int64
-	if len(followersCountFuncs) == 0 {
+	if followersCountFunc == nil {
 		followers = 0
 	} else {
-		followers = followersCountFuncs[0](user.ID)
+		followers = followersCountFunc(user.ID)
 	}
+
 	return UserDTO{
 		ID:             user.ID,
 		Username:       user.Username,
