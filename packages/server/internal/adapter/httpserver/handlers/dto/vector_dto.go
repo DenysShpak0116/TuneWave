@@ -16,7 +16,7 @@ type VectorDTO struct {
 	CollectionSongID uuid.UUID `json:"collectionSongId"`
 }
 
-func NewVectorDTO(vector models.Vector) VectorDTO {
+func (b *DTOBuilder) BuildVectorDTO(vector models.Vector) VectorDTO {
 	return VectorDTO{
 		ID:               vector.ID,
 		Mark:             vector.Mark,

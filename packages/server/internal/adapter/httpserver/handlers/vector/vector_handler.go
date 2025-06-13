@@ -32,12 +32,6 @@ func NewVectorHandler(
 	}
 }
 
-//id - collection id
-// r.Get("/{id}/{song-id}/vectors", vectorHandler.GetSongVectors)
-// r.Post("/{id}/{song-id}/vectors", vectorHandler.CreateSongVectors)
-// r.Put("/{id}/{song-id}/vectors", vectorHandler.UpdateSongVectors)
-// r.Delete("/{id}/{song-id}/vectors", vectorHandler.DeleteSongVectors)
-
 // GetSongVectors godoc
 // @Summary Get song vectors
 // @Description Get song vectors
@@ -79,9 +73,11 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) {
 	}
 	collectionSong := collectionSongs[0]
 
+	dtoBuilder := dto.NewDTOBuilder()
+
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dto.NewVectorDTO(vector))
+		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
 	}
 
 	render.Status(r, http.StatusOK)
@@ -165,9 +161,11 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	dtoBuilder := dto.NewDTOBuilder()
+
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dto.NewVectorDTO(vector))
+		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -242,9 +240,11 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 	collectionSong := collectionSongs[0]
 
+	dtoBuilder := dto.NewDTOBuilder()
+
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dto.NewVectorDTO(vector))
+		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
 	}
 
 	render.Status(r, http.StatusOK)

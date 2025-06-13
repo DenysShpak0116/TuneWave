@@ -13,12 +13,18 @@ import (
 type UserHandler struct {
 	UserService         services.UserService
 	UserFollowerService services.UserFollowerService
+	UserReactionService services.UserReactionService
 }
 
-func NewUserHandler(userService services.UserService, userFollowerService services.UserFollowerService) *UserHandler {
+func NewUserHandler(
+	userService services.UserService,
+	userFollowerService services.UserFollowerService,
+	userReactionService services.UserReactionService,
+) *UserHandler {
 	return &UserHandler{
 		UserService:         userService,
 		UserFollowerService: userFollowerService,
+		UserReactionService: userReactionService,
 	}
 }
 

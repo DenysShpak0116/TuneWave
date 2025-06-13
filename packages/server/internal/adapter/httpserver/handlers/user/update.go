@@ -63,7 +63,11 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
 
-	userDTO := dto.NewUserDTO(updatedUser)
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return uh.UserService.GetUserFollowersCount(context.Background(), userID)
+		})
+	userDTO := dtoBuilder.BuildUserDTO(updatedUser)
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
 		"user": userDTO,

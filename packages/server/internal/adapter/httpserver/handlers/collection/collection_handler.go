@@ -20,17 +20,20 @@ type CollectionHandler struct {
 	CollectionService     services.CollectionService
 	UserCollectionService services.UserCollectionService
 	UserReactionService   services.UserReactionService
+	UserService           services.UserService
 }
 
 func NewCollectionHandler(
 	collectionService services.CollectionService,
 	userCollectionService services.UserCollectionService,
 	userReactionService services.UserReactionService,
+	userService services.UserService,
 ) *CollectionHandler {
 	return &CollectionHandler{
 		CollectionService:     collectionService,
 		UserCollectionService: userCollectionService,
 		UserReactionService:   userReactionService,
+		UserService:           userService,
 	}
 }
 
@@ -46,6 +49,7 @@ func NewCollectionHandler(
 // @Param cover formData file true "Collection cover image"
 // @Router /collections [post]
 func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
@@ -69,7 +73,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 	}
 
 	collection, err := ch.CollectionService.SaveCollection(
-		context.Background(), services.SaveCollectionParams{
+		ctx, services.SaveCollectionParams{
 			Title:       title,
 			Description: description,
 			CoverHeader: coverHeader,
@@ -87,19 +91,30 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		CollectionID: collection.ID,
 	}
 
-	if err := ch.UserCollectionService.Create(context.Background(), userCollection); err != nil {
+	if err := ch.UserCollectionService.Create(ctx, userCollection); err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error creating user collection", err)
 		return
 	}
 
-	newCollection, err := ch.CollectionService.GetByID(context.Background(), collection.ID, "User")
+	newCollection, err := ch.CollectionService.GetByID(ctx, collection.ID, "User")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
 
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ch.UserService.GetUserFollowersCount(ctx, userID)
+		}).
+		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongLikes(ctx, songID)
+		}).
+		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongDislikes(ctx, songID)
+		})
+
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, dto.NewCollectionDTO(newCollection))
+	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(newCollection))
 }
 
 // GetCollectionByID godoc
@@ -111,7 +126,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [get]
 func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := context.Background()
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -125,7 +140,18 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	render.JSON(w, r, dto.NewCollectionDTO(collection))
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ch.UserService.GetUserFollowersCount(ctx, userID)
+		}).
+		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongLikes(ctx, songID)
+		}).
+		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongDislikes(ctx, songID)
+		})
+
+	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(collection))
 }
 
 // DeleteCollection godoc
@@ -166,6 +192,7 @@ func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Req
 // @Param cover formData file true "Collection cover image"
 // @Router /collections/{id} [put]
 func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -192,14 +219,14 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
-	prevCollection, err := ch.CollectionService.GetByID(r.Context(), collectionUUID, "User")
+	prevCollection, err := ch.CollectionService.GetByID(ctx, collectionUUID, "User")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
 
 	_, err = ch.CollectionService.UpdateCollection(
-		r.Context(), collectionUUID, services.UpdateCollectionParams{
+		ctx, collectionUUID, services.UpdateCollectionParams{
 			UserID:      prevCollection.User.ID,
 			Title:       title,
 			Description: description,
@@ -217,8 +244,20 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
 		return
 	}
+
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ch.UserService.GetUserFollowersCount(ctx, userID)
+		}).
+		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongLikes(ctx, songID)
+		}).
+		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongDislikes(ctx, songID)
+		})
+
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewCollectionDTO(newCollection))
+	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(newCollection))
 }
 
 // GetUsersCollections godoc
@@ -280,6 +319,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 // @Param order query string false "Order (asc, desc)"
 // @Router /collections [get]
 func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	limitParam := r.URL.Query().Get("limit")
 	pageParam := r.URL.Query().Get("page")
 	sort := r.URL.Query().Get("sort")
@@ -324,7 +364,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 	}
 
 	collections, err := ch.CollectionService.GetMany(
-		context.Background(),
+		ctx,
 		limit,
 		page,
 		sort,
@@ -337,9 +377,20 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ch.UserService.GetUserFollowersCount(ctx, userID)
+		}).
+		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongLikes(ctx, songID)
+		}).
+		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
+			return ch.UserReactionService.GetSongDislikes(ctx, songID)
+		})
+
 	collectionsDTOs := make([]dto.CollectionDTO, 0)
 	for _, collection := range collections {
-		collectionsDTOs = append(collectionsDTOs, dto.NewCollectionDTO(&collection))
+		collectionsDTOs = append(collectionsDTOs, dtoBuilder.BuildCollectionDTO(&collection))
 	}
 
 	render.JSON(w, r, collectionsDTOs)

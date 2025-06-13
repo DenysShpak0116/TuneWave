@@ -25,20 +25,20 @@ type SongDTO struct {
 	Comments   []CommentDTO `json:"comments"`
 }
 
-func NewSongDTO(song *models.Song) *SongDTO {
+func (b *DTOBuilder) BuildSongDTO(song *models.Song) *SongDTO {
 	songAuthors := []AuthorDTO{}
 	for _, songAuthor := range song.Authors {
-		songAuthors = append(songAuthors, *NewAuthorDTO(&songAuthor))
+		songAuthors = append(songAuthors, *b.BuildAuthorDTO(&songAuthor))
 	}
 
 	songTags := []TagDTO{}
 	for _, songTag := range song.SongTags {
-		songTags = append(songTags, *NewTagDTO(&songTag))
+		songTags = append(songTags, *b.BuildTagDTO(&songTag))
 	}
 
 	comments := []CommentDTO{}
 	for _, comment := range song.Comments {
-		comments = append(comments, NewCommentDTO(&comment))
+		comments = append(comments, b.BuildCommentDTO(&comment))
 	}
 
 	return &SongDTO{
@@ -50,9 +50,9 @@ func NewSongDTO(song *models.Song) *SongDTO {
 		SongURL:    song.SongURL,
 		CoverURL:   song.CoverURL,
 		Listenings: song.Listenings,
-		Likes:      0,
-		Dislikes:   0,
-		User:       NewUserDTO(&song.User),
+		Likes:      b.CountSongLikes(song.ID),
+		Dislikes:   b.CountSongDislikes(song.ID),
+		User:       b.BuildUserDTO(&song.User),
 		Authors:    songAuthors,
 		SongTags:   songTags,
 		Comments:   comments,

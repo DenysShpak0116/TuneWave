@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO: figure out  response body
 // FollowUser	godoc
 // @Summary		Follow user using id param
 // @Description	Follow user using id param
@@ -21,7 +22,8 @@ import (
 // @Produce		json
 // @Param		id path string true "User to follow ID"
 // @Router		/users/{id}/follow [post]
-func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	targetID := chi.URLParam(r, "id")
 	targetUUID, err := uuid.Parse(targetID)
 	if err != nil {
@@ -29,7 +31,7 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
+	userID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid auth user token", err)
 		return
@@ -40,7 +42,7 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userFollowers, _ := us.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	userFollowers, _ := uh.UserFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
@@ -53,20 +55,25 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}
-	err = us.UserFollowerService.Create(context.Background(), userFollower)
+	err = uh.UserFollowerService.Create(ctx, userFollower)
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "could not follow this user", err)
 		return
 	}
 
-	userFollowersToReturn, _ := us.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	userFollowersToReturn, _ := uh.UserFollowerService.Where(ctx, &models.UserFollower{
 		BaseModel: models.BaseModel{
 			ID: userFollower.ID,
 		},
 	}, "User", "User.Followers", "Follower", "Follower.Followers")
 	userFollowerToReturn := &userFollowersToReturn[0]
 
-	userDTO := dto.NewUserFollowerDTO(userFollowerToReturn)
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return uh.UserService.GetUserFollowersCount(ctx, userID)
+		})
+
+	userDTO := dtoBuilder.BuildUserFollowerDTO(userFollowerToReturn)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, userDTO)
 }

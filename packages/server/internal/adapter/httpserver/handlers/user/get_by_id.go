@@ -168,6 +168,7 @@ func printChat(chat interface{}) {
 // @Param id path string true "User id"
 // @Router /users/{id}/collections [get]
 func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
 	userID := chi.URLParam(r, "id")
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
@@ -176,7 +177,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 	}
 
 	users, err := uh.UserService.Where(
-		context.Background(),
+		ctx,
 		&models.User{
 			BaseModel: models.BaseModel{
 				ID: userUUID,
@@ -198,9 +199,20 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	user := users[0]
 
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return uh.UserService.GetUserFollowersCount(ctx, userID)
+		}).
+		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
+			return uh.UserReactionService.GetSongLikes(ctx, songID)
+		}).
+		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
+			return uh.UserReactionService.GetSongDislikes(ctx, songID)
+		})
+
 	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {
-		collectionsDTO = append(collectionsDTO, dto.NewCollectionDTO(&userCollection.Collection))
+		collectionsDTO = append(collectionsDTO, dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
 	}
 
 	render.Status(r, http.StatusOK)

@@ -6,7 +6,7 @@ type TagDTO struct {
 	Name string `json:"name"`
 }
 
-func NewTagDTO(songTag *models.SongTag) *TagDTO {
+func (b *DTOBuilder) BuildTagDTO(songTag *models.SongTag) *TagDTO {
 	return &TagDTO{
 		Name: songTag.Tag.Name,
 	}

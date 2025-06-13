@@ -19,10 +19,10 @@ type CollectionDTO struct {
 	CollectionSongs []SongDTO `json:"collectionSongs,omitempty"`
 }
 
-func NewCollectionDTO(collection *models.Collection) CollectionDTO {
+func (b *DTOBuilder) BuildCollectionDTO(collection *models.Collection) CollectionDTO {
 	collectionSongs := []SongDTO{}
 	for _, collectionSong := range collection.CollectionSongs {
-		collectionSongs = append(collectionSongs, *NewSongDTO(&collectionSong.Song))
+		collectionSongs = append(collectionSongs, *b.BuildSongDTO(&collectionSong.Song))
 	}
 
 	if len(collectionSongs) == 0 {
@@ -35,7 +35,7 @@ func NewCollectionDTO(collection *models.Collection) CollectionDTO {
 		CoverURL:        collection.CoverURL,
 		CreatedAt:       collection.CreatedAt,
 		Description:     collection.Description,
-		User:            NewUserDTO(&collection.User),
+		User:            b.BuildUserDTO(&collection.User),
 		CollectionSongs: collectionSongs,
 	}
 }

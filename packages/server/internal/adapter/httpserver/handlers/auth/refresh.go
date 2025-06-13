@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -22,6 +23,8 @@ import (
 // @Security     BearerAuth
 // @Router       /auth/refresh [post]
 func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
 	authCookie, err := r.Cookie("authData")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusBadRequest, "authData cookie not found", err)
@@ -64,13 +67,11 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ah.UserService.GetByID(r.Context(), userUUID, "Followers")
+	user, err := ah.UserService.GetByID(ctx, userUUID, "Followers")
 	if err != nil {
 		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user", err)
 		return
 	}
-
-	userDTO := dto.NewUserDTO(user)
 
 	newAuthData := map[string]interface{}{
 		"refreshToken": newRefreshToken,
@@ -93,8 +94,13 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ah.UserService.GetUserFollowersCount(ctx, userID)
+		})
+
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
-		"user":        userDTO,
+		"user":        dtoBuilder.BuildUserDTO(user),
 	})
 }

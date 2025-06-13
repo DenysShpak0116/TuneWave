@@ -11,7 +11,7 @@ type AuthorDTO struct {
 	Role string    `json:"role"`
 }
 
-func NewAuthorDTO(songAuthor *models.SongAuthor) *AuthorDTO {
+func (b *DTOBuilder) BuildAuthorDTO(songAuthor *models.SongAuthor) *AuthorDTO {
 	return &AuthorDTO{
 		ID:   songAuthor.AuthorID,
 		Name: songAuthor.Author.Name,

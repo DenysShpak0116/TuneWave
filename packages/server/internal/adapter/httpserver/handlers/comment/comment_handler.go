@@ -74,7 +74,8 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	commentDTO := dto.NewCommentDTO(commentWithPreload)
+	dtoBuilder := dto.NewDTOBuilder()
+	commentDTO := dtoBuilder.BuildCommentDTO(commentWithPreload)
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, commentDTO)

@@ -67,10 +67,13 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO := dto.NewUserDTO(user)
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ah.UserService.GetUserFollowersCount(ctx, userID)
+		})
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, userDTO)
+	render.JSON(w, r, dtoBuilder.BuildUserDTO(user))
 }
 
 // Login		godoc
@@ -122,8 +125,6 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userDTO := dto.NewUserDTO(userData)
-
 	authData := map[string]any{
 		"refreshToken": refreshToken,
 	}
@@ -146,9 +147,14 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
+	dtoBuilder := dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return ah.UserService.GetUserFollowersCount(ctx, userID)
+		})
+		
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
-		"user":        userDTO,
+		"user":        dtoBuilder.BuildUserDTO(userData),
 	})
 }
 
