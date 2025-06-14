@@ -7,6 +7,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -42,19 +43,17 @@ func NewVectorHandler(
 // @Param id path string true "Collection ID"
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [get]
-func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) {
+func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
 	songID := chi.URLParam(r, "song-id")
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid song id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
 	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
@@ -62,14 +61,13 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) {
 		SongID:       songUUID,
 	}, "Vectors", "Vectors.Criterion")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
 	if len(collectionSongs) == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, map[string]string{})
-		return
+		return nil
 	}
 	collectionSong := collectionSongs[0]
 
@@ -82,6 +80,7 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, vectorsDTO)
+	return nil
 }
 
 type CreateSongVectorsRequest struct {

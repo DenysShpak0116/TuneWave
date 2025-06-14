@@ -9,16 +9,25 @@ import (
 	"github.com/go-chi/render"
 )
 
-func RespondWithError(w http.ResponseWriter, r *http.Request, status int, message string, err error) {
-	log.Printf("Error: %v, Status: %d, Message: %s", err, status, message)
+type APIFunc func(w http.ResponseWriter, r *http.Request) error
 
-	var ErrMsg string
-	if err != nil {
-		ErrMsg = err.Error()
-	} else {
-		ErrMsg = message
+func MakeHandler(h APIFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := h(w, r)
+		if err == nil {
+			return
+		}
+
+		switch e := err.(type) {
+		case *helpers.APIError:
+			log.Printf("[API ERROR] Status: %d, Message: %s", e.Status, e.Message)
+			render.Status(r, e.Status)
+			render.JSON(w, r, map[string]any{"error": e.Message})
+
+		default:
+			log.Printf("Error: %v", e)
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, map[string]any{"error": "internal server error"})
+		}
 	}
-
-	render.Status(r, status)
-	render.JSON(w, r, helpers.NewErrorResponse(status, message, ErrMsg))
 }
