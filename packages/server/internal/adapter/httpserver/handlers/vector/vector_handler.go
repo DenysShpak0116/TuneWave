@@ -101,25 +101,22 @@ type CreateSongVectorsRequest struct {
 // @Param song-id path string true "Song ID"
 // @Param vectors body CreateSongVectorsRequest true "Vectors"
 // @Router /collections/{id}/{song-id}/vectors [post]
-func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request) {
+func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
 	songID := chi.URLParam(r, "song-id")
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid song id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
 	var request CreateSongVectorsRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid request", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
 	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
@@ -127,14 +124,13 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 		SongID:       songUUID,
 	})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
 	if len(collectionSongs) == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, map[string]string{})
-		return
+		return nil
 	}
 	collectionSong := &collectionSongs[0]
 
@@ -149,15 +145,13 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 
 	for _, vector := range vectors {
 		if err := h.VactorService.Create(r.Context(), vector); err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to create vector", err)
-			return
+			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create vector")
 		}
 	}
 
 	collectionSong, err = h.CollectionSongService.GetByID(r.Context(), collectionSong.ID, "Vectors", "Vectors.Criterion")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
 	dtoBuilder := dto.NewDTOBuilder()
@@ -169,6 +163,7 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, vectorsDTO)
+	return nil
 }
 
 type UpdateSongVectorsRequest struct {
@@ -190,25 +185,22 @@ type UpdateSongVectorsRequest struct {
 // @Param song-id path string true "Song ID"
 // @Param vectors body UpdateSongVectorsRequest true "Vectors"
 // @Router /collections/{id}/{song-id}/vectors [put]
-func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) {
+func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
 	songID := chi.URLParam(r, "song-id")
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid song id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
 	var request UpdateSongVectorsRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid request", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
 	for _, vector := range request.Vectors {
@@ -219,8 +211,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 			Mark:        vector.Mark,
 			CriterionID: vector.CriterionID,
 		}); err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to update vector", err)
-			return
+			return helpers.NewAPIError(http.StatusInternalServerError, "failed to update vector")
 		}
 	}
 
@@ -229,13 +220,12 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 		SongID:       songUUID,
 	}, "Vectors", "Vectors.Criterion")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 	if len(collectionSongs) == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, map[string]string{})
-		return
+		return nil
 	}
 	collectionSong := collectionSongs[0]
 
@@ -248,6 +238,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, vectorsDTO)
+	return nil
 }
 
 // DeleteSongVectors godoc
@@ -260,19 +251,17 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 // @Param id path string true "Collection ID"
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [delete]
-func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) {
+func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
 	songID := chi.URLParam(r, "song-id")
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid song id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
 	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
@@ -280,26 +269,25 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 		SongID:       songUUID,
 	}, "Vectors")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
 	if len(collectionSongs) == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, map[string]string{})
-		return
+		return nil
 	}
 	collectionSong := collectionSongs[0]
 
 	for _, vector := range collectionSong.Vectors {
 		if err := h.VactorService.Delete(r.Context(), vector.ID); err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to delete vector", err)
-			return
+			return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete vector")
 		}
 	}
 
 	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+	return nil
 }
 
 // HasAllVectors godoc
@@ -311,47 +299,45 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/has-all-vectors [get]
-func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) {
+func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid collection id", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
 	criterionCount, err := h.CriterionService.CountWhere(context.Background(), &models.Criterion{})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to count criteria", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to count criteria")
 	}
 	if criterionCount == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, "there is no criteria")
-		return
+		return nil
 	}
 
 	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
 		CollectionID: collectionUUID,
 	}, "Vectors")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "failed to get collection song", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 	if len(collectionSongs) == 0 {
 		render.Status(r, http.StatusNotFound)
 		render.JSON(w, r, "there is no collection song")
-		return
+		return nil
 	}
 
 	for _, collectionSong := range collectionSongs {
 		if len(collectionSong.Vectors) < int(criterionCount) {
 			render.Status(r, http.StatusOK)
 			render.JSON(w, r, map[string]bool{"hasAllVectors": false})
-			return
+			return nil
 		}
 	}
 	hasAllVectors := true
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]bool{"hasAllVectors": hasAllVectors})
+	return nil
 }

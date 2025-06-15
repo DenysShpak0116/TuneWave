@@ -14,7 +14,7 @@ type MessageDTO struct {
 	Content   string    `json:"content"`
 }
 
-func NewMessageDTO(message *models.Message) *MessageDTO {
+func (b *DTOBuilder) BuildMessageDTO(message *models.Message) *MessageDTO {
 	return &MessageDTO{
 		ID:        message.ID,
 		Content:   message.Content,

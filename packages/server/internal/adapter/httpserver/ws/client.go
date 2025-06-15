@@ -42,6 +42,7 @@ func (c *Client) ReadPump() {
 		log.Println("[ReadPump] client disconnected")
 	}()
 
+	dtoBuilder := dto.NewDTOBuilder()
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -70,7 +71,7 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
-		messageDTO := dto.NewMessageDTO(message)
+		messageDTO := dtoBuilder.BuildMessageDTO(message)
 		outgoing, _ := json.Marshal(messageDTO)
 		c.Hub.Broadcast <- outgoing
 	}

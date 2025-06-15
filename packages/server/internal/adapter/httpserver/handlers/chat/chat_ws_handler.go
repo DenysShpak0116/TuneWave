@@ -99,9 +99,10 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 	go client.ReadPump()
 
 	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
+	dtoBuilder := dto.NewDTOBuilder()
 	if err == nil {
 		for _, msg := range messages {
-			msgDTO := dto.NewMessageDTO(&msg)
+			msgDTO := dtoBuilder.BuildMessageDTO(&msg)
 			b, _ := json.Marshal(msgDTO)
 			client.Send <- b
 		}
