@@ -87,22 +87,22 @@ func NewRouter(
 	})
 
 	router.Route("/songs", func(r chi.Router) {
-		r.Get("/", songHandler.GetSongs)
-		r.Get("/{id}", songHandler.GetByID)
-		r.Get("/{id}/is-reacted/{userId}", songHandler.CheckReaction)
-		r.Post("/{id}/listen/{userId}", songHandler.ListenSong)
+		r.Get("/", handlers.MakeHandler(songHandler.GetSongs))
+		r.Get("/{id}", handlers.MakeHandler(songHandler.GetByID))
+		r.Get("/{id}/is-reacted/{userId}", handlers.MakeHandler(songHandler.CheckReaction))
+		r.Post("/{id}/listen/{userId}", handlers.MakeHandler(songHandler.ListenSong))
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 
-			protected.Post("/", songHandler.Create)
-			protected.Put("/{id}", songHandler.Update)
-			protected.Delete("/{id}", songHandler.Delete)
+			protected.Post("/", handlers.MakeHandler(songHandler.Create))
+			protected.Put("/{id}", handlers.MakeHandler(songHandler.Update))
+			protected.Delete("/{id}", handlers.MakeHandler(songHandler.Delete))
 
-			protected.Post("/{id}/reaction", songHandler.SetReaction)
+			protected.Post("/{id}/reaction", handlers.MakeHandler(songHandler.SetReaction))
 
-			protected.Post("/{id}/add-to-collection", songHandler.AddToCollection)
-			protected.Delete("/{id}/remove-from-collection", songHandler.RemoveFromCollection)
+			protected.Post("/{id}/add-to-collection", handlers.MakeHandler(songHandler.AddToCollection))
+			protected.Delete("/{id}/remove-from-collection", handlers.MakeHandler(songHandler.RemoveFromCollection))
 		})
 	})
 
@@ -156,7 +156,7 @@ func NewRouter(
 		r.Get("/", handlers.MakeHandler(userHandler.GetChats))
 	})
 
-	router.Get("/genres", songHandler.GetGenres)
+	router.Get("/genres", handlers.MakeHandler(songHandler.GetGenres))
 
 	return router
 }
