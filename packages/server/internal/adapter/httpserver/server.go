@@ -109,8 +109,8 @@ func NewRouter(
 	router.Route("/comments", func(r chi.Router) {
 		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 
-		r.Post("/", commentHandler.CreateComment)
-		r.Delete("/{id}", commentHandler.DeleteComment)
+		r.Post("/", handlers.MakeHandler(commentHandler.CreateComment))
+		r.Delete("/{id}", handlers.MakeHandler(commentHandler.DeleteComment))
 	})
 
 	router.Route("/collections", func(r chi.Router) {
