@@ -114,9 +114,9 @@ func NewRouter(
 	})
 
 	router.Route("/collections", func(r chi.Router) {
-		r.Get("/", collectionHandler.GetCollections)
-		r.Get("/{id}", collectionHandler.GetCollectionByID)
-		r.Get("/{id}/songs", collectionHandler.GetCollectionSongs)
+		r.Get("/", handlers.MakeHandler(collectionHandler.GetCollections))
+		r.Get("/{id}", handlers.MakeHandler(collectionHandler.GetCollectionByID))
+		r.Get("/{id}/songs", handlers.MakeHandler(collectionHandler.GetCollectionSongs))
 		r.Get("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.GetSongVectors))
 		r.Post("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.CreateSongVectors))
 		r.Put("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.UpdateSongVectors))
@@ -131,12 +131,12 @@ func NewRouter(
 			protected.Get("/{id}/get-results", handlers.MakeHandler(resultHandler.GetCollectiveResults))
 			protected.Delete("/{id}/delete-user-results", handlers.MakeHandler(resultHandler.DeleteUserResults))
 
-			protected.Post("/", collectionHandler.CreateCollection)
-			protected.Put("/{id}", collectionHandler.UpdateCollection)
-			protected.Delete("/{id}", collectionHandler.DeleteCollection)
-			protected.Get("/users-collections", collectionHandler.GetUsersCollections)
-			protected.Post("/{id}/add-to-user", collectionHandler.AddCollectionToUser)
-			protected.Delete("/{id}/remove-from-user", collectionHandler.RemoveCollectionFromUser)
+			protected.Post("/", handlers.MakeHandler(collectionHandler.CreateCollection))
+			protected.Put("/{id}", handlers.MakeHandler(collectionHandler.UpdateCollection))
+			protected.Delete("/{id}", handlers.MakeHandler(collectionHandler.DeleteCollection))
+			protected.Get("/users-collections", handlers.MakeHandler(collectionHandler.GetUsersCollections))
+			protected.Post("/{id}/add-to-user", handlers.MakeHandler(collectionHandler.AddCollectionToUser))
+			protected.Delete("/{id}/remove-from-user", handlers.MakeHandler(collectionHandler.RemoveCollectionFromUser))
 		})
 	})
 
