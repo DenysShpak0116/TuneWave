@@ -3,11 +3,9 @@ package chat
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
@@ -50,49 +48,38 @@ func NewChatHandler(
 // @Param        targetUserId query string true "UUID of target user"
 // @Param        authToken query string true "Bearer auth token"
 // @Router       /ws/chat [get]
-func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
+func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	targetID := r.URL.Query().Get("targetUserId")
 	targetUUID, err := uuid.Parse(targetID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid target user ID", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid target user ID")
 	}
 
 	token := r.URL.Query().Get("authToken")
 	userIDRaw, err := helpers.ParseToken(ch.JWTSecret, token)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid auth token", nil)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth token")
 	}
 
 	userUUID, err := uuid.Parse(userIDRaw)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
 	chat, err := ch.ChatService.GetOrCreatePrivateChat(r.Context(), userUUID, targetUUID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get or create chat", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get or create chat")
 	}
-
-	log.Printf("Chat ID: %s", chat.ID.String())
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to upgrade connection", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to upgrade connection")
 	}
-
-	log.Printf("Connection upgraded to WebSocket")
 
 	chatIDStr := chat.ID.String()
 	hub := ch.Manager.GetHub(chatIDStr)
 
 	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.MessageService)
-
-	log.Printf("Client created: %s", client.UserID.String())
 
 	hub.Register <- client
 	go client.WritePump()
@@ -107,4 +94,6 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
 			client.Send <- b
 		}
 	}
+
+	return nil
 }

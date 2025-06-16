@@ -149,7 +149,7 @@ func NewRouter(
 		r.Delete("/{id}", handlers.MakeHandler(criterionHandler.DeleteCriterion))
 	})
 
-	router.Get("/ws/chat", chatHandler.ServeWs)
+	router.Get("/ws/chat", handlers.MakeHandler(chatHandler.ServeWs))
 
 	router.Route("/chats", func(r chi.Router) {
 		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
