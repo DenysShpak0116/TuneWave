@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/markbates/goth/gothic"
 )
@@ -20,8 +20,9 @@ import (
 // @Accept  json
 // @Produce  json
 // @Router /auth/google [get]
-func (ah *AuthHandler) GoogleAuth(res http.ResponseWriter, req *http.Request) {
+func (ah *AuthHandler) GoogleAuth(res http.ResponseWriter, req *http.Request) error {
 	gothic.BeginAuthHandler(res, req)
+	return nil
 }
 
 type UserWithNickname struct {
@@ -38,11 +39,10 @@ type UserWithNickname struct {
 // @Produce  json
 // @Param code query string true "Google OAuth code"
 // @Router /auth/google/callback [get]
-func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) error {
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to get user data", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "failed to get user data")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -50,8 +50,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	users, err := ah.UserService.Where(ctx, &models.User{Email: user.Email})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user data", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user data")
 	}
 
 	var currentUser *models.User
@@ -60,8 +59,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	} else {
 		nickname, err := fetchGoogleNickname(user.AccessToken)
 		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to fetch nickname", err)
-			return
+			return helpers.NewAPIError(http.StatusInternalServerError, "failed to fetch nickname")
 		}
 		if nickname == "" {
 			nickname = user.Name
@@ -78,21 +76,18 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := ah.UserService.Create(ctx, currentUser); err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to create user", err)
-			return
+			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
 		}
 	}
 
 	accessToken, refreshToken, err := ah.GenerateTokens(currentUser.ID.String())
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
 	}
 
 	userDTO, err := ah.UserService.GetByID(ctx, currentUser.ID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to get user DTO")
 	}
 
 	authData := map[string]any{
@@ -103,8 +98,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to encode auth data")
 	}
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
@@ -120,6 +114,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "http://localhost:5173/", http.StatusSeeOther)
+	return nil
 }
 
 func fetchGoogleNickname(token string) (string, error) {

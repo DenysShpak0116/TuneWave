@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/go-chi/render"
 )
 
@@ -17,21 +18,20 @@ import (
 // @Produce      json
 // @Param        request body dto.ForgotPasswordRequest true "Email address for password reset"
 // @Router       /auth/forgot-password [post]
-func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) error {
 	var req dto.ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("invalid request: %v", err)})
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
 	token, err := ah.AuthService.HandleForgotPassword(req)
 	if err != nil {
-		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("failed to send email: %v", err)})
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to send email")
 	}
 
 	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, map[string]string{"token": token})
+	return nil
 }
 
 // ResetPassword godoc
@@ -42,18 +42,18 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        request body dto.ResetPasswordRequest true "New password and token"
 // @Router       /auth/reset-password [post]
-func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) error {
 	var req dto.ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("invalid request: %v", err)})
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
 	if err := ah.AuthService.HandleResetPassword(req); err != nil {
 		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("failed to reset password: %v", err)})
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to reset password")
 	}
 
 	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Password reset successfully"})
+	return nil
 }

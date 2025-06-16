@@ -58,15 +58,15 @@ func NewRouter(
 	))
 
 	router.Route("/auth", func(r chi.Router) {
-		r.Post("/login", authHandler.Login)
-		r.Post("/register", authHandler.Register)
-		r.Post("/logout", authHandler.Logout)
-		r.Post("/forgot-password", authHandler.ForgotPassword)
-		r.Post("/reset-password", authHandler.ResetPassword)
-		r.Post("/refresh", authHandler.Refresh)
+		r.Post("/login", handlers.MakeHandler(authHandler.Login))
+		r.Post("/register", handlers.MakeHandler(authHandler.Register))
+		r.Post("/logout", handlers.MakeHandler(authHandler.Logout))
+		r.Post("/forgot-password", handlers.MakeHandler(authHandler.ForgotPassword))
+		r.Post("/reset-password", handlers.MakeHandler(authHandler.ResetPassword))
+		r.Post("/refresh", handlers.MakeHandler(authHandler.Refresh))
 
-		r.Get("/google/callback", authHandler.GoogleCallback)
-		r.Get("/google", authHandler.GoogleAuth)
+		r.Get("/google/callback", handlers.MakeHandler(authHandler.GoogleCallback))
+		r.Get("/google", handlers.MakeHandler(authHandler.GoogleAuth))
 	})
 
 	router.Route("/users", func(r chi.Router) {

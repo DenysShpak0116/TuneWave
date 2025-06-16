@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/go-chi/render"
@@ -22,55 +21,47 @@ import (
 // @Produce      json
 // @Security     BearerAuth
 // @Router       /auth/refresh [post]
-func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 	ctx := context.Background()
 
 	authCookie, err := r.Cookie("authData")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "authData cookie not found", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "authData cookie not found")
 	}
 
 	authDataBytes, err := base64.URLEncoding.DecodeString(authCookie.Value)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to decode authData", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "failed to decode authData")
 	}
 
 	var authData map[string]interface{}
 	if err := json.Unmarshal(authDataBytes, &authData); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to parse authData", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "failed to parse authData")
 	}
 
 	refreshToken, ok := authData["refreshToken"].(string)
 	if !ok || refreshToken == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "refreshToken not found in authData", nil)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "refreshToken not found in authData")
 	}
 
 	userID, err := helpers.ParseToken(ah.JWTSecret, refreshToken)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid or expired refresh token", err)
-		return
+		return helpers.NewAPIError(http.StatusUnauthorized, "invalid or expired refresh token")
 	}
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
 	accessToken, newRefreshToken, err := ah.GenerateTokens(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
 	}
 
 	user, err := ah.UserService.GetByID(ctx, userUUID, "Followers")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user")
 	}
 
 	newAuthData := map[string]interface{}{
@@ -78,8 +69,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 	authJSON, err := json.Marshal(newAuthData)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to encode auth data")
 	}
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
@@ -98,9 +88,9 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
 			return ah.UserService.GetUserFollowersCount(ctx, userID)
 		})
-
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
 		"user":        dtoBuilder.BuildUserDTO(user),
 	})
+	return nil
 }
