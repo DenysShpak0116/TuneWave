@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/render"
 )
@@ -38,7 +38,7 @@ func NewUserHandler(
 // @Param        page  query  int  false  "Page number"  default(1)
 // @Param        limit query  int  false  "Number of users per page"  default(10)
 // @Router       /users [get]
-func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) error {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
@@ -51,10 +51,10 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.UserService.GetUsers(context.Background(), page, limit)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get users", err)
-		return
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get users")
 	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, users)
+	return nil
 }

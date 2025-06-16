@@ -6,8 +6,8 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -25,19 +25,19 @@ import (
 // @Param        id   path      string                true  "User ID (UUID format)"
 // @Param        user body      dto.UserUpdateRequest true  "Updated user data"
 // @Router       /users/{id} [put]
-func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "User ID is required"})
-		return
+		return nil
 	}
 
 	var userUpdateRequest dto.UserUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&userUpdateRequest); err != nil {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "Invalid request payload"})
-		return
+		return nil
 	}
 	defer r.Body.Close()
 
@@ -45,7 +45,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "Invalid User ID format"})
-		return
+		return nil
 	}
 	userUpdate := &models.User{
 		BaseModel: models.BaseModel{
@@ -58,7 +58,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to update user"})
-		return
+		return nil
 	}
 
 	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
@@ -72,6 +72,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]interface{}{
 		"user": userDTO,
 	})
+	return nil
 }
 
 // UpdateAvatar godoc
@@ -83,18 +84,16 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        file formData file true "Avatar file"
 // @Router 	 /users/avatar/ [put]
-func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) error {
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid form data", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid form data")
 	}
 
 	var pfpFile multipart.File
 	var pfpHeader *multipart.FileHeader
 	pfpFile, pfpHeader, err := r.FormFile("file")
 	if err != nil && err != http.ErrMissingFile {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid cover image", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid cover image")
 	}
 	if pfpFile != nil {
 		defer pfpFile.Close()
@@ -102,13 +101,11 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value("userID").(string)
 	if userID == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "User ID is required", nil)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "user id is required")
 	}
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid User ID format", err)
-		return
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid User ID format")
 	}
 
 	err = uh.UserService.UpdateUserPfp(context.TODO(), services.UpdatePfpParams{
@@ -119,9 +116,10 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to update avatar"})
-		return
+		return nil
 	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Avatar updated successfully"})
+	return nil
 }

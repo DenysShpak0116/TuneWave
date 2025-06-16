@@ -16,27 +16,28 @@ import (
 // @Security     BearerAuth
 // @Param        id   path      string true "User ID (UUID format)"
 // @Router       /users/{id} [delete]
-func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "User ID is required"})
-		return
+		return nil
 	}
 
 	uuidID, err := uuid.Parse(id)
 	if err != nil {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "Invalid User ID format"})
-		return
+		return nil
 	}
 
 	err = uh.UserService.Delete(context.TODO(), uuidID)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to delete user"})
-		return
+		return nil
 	}
 
 	render.Status(r, http.StatusNoContent)
+	return nil
 }

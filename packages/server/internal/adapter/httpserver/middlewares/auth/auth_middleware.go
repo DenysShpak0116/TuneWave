@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -18,7 +17,7 @@ func AuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 				handlers.RespondWithError(w, r, http.StatusUnauthorized, "Authorization header missing or invalid", fmt.Errorf("authorization header missing or invalid"))
-				return 
+				return
 			}
 
 			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")

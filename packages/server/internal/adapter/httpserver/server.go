@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
@@ -69,19 +70,19 @@ func NewRouter(
 	})
 
 	router.Route("/users", func(r chi.Router) {
-		r.Get("/", userHandler.GetAll)
-		r.Get("/{id}/collections", userHandler.GetUserCollections)
+		r.Get("/", handlers.MakeHandler(userHandler.GetAll))
+		r.Get("/{id}/collections", handlers.MakeHandler(userHandler.GetUserCollections))
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 
-			protected.Get("/{id}", userHandler.GetByID)
-			protected.Post("/{id}/follow", userHandler.FollowUser)
-			protected.Delete("/{id}/unfollow", userHandler.UnfollowUser)
-			protected.Get("/{id}/is-followed", userHandler.IsFollowed)
-			protected.Put("/{id}", userHandler.Update)
-			protected.Put("/avatar/", userHandler.UpdateAvatar)
-			protected.Delete("/{id}", userHandler.Delete)
+			protected.Get("/{id}", handlers.MakeHandler(userHandler.GetByID))
+			protected.Post("/{id}/follow", handlers.MakeHandler(userHandler.FollowUser))
+			protected.Delete("/{id}/unfollow", handlers.MakeHandler(userHandler.UnfollowUser))
+			protected.Get("/{id}/is-followed", handlers.MakeHandler(userHandler.IsFollowed))
+			protected.Put("/{id}", handlers.MakeHandler(userHandler.Update))
+			protected.Put("/avatar/", handlers.MakeHandler(userHandler.UpdateAvatar))
+			protected.Delete("/{id}", handlers.MakeHandler(userHandler.Delete))
 		})
 	})
 
@@ -117,10 +118,10 @@ func NewRouter(
 		r.Get("/{id}", collectionHandler.GetCollectionByID)
 		r.Get("/{id}/songs", collectionHandler.GetCollectionSongs)
 		r.Get("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.GetSongVectors))
-		r.Post("/{id}/{song-id}/vectors", vectorHandler.CreateSongVectors)
-		r.Put("/{id}/{song-id}/vectors", vectorHandler.UpdateSongVectors)
-		r.Delete("/{id}/{song-id}/vectors", vectorHandler.DeleteSongVectors)
-		r.Get("/{id}/has-all-vectors", vectorHandler.HasAllVectors)
+		r.Post("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.CreateSongVectors))
+		r.Put("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.UpdateSongVectors))
+		r.Delete("/{id}/{song-id}/vectors", handlers.MakeHandler(vectorHandler.DeleteSongVectors))
+		r.Get("/{id}/has-all-vectors", handlers.MakeHandler(vectorHandler.HasAllVectors))
 
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
@@ -152,7 +153,7 @@ func NewRouter(
 
 	router.Route("/chats", func(r chi.Router) {
 		r.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
-		r.Get("/", userHandler.GetChats)
+		r.Get("/", handlers.MakeHandler(userHandler.GetChats))
 	})
 
 	router.Get("/genres", songHandler.GetGenres)
