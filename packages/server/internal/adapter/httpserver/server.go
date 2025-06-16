@@ -126,10 +126,10 @@ func NewRouter(
 		r.Group(func(protected chi.Router) {
 			protected.Use(authmiddleware.AuthMiddleware([]byte(cfg.JwtSecret)))
 
-			protected.Post("/{id}/send-results", resultHandler.SendResult)
-			protected.Get("/{id}/get-user-results", resultHandler.GetUserResults)
-			protected.Get("/{id}/get-results", resultHandler.GetCollectiveResults)
-			protected.Delete("/{id}/delete-user-results", resultHandler.DeleteUserResults)
+			protected.Post("/{id}/send-results", handlers.MakeHandler(resultHandler.SendResult))
+			protected.Get("/{id}/get-user-results", handlers.MakeHandler(resultHandler.GetUserResults))
+			protected.Get("/{id}/get-results", handlers.MakeHandler(resultHandler.GetCollectiveResults))
+			protected.Delete("/{id}/delete-user-results", handlers.MakeHandler(resultHandler.DeleteUserResults))
 
 			protected.Post("/", collectionHandler.CreateCollection)
 			protected.Put("/{id}", collectionHandler.UpdateCollection)
