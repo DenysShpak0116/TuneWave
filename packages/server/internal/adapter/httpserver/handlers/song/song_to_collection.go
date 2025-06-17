@@ -29,7 +29,7 @@ type SongCollectionRequest struct {
 func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) error {
 	songID := chi.URLParam(r, "id")
 	if songID == "" {
-		return helpers.NewAPIError(http.StatusBadRequest, "song ID is requiredr")
+		return helpers.NewAPIError(http.StatusBadRequest, "song ID is required")
 	}
 
 	songUUID, err := uuid.Parse(songID)
