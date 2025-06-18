@@ -17,7 +17,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/vector"
 	authmiddleware "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/auth"
-	errormiddleware "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/error"
 	loggermiddleware "github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/middlewares/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -52,7 +51,6 @@ func NewRouter(
 	router.Use(middleware.RequestID)
 	router.Use(loggermiddleware.New(log))
 	router.Use(middleware.Recoverer)
-	router.Use(errormiddleware.ErrorMiddleware)
 
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(fmt.Sprintf("http://localhost:%d/swagger/doc.json", cfg.Http.Port)),

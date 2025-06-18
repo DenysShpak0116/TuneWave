@@ -87,7 +87,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	ctx := context.Background()
 
 	users, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
-	if err != nil || len(users) == 0 {
+	if err != nil || users == nil || len(users) == 0 {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid credentials")
 	}
 
