@@ -20,6 +20,7 @@ export const SelectCollectionModal: FC<ISelectCollection> = ({ active, setActive
     const { data: collections = [], isLoading, isError, refetch } = useUserCollections(userId);
     const { mutate: addSong } = useAddSongToCollection();
 
+
     const handleSubmit = () => {
         if (!selectedCollection) return
         addSong({ trackId: trackId, collectionId: selectedCollection?.id })

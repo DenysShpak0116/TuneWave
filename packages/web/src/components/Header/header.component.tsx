@@ -54,11 +54,11 @@ export const Header: FC = () => {
                     {HeaderItems.map((element, index) => (
                         <NavItem key={index} title={element.title} path={element.path} icon={element.icon} />
                     ))}
+                    <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
                     <DropdownMenu>
                         {isAuth() && (
                             <>
                                 <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
-                                <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
                                 <NavItem
                                     path={ROUTES.USER_LIST.replace(":id", user!.id)}
                                     title="Підписки"

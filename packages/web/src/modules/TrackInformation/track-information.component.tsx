@@ -35,7 +35,7 @@ export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
                     songId={song.id}
                     isUserMainTrack={isMainUserTrack}
                     userId={user?.id}
-                    type={currentReaction ?? "none"}
+                    type={{ type: currentReaction ?? "none" }}
                     reactFn={onReactBtnClickFn}
                     logo={song?.coverUrl}
                 />

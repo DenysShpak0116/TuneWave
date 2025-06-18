@@ -71,6 +71,8 @@ export const DeleteButton = styled.button`
   }
 `
 export const EditButton = styled(DeleteButton)`
+    color: black;
+    font-weight: 500;
     background: #ffc107;
 
     &:hover {

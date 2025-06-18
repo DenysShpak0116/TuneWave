@@ -13,7 +13,7 @@ import plusIcon from "@assets/images/ic_plus.png"
 import { SelectCollectionModal } from "@modules/SelectCollectionModal";
 import { ConfirmDeleteModal } from "@components/ConfirmDeleteModal/confirmDelete.modal";
 
-type ReactionType = "like" | "dislike" | "none";
+export type ReactionType = "like" | "dislike" | "none";
 
 interface ITrackLogo {
     songId: string;

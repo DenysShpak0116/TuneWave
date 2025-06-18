@@ -62,7 +62,7 @@ export const ChatPage: FC = () => {
             <Divider />
             {chatPreviews?.length === 0 && !targetUserId || !user ? (
                 <div style={{ padding: "20px", fontSize: "16px" }}>
-                    У вас поки що немає чатів
+                    Ви поки що не маєте чатів
                 </div>
             ) : (
                 <MainChat

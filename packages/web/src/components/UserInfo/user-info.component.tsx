@@ -43,11 +43,6 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCoun
                         </Bio>
                         {!isMainUser && (
                             <>
-                                <Button
-                                    text="Надіслати повідомлення"
-                                    style={{ padding: "5px", marginTop: "10px" }}
-                                    onClick={() => navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${user.id}`)}
-                                />
                                 {!isLoading && !isFollowed && (
                                     <Button
                                         text="Підписатися"
@@ -58,13 +53,20 @@ export const UserInfo: FC<IUserInfoProps> = ({ user, isMainUser, collectionsCoun
                                     />
                                 )}
                                 {isFollowed && (
-                                    <Button
-                                        text="Відписатись"
-                                        style={{ padding: "5px", marginTop: "10px", backgroundColor: "rgb(236, 94, 120)" }}
-                                        onClick={() => {
-                                            handleUnfollow(user.id)
-                                        }}
-                                    />
+                                    <>
+                                        <Button
+                                            text="Надіслати повідомлення"
+                                            style={{ padding: "5px", marginTop: "10px" }}
+                                            onClick={() => navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${user.id}`)}
+                                        />
+                                        <Button
+                                            text="Відписатись"
+                                            style={{ padding: "5px", marginTop: "10px", backgroundColor: "rgb(236, 94, 120)" }}
+                                            onClick={() => {
+                                                handleUnfollow(user.id)
+                                            }}
+                                        />
+                                    </>
                                 )}
                             </>
                         )}
