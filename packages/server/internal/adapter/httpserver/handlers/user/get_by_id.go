@@ -2,8 +2,6 @@ package user
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
@@ -24,18 +22,24 @@ import (
 // @Param id path string true "User ID"
 // @Router /users/{id} [get]
 func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	userID := chi.URLParam(r, "id")
-	userIDuuid, err := uuid.Parse(userID)
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-	user, err := uh.UserService.GetByID(context.Background(), userIDuuid)
+	user, err := uh.UserService.GetByID(ctx, userUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
+	dtoBuilder := *dto.NewDTOBuilder().
+		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
+			return uh.UserService.GetUserFollowersCount(ctx, userID)
+		})
+
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, user)
+	render.JSON(w, r, dtoBuilder.BuildUserDTO(user))
 	return nil
 }
 
@@ -145,15 +149,6 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		Chats: chats,
 	})
 	return nil
-}
-
-func printChat(chat interface{}) {
-	bytes, err := json.MarshalIndent(chat, "", "  ")
-	if err != nil {
-		fmt.Printf("Error marshalling chat: %v\n", err)
-		return
-	}
-	fmt.Printf("Chat:\n%s\n", string(bytes))
 }
 
 // GetUserCollections godoc
