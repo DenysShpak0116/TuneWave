@@ -107,7 +107,7 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 
 func (us *UserService) GetUserFollowersCount(ctx context.Context, userID uuid.UUID) int64 {
 	count, _ := us.UserFollowersRepository.NewQuery(ctx).
-		Where(models.UserFollower{UserID: userID}).Count()
+		Where(&models.UserFollower{UserID: userID}).Count()
 
 	return count
 }

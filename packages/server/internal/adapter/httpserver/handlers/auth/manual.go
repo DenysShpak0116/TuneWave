@@ -131,7 +131,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
 			return ah.UserService.GetUserFollowersCount(ctx, userID)
 		})
-	render.JSON(w, r, map[string]interface{}{
+	render.JSON(w, r, map[string]any{
 		"accessToken": accessToken,
 		"user":        dtoBuilder.BuildUserDTO(user),
 	})
