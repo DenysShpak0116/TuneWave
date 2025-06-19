@@ -28,18 +28,19 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-	user, err := uh.UserService.GetByID(ctx, userUUID)
+	userPreloads := []string{ 
+		"Songs", "Collections", "Chats1", "Chats2",
+		"Follows", "Followers", 
+
+	}
+	user, err := uh.UserService.GetByID(ctx, userUUID, userPreloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
-	dtoBuilder := *dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return uh.UserService.GetUserFollowersCount(ctx, userID)
-		})
-
+	dtoBuilder := *dto.NewDTOBuilder()
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dtoBuilder.BuildUserDTO(user))
+	render.JSON(w, r, dtoBuilder.BuildFullUserDTO(user))
 	return nil
 }
 
@@ -198,7 +199,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {
-		collectionsDTO = append(collectionsDTO, dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
+		collectionsDTO = append(collectionsDTO, *dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
 	}
 
 	render.Status(r, http.StatusOK)

@@ -38,7 +38,7 @@ func (b *DTOBuilder) BuildSongDTO(song *models.Song) *SongDTO {
 
 	comments := []CommentDTO{}
 	for _, comment := range song.Comments {
-		comments = append(comments, b.BuildCommentDTO(&comment))
+		comments = append(comments, *b.BuildCommentDTO(&comment))
 	}
 
 	return &SongDTO{
@@ -52,7 +52,7 @@ func (b *DTOBuilder) BuildSongDTO(song *models.Song) *SongDTO {
 		Listenings: song.Listenings,
 		Likes:      b.CountSongLikes(song.ID),
 		Dislikes:   b.CountSongDislikes(song.ID),
-		User:       b.BuildUserDTO(&song.User),
+		User:       *b.BuildUserDTO(&song.User),
 		Authors:    songAuthors,
 		SongTags:   songTags,
 		Comments:   comments,

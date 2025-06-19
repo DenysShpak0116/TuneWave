@@ -372,7 +372,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 
 	collectionsDTOs := make([]dto.CollectionDTO, 0)
 	for _, collection := range collections {
-		collectionsDTOs = append(collectionsDTOs, dtoBuilder.BuildCollectionDTO(&collection))
+		collectionsDTOs = append(collectionsDTOs, *dtoBuilder.BuildCollectionDTO(&collection))
 	}
 
 	render.JSON(w, r, collectionsDTOs)

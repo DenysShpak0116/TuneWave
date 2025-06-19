@@ -14,9 +14,9 @@ type CommentDTO struct {
 	Content   string    `json:"content"`
 }
 
-func (b *DTOBuilder) BuildCommentDTO(comment *models.Comment) CommentDTO {
-	return CommentDTO{
-		Author:    b.BuildUserDTO(&comment.User),
+func (b *DTOBuilder) BuildCommentDTO(comment *models.Comment) *CommentDTO {
+	return &CommentDTO{
+		Author:    *b.BuildUserDTO(&comment.User),
 		CreatedAt: comment.CreatedAt,
 		ID:        comment.ID,
 		Content:   comment.Content,
