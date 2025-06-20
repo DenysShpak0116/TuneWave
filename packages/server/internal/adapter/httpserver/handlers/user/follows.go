@@ -7,6 +7,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -22,7 +23,7 @@ import (
 // @Param		id path string true "User to follow ID"
 // @Router		/users/{id}/follow [post]
 func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 	targetID := chi.URLParam(r, "id")
 	targetUUID, err := uuid.Parse(targetID)
 	if err != nil {
@@ -55,11 +56,21 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not follow this user")
 	}
 
-	userFollowersToReturn, _ := uh.UserFollowerService.Where(ctx, &models.UserFollower{
-		BaseModel: models.BaseModel{
-			ID: userFollower.ID,
+	preloads := []string{
+		"User",
+		"User.Followers",
+		"Follower",
+		"Follower.Followers",
+	}
+	userFollowersToReturn, _ := uh.UserFollowerService.Where(
+		ctx,
+		&models.UserFollower{
+			BaseModel: models.BaseModel{
+				ID: userFollower.ID,
+			},
 		},
-	}, "User", "User.Followers", "Follower", "Follower.Followers")
+		query.WithPreloads(preloads...),
+	)
 	userFollowerToReturn := &userFollowersToReturn[0]
 
 	dtoBuilder := dto.NewDTOBuilder().
@@ -82,13 +93,14 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 // @Param		id path string true "User to unfollow ID"
 // @Router		/users/{id}/unfollow [delete]
 func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	targetID := chi.URLParam(r, "id")
 	targetUUID, err := uuid.Parse(targetID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
+	userID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth user token")
 	}
@@ -97,7 +109,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userFollowers, err := uh.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	userFollowers, err := uh.UserFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
@@ -110,7 +122,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 
 	userFollower := userFollowers[0]
 
-	err = uh.UserFollowerService.Delete(context.Background(), userFollower.ID)
+	err = uh.UserFollowerService.Delete(ctx, userFollower.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "can not unfollow this user")
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
 )
@@ -37,13 +38,15 @@ func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads 
 	return &entities[0], nil
 }
 
-func (s *GenericService[T]) Where(ctx context.Context, params *T, preloads ...string) ([]T, error) {
-	query := s.Repository.NewQuery(ctx).Where(params)
-	for _, preload := range preloads {
-		query = query.Preload(preload)
-	}
+func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error) {
+	cfg := query.Build(opts...)
 
-	result, err := query.Find()
+	result, err := s.Repository.NewQuery(ctx).
+		Where(params).
+		Order(cfg.Sort).
+		Skip(cfg.Offset).
+		Take(cfg.Limit).
+		Preload(cfg.Preloads...).Find()
 	if err != nil {
 		return nil, err
 	}

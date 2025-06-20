@@ -1143,14 +1143,7 @@
                         "required": true
                     }
                 ],
-                "responses": {
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/songs/{id}": {
@@ -1311,6 +1304,42 @@
                         "schema": {
                             "$ref": "#/definitions/song.SongCollectionRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/songs/{id}/comments": {
+            "get": {
+                "description": "Get song comments",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Get song comments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -1859,20 +1888,6 @@
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "helpers.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         },

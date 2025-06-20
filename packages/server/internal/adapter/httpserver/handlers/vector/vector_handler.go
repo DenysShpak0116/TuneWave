@@ -1,13 +1,13 @@
 package vector
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -43,6 +43,8 @@ func NewVectorHandler(
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [get]
 func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -55,10 +57,15 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
-	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
-		CollectionID: collectionUUID,
-		SongID:       songUUID,
-	}, "Vectors", "Vectors.Criterion")
+	preloads := []string{"Vectors", "Vectors.Criterion"}
+	collectionSongs, err := h.CollectionSongService.Where(
+		ctx,
+		&models.CollectionSong{
+			CollectionID: collectionUUID,
+			SongID:       songUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
@@ -185,6 +192,8 @@ type UpdateSongVectorsRequest struct {
 // @Param vectors body UpdateSongVectorsRequest true "Vectors"
 // @Router /collections/{id}/{song-id}/vectors [put]
 func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -203,7 +212,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 
 	for _, vector := range request.Vectors {
-		if _, err := h.VactorService.Update(r.Context(), &models.Vector{
+		if _, err := h.VactorService.Update(ctx, &models.Vector{
 			BaseModel: models.BaseModel{
 				ID: vector.ID,
 			},
@@ -214,10 +223,15 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
-		CollectionID: collectionUUID,
-		SongID:       songUUID,
-	}, "Vectors", "Vectors.Criterion")
+	preloads := []string{"Vectors", "Vectors.Criterion"}
+	collectionSongs, err := h.CollectionSongService.Where(
+		ctx,
+		&models.CollectionSong{
+			CollectionID: collectionUUID,
+			SongID:       songUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
@@ -251,6 +265,8 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [delete]
 func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -263,10 +279,17 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
-	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
-		CollectionID: collectionUUID,
-		SongID:       songUUID,
-	}, "Vectors")
+	preloads := []string{
+		"Vectors",
+	}
+	collectionSongs, err := h.CollectionSongService.Where(
+		ctx,
+		&models.CollectionSong{
+			CollectionID: collectionUUID,
+			SongID:       songUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
@@ -299,13 +322,15 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/has-all-vectors [get]
 func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
-	criterionCount, err := h.CriterionService.CountWhere(context.Background(), &models.Criterion{})
+	criterionCount, err := h.CriterionService.CountWhere(ctx, &models.Criterion{})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to count criteria")
 	}
@@ -315,9 +340,16 @@ func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) er
 		return nil
 	}
 
-	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
-		CollectionID: collectionUUID,
-	}, "Vectors")
+	preloads := []string{
+		"Vectors",
+	}
+	collectionSongs, err := h.CollectionSongService.Where(
+		ctx,
+		&models.CollectionSong{
+			CollectionID: collectionUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}

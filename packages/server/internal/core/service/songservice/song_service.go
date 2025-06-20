@@ -45,25 +45,17 @@ func NewSongService(
 	}
 }
 
-func (ss *SongService) GetSongs(ctx context.Context, search, sortBy, order string, page, limit int) ([]models.Song, error) {
+func (ss *SongService) GetSongs(ctx context.Context, params services.SearchSongsParams, preloads ...string) ([]models.Song, error) {
 	query := ss.Repository.NewQuery(ctx).
 		Join("LEFT JOIN song_authors ON song_authors.song_id = songs.id").
 		Join("LEFT JOIN authors ON authors.id = song_authors.author_id").
-		Join("LEFT JOIN song_tags ON song_tags.song_id = songs.id").
-		Join("LEFT JOIN tags ON tags.id = song_tags.tag_id").
 		Where("songs.title ILIKE ? OR authors.name ILIKE ? OR LOWER(songs.genre) = LOWER(?)",
-			"%"+search+"%", "%"+search+"%", search).
-		Order(fmt.Sprintf("songs.%s %s", sortBy, order)).
+			"%"+params.Search+"%", "%"+params.Search+"%", params.Search).
+		Order(fmt.Sprintf("songs.%s %s", params.SortBy, params.Order)).
 		Group("songs.id").
-		Skip((page - 1) * limit).
-		Take(limit).
-		Preload("User").
-		Preload("Authors").
-		Preload("Authors.Author").
-		Preload("SongTags").
-		Preload("SongTags.Tag").
-		Preload("Comments").
-		Preload("Comments.User")
+		Skip((params.Page - 1) * params.Limit).
+		Take(params.Limit).
+		Preload(preloads...)
 
 	songs, err := query.Find()
 	if err != nil {

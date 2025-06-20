@@ -89,6 +89,7 @@ func NewRouter(
 	router.Route("/songs", func(r chi.Router) {
 		r.Get("/", handlers.MakeHandler(songHandler.GetSongs))
 		r.Get("/{id}", handlers.MakeHandler(songHandler.GetByID))
+		r.Get("/{id}/comments", handlers.MakeHandler(songHandler.GetSongComments))
 		r.Get("/{id}/is-reacted/{userId}", handlers.MakeHandler(songHandler.CheckReaction))
 		r.Post("/{id}/listen/{userId}", handlers.MakeHandler(songHandler.ListenSong))
 

@@ -32,16 +32,17 @@ type UpdateSongParams struct {
 	CoverHeader *multipart.FileHeader
 }
 
+type SearchSongsParams struct {
+	Search string
+	SortBy string
+	Order  string
+	Page   int
+	Limit  int
+}
+
 type SongService interface {
 	Service[models.Song]
-	GetSongs(
-		ctx context.Context,
-		search string,
-		sortBy string,
-		order string,
-		page int,
-		limit int,
-	) ([]models.Song, error)
+	GetSongs(ctx context.Context, params SearchSongsParams, preloads ...string) ([]models.Song, error)
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	UpdateSong(ctx context.Context, songParams UpdateSongParams) error
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)

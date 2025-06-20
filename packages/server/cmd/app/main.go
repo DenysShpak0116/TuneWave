@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"syscall"
 
+	_ "net/http/pprof"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/digcontainer"
@@ -29,7 +31,6 @@ import (
 // @description Provide the Bearer token in the format: "Bearer {token}"
 func main() {
 	container := digcontainer.BuildContainer()
-	// invoke container db
 	err := container.Invoke(func(db *gorm.DB) {
 		if err := repository.AutoMigrate(db); err != nil {
 			log.Fatalf("Migration failed: %s", err)
@@ -41,6 +42,11 @@ func main() {
 
 	err = container.Invoke(func(router *chi.Mux, cfg *config.Config) {
 		log.Println("Starting server on port", cfg.Http.Port)
+
+		go func() {
+			log.Println("pprof server listening on :6060")
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
 
 		srv := &http.Server{
 			Addr:    "localhost:" + strconv.Itoa(cfg.Http.Port),

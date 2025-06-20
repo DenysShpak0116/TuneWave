@@ -9,6 +9,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -255,7 +256,8 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 // @Produce      json
 // @Router       /collections/users-collections [get]
 func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) error {
-	userID, err := helpers.GetUserID(r.Context())
+	ctx := r.Context()
+	userID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
@@ -265,9 +267,14 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
 
-	userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
-		UserID: userUUID,
-	}, "Collection")
+	preloads := []string{"Collection"}
+	userCollections, err := ch.UserCollectionService.Where(
+		ctx,
+		&models.UserCollection{
+			UserID: userUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collections")
 	}
@@ -388,31 +395,34 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/add-to-user [post]
 func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.Request) error {
-	collectionID := chi.URLParam(r, "id")
+	ctx := r.Context()
 
+	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
+	userID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
 
-	if userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
-		UserID:       userUUID,
-		CollectionID: collectionUUID,
-	}); err != nil || len(userCollections) > 0 {
+	if userCollections, err := ch.UserCollectionService.Where(
+		ctx,
+		&models.UserCollection{
+			UserID:       userUUID,
+			CollectionID: collectionUUID,
+		},
+	); err != nil || len(userCollections) > 0 {
 		return helpers.NewAPIError(http.StatusBadRequest, "could not add collection")
 	}
 
-	err = ch.UserCollectionService.Create(context.Background(), &models.UserCollection{
+	err = ch.UserCollectionService.Create(ctx, &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	})
@@ -420,9 +430,14 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		return helpers.NewAPIError(http.StatusBadRequest, "error adding song to collection")
 	}
 
-	userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
-		UserID: userUUID,
-	}, "Collection")
+	preloads := []string{"Collection"}
+	userCollections, err := ch.UserCollectionService.Where(
+		ctx,
+		&models.UserCollection{
+			UserID: userUUID,
+		},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collections")
 	}
