@@ -77,13 +77,11 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) e
 	}
 	collectionSong := collectionSongs[0]
 
-	dtoBuilder := dto.NewDTOBuilder()
-
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
 		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
 	}
-
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, vectorsDTO)
 	return nil
@@ -160,8 +158,7 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder()
-
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
 		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
@@ -242,7 +239,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 	collectionSong := collectionSongs[0]
 
-	dtoBuilder := dto.NewDTOBuilder()
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {

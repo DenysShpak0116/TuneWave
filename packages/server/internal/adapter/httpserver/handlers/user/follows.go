@@ -73,11 +73,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 	)
 	userFollowerToReturn := &userFollowersToReturn[0]
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return uh.UserService.GetUserFollowersCount(ctx, userID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(uh.UserService, nil)
 	userDTO := dtoBuilder.BuildUserFollowerDTO(userFollowerToReturn)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, userDTO)

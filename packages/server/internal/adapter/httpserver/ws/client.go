@@ -42,7 +42,7 @@ func (c *Client) ReadPump() {
 		log.Println("[ReadPump] client disconnected")
 	}()
 
-	dtoBuilder := dto.NewDTOBuilder()
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {

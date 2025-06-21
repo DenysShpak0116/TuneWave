@@ -38,10 +38,7 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
-	dtoBuilder := *dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return uh.UserService.GetUserFollowersCount(context.Background(), userID)
-		})
+	dtoBuilder := *dto.NewDTOBuilder(uh.UserService, nil)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dtoBuilder.BuildFullUserDTO(user))
@@ -203,16 +200,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	user := users[0]
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return uh.UserService.GetUserFollowersCount(ctx, userID)
-		}).
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return uh.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return uh.UserReactionService.GetSongDislikes(ctx, songID)
-		})
+	dtoBuilder := dto.NewDTOBuilder(uh.UserService, uh.UserReactionService)
 
 	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {

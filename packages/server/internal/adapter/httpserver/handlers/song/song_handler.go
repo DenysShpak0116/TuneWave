@@ -82,14 +82,7 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get songs")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return sh.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return sh.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(nil, sh.UserReactionService)
 	songDTOs := make([]dto.SongPreviewDTO, 0)
 	for _, song := range songs {
 		songDTOs = append(songDTOs, *dtoBuilder.BuildSongPreviewDTO(&song))
@@ -128,14 +121,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get song")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return sh.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return sh.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(nil, sh.UserReactionService)
 	render.JSON(w, r, dtoBuilder.BuildSongDTO(song))
 	return nil
 }
@@ -386,7 +372,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not retrieve comments")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder()
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	commentDTOs := make([]dto.CommentDTO, 0)
 	for _, comment := range comments {
 		commentDTOs = append(commentDTOs, *dtoBuilder.BuildCommentDTO(&comment))

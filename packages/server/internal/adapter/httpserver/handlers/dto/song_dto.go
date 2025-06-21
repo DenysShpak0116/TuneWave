@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"context"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -44,8 +45,8 @@ func (b *DTOBuilder) BuildSongDTO(song *models.Song) *SongDTO {
 		SongURL:    song.SongURL,
 		CoverURL:   song.CoverURL,
 		Listenings: song.Listenings,
-		Likes:      b.CountSongLikes(song.ID),
-		Dislikes:   b.CountSongDislikes(song.ID),
+		Likes:      b.songReactionService.GetSongLikes(context.Background(), song.ID),
+		Dislikes:   b.songReactionService.GetSongDislikes(context.Background(), song.ID),
 		User:       *b.BuildUserDTO(&song.User),
 		Authors:    songAuthors,
 		SongTags:   songTags,
@@ -79,8 +80,8 @@ func (b *DTOBuilder) BuildSongPreviewDTO(song *models.Song) *SongPreviewDTO {
 		SongURL:    song.SongURL,
 		CoverURL:   song.CoverURL,
 		Listenings: song.Listenings,
-		Likes:      b.CountSongLikes(song.ID),
-		Dislikes:   b.CountSongDislikes(song.ID),
+		Likes:      b.songReactionService.GetSongLikes(context.Background(), song.ID),
+		Dislikes:   b.songReactionService.GetSongDislikes(context.Background(), song.ID),
 		Authors:    songAuthors,
 	}
 }

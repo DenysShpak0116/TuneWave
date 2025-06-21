@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"context"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/google/uuid"
 )
@@ -21,7 +23,7 @@ func (b *DTOBuilder) BuildUserDTO(user *models.User) *UserDTO {
 		Role:           user.Role,
 		ProfilePicture: user.ProfilePicture,
 		ProfileInfo:    user.ProfileInfo,
-		Followers:      b.CountUserFollowers(user.ID),
+		Followers:      b.userService.GetUserFollowersCount(context.Background(), user.ID),
 	}
 }
 

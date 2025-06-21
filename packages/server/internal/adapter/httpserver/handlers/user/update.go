@@ -26,6 +26,7 @@ import (
 // @Param        user body      dto.UserUpdateRequest true  "Updated user data"
 // @Router       /users/{id} [put]
 func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		render.Status(r, http.StatusBadRequest)
@@ -54,19 +55,16 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		Username:    userUpdateRequest.Username,
 		ProfileInfo: userUpdateRequest.ProfileInfo,
 	}
-	updatedUser, err := uh.UserService.Update(context.TODO(), userUpdate)
+	updatedUser, err := uh.UserService.Update(ctx, userUpdate)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to update user"})
 		return nil
 	}
 
-	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
+	updatedUser, err = uh.UserService.GetByID(ctx, updatedUser.ID, "Followers")
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return uh.UserService.GetUserFollowersCount(context.Background(), userID)
-		})
+	dtoBuilder := dto.NewDTOBuilder(uh.UserService, nil)
 	userDTO := dtoBuilder.BuildUserDTO(updatedUser)
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{

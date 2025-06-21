@@ -60,11 +60,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ah.UserService.GetUserFollowersCount(ctx, userID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dtoBuilder.BuildUserDTO(user))
 	return nil
@@ -127,10 +123,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ah.UserService.GetUserFollowersCount(ctx, userID)
-		})
+	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.JSON(w, r, map[string]any{
 		"accessToken": accessToken,
 		"user":        dtoBuilder.BuildUserDTO(user),

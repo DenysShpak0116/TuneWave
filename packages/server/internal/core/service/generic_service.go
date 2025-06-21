@@ -43,7 +43,7 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.
 
 	result, err := s.Repository.NewQuery(ctx).
 		Where(params).
-		Order(cfg.Sort).
+		Order(cfg.SortBy).
 		Skip(cfg.Offset).
 		Take(cfg.Limit).
 		Preload(cfg.Preloads...).Find()

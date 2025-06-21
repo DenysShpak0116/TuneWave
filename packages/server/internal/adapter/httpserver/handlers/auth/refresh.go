@@ -84,10 +84,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ah.UserService.GetUserFollowersCount(ctx, userID)
-		})
+	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
 		"user":        dtoBuilder.BuildUserDTO(user),

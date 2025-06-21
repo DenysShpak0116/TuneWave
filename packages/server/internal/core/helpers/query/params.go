@@ -1,16 +1,23 @@
 package query
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type Option interface {
 	apply(*listParams)
 }
 
 type listParams struct {
-	Preloads []string
-	Sort     string
-	Offset   int
-	Limit    int
+	allowedFields []string
+	Preloads      []string
+	SortBy        string
+	orderBy       string
+	sort          string
+	defaultField  string
+	Offset        int
+	Limit         int
 }
 type optionFunc func(*listParams)
 
@@ -31,9 +38,16 @@ func WithPagination(page, limit int) Option {
 	})
 }
 
-func WithSort(orderBy, sort string) Option {
+func WithSort(
+	orderBy, sort string,
+	allowedFields []string,
+	defaultField string,
+) Option {
 	return optionFunc(func(p *listParams) {
-		p.Sort = fmt.Sprintf("%s %s", orderBy, sort)
+		p.sort = sort
+		p.orderBy = orderBy
+		p.allowedFields = allowedFields
+		p.defaultField = defaultField
 	})
 }
 
@@ -45,10 +59,12 @@ func WithPreloads(preloads ...string) Option {
 
 func Build(opts ...Option) *listParams {
 	params := &listParams{
-		Limit:    20,
-		Offset:   0,
-		Sort:     "created_at desc",
-		Preloads: []string{},
+		Limit:         20,
+		Offset:        0,
+		SortBy:        "created_at desc",
+		Preloads:      []string{},
+		allowedFields: []string{"created_at"},
+		defaultField:  "created_at",
 	}
 
 	for _, opt := range opts {
@@ -61,9 +77,22 @@ func Build(opts ...Option) *listParams {
 	if params.Offset < 0 {
 		params.Offset = 0
 	}
-	if params.Sort == "" {
-		params.Sort = "created_at desc"
+
+	if params.sort != "asc" && params.sort != "desc" {
+		params.sort = "desc"
 	}
+
+	if len(params.allowedFields) == 0 {
+		params.allowedFields = []string{"created_at"}
+	}
+	if !slices.Contains(params.allowedFields, params.defaultField) {
+		params.defaultField = "created_at"
+	}
+	if !slices.Contains(params.allowedFields, params.orderBy) {
+		params.orderBy = params.defaultField
+	}
+
+	params.SortBy = fmt.Sprintf("%s %s", params.orderBy, params.sort)
 
 	return params
 }

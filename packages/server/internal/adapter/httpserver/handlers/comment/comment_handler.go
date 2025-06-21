@@ -69,7 +69,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get comment")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder()
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	commentDTO := dtoBuilder.BuildCommentDTO(commentWithPreload)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, commentDTO)

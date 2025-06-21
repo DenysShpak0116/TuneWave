@@ -2,6 +2,7 @@ package collection
 
 import (
 	"context"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -49,7 +50,7 @@ func NewCollectionHandler(
 // @Param cover formData file true "Collection cover image"
 // @Router /collections [post]
 func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
@@ -96,17 +97,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ch.UserService.GetUserFollowersCount(ctx, userID)
-		}).
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(ch.UserService, ch.UserReactionService)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(newCollection))
 	return nil
@@ -121,7 +112,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [get]
 func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -133,17 +124,7 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ch.UserService.GetUserFollowersCount(ctx, userID)
-		}).
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(ch.UserService, ch.UserReactionService)
 	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(collection))
 	return nil
 }
@@ -185,7 +166,7 @@ func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Req
 // @Param cover formData file true "Collection cover image"
 // @Router /collections/{id} [put]
 func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -232,17 +213,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ch.UserService.GetUserFollowersCount(ctx, userID)
-		}).
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(ch.UserService, ch.UserReactionService)
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dtoBuilder.BuildCollectionDTO(newCollection))
 	return nil
@@ -303,80 +274,46 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 // @Summary Get all collections
 // @Description Get all collections. Returns a list of collections.
 // @Tags collections
-// @Security     BearerAuth
-// @Produce  json
+// @Security BearerAuth
+// @Produce json
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
-// @Param sort query string false "Sort by (title, created_at)"
-// @Param order query string false "Order (asc, desc)"
+// @Param orderBy query string false "Order by (title, created_at)"
+// @Param sort query string false "sort order (asc, desc)"
 // @Router /collections [get]
 func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
-	limitParam := r.URL.Query().Get("limit")
-	pageParam := r.URL.Query().Get("page")
+	ctx := r.Context()
+	orderBy := r.URL.Query().Get("orderBy")
 	sort := r.URL.Query().Get("sort")
-	order := r.URL.Query().Get("order")
 
-	if sort != "title" && sort != "created_at" {
-		sort = "created_at"
-	}
-
-	if order != "asc" && order != "desc" {
-		order = "asc"
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		log.Printf("invalid limit param: %v", err)
+		limit = 20
 	}
 
-	var limit int
-	if limitParam == "" {
-		limit = 10
-	} else {
-		var err error
-		limit, err = strconv.Atoi(limitParam)
-		if err != nil {
-			return helpers.NewAPIError(http.StatusBadRequest, "invalid limit")
-		}
-	}
-	if limit <= 0 {
-		limit = 10
-	}
-
-	var page int
-	if pageParam == "" {
-		page = 1
-	} else {
-		var err error
-		page, err = strconv.Atoi(pageParam)
-		if err != nil {
-			return helpers.NewAPIError(http.StatusBadRequest, "invalid page")
-		}
-	}
-	if page <= 0 {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		log.Printf("invalid page param: %v", err)
 		page = 1
 	}
 
-	collections, err := ch.CollectionService.GetMany(
+	allowedSortFields := []string{"title", "created_at"}
+	defaultField := "created_at"
+
+	preloads := []string{"User"}
+	collections, err := ch.CollectionService.Where(
 		ctx,
-		limit,
-		page,
-		sort,
-		order,
-		"User",
-		"User.Followers",
+		&models.Collection{},
+		query.WithPagination(limit, page),
+		query.WithSort(orderBy, sort, allowedSortFields, defaultField),
+		query.WithPreloads(preloads...),
 	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collections")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder().
-		SetCountUserFollowersFunc(func(userID uuid.UUID) int64 {
-			return ch.UserService.GetUserFollowersCount(ctx, userID)
-		}).
-		SetCountSongLikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongLikes(ctx, songID)
-		}).
-		SetCountSongDislikesFunc(func(songID uuid.UUID) int64 {
-			return ch.UserReactionService.GetSongDislikes(ctx, songID)
-		})
-
+	dtoBuilder := dto.NewDTOBuilder(ch.UserService, ch.UserReactionService)
 	collectionsDTOs := make([]dto.CollectionDTO, 0)
 	for _, collection := range collections {
 		collectionsDTOs = append(collectionsDTOs, *dtoBuilder.BuildCollectionDTO(&collection))

@@ -86,7 +86,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	go client.ReadPump()
 
 	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
-	dtoBuilder := dto.NewDTOBuilder()
+	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	if err == nil {
 		for _, msg := range messages {
 			msgDTO := dtoBuilder.BuildMessageDTO(&msg)
