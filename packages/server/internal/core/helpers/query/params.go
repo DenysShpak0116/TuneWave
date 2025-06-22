@@ -59,7 +59,7 @@ func WithPreloads(preloads ...string) Option {
 
 func Build(opts ...Option) *listParams {
 	params := &listParams{
-		Limit:         20,
+		Limit:         -1,
 		Offset:        0,
 		SortBy:        "created_at desc",
 		Preloads:      []string{},
@@ -71,7 +71,7 @@ func Build(opts ...Option) *listParams {
 		opt.apply(params)
 	}
 
-	if params.Limit <= 0 {
+	if params.Limit >= 0 && params.Limit != -1 {
 		params.Limit = 20
 	}
 	if params.Offset < 0 {

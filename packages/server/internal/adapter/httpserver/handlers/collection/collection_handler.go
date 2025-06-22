@@ -1,7 +1,6 @@
 package collection
 
 import (
-	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -44,9 +43,9 @@ func NewCollectionHandler(
 // @Summary Create a new collection
 // @Description Creates a new collection. Returns the created collection object.
 // @Tags collections
-// @Security     BearerAuth
-// @Accept  multipart/form-data
-// @Produce  json
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
 // @Param title formData string true "Collection title"
 // @Param description formData string true "Collection description"
 // @Param cover formData file true "Collection cover image"
@@ -156,9 +155,9 @@ func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Req
 // @Summary Update a collection
 // @Description Updates a collection by its ID. Returns the updated collection object.
 // @Tags collections
-// @Security     BearerAuth
-// @Accept  multipart/form-data
-// @Produce  json
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
 // @Param id path string true "Collection ID"
 // @Param title formData string true "Collection title"
 // @Param description formData string true "Collection description"
@@ -286,13 +285,11 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
-		log.Printf("invalid limit param: %v", err)
 		limit = 20
 	}
 
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
-		log.Printf("invalid page param: %v", err)
 		page = 1
 	}
 
@@ -302,7 +299,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 	collections, err := ch.collectionService.Where(
 		ctx,
 		&models.Collection{},
-		query.WithPagination(limit, page),
+		query.WithPagination(page, limit),
 		query.WithSort(orderBy, sort, allowedSortFields, defaultField),
 		query.WithPreloads(preloads...),
 	)

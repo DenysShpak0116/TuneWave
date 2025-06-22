@@ -32,7 +32,6 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 	if songID == "" {
 		return helpers.NewAPIError(http.StatusBadRequest, "song ID is required")
 	}
-
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
@@ -42,10 +41,17 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
 	}
-
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+	}
+
+	collectionSongs, err := sh.collectionSongService.Where(ctx, &models.CollectionSong{
+		SongID:       songUUID,
+		CollectionID: collectionUUID,
+	})
+	if len(collectionSongs) != 0 || err != nil {
+		return helpers.NewAPIError(http.StatusConflict, "this song is already in collection")
 	}
 
 	err = sh.songService.AddToCollection(ctx, songUUID, collectionUUID)

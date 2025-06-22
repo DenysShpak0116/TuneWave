@@ -41,12 +41,17 @@ func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads 
 func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error) {
 	cfg := query.Build(opts...)
 
-	result, err := s.Repository.NewQuery(ctx).
+	query := s.Repository.NewQuery(ctx).
 		Where(params).
-		Order(cfg.SortBy).
-		Skip(cfg.Offset).
-		Take(cfg.Limit).
-		Preload(cfg.Preloads...).Find()
+		Order(cfg.SortBy)
+
+	if cfg.Limit != -1 {
+		query = query.Skip(cfg.Offset).Take(cfg.Limit)
+	}
+
+	query = query.Preload(cfg.Preloads...)
+
+	result, err := query.Find()
 	if err != nil {
 		return nil, err
 	}
