@@ -31,7 +31,7 @@ func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	err = uh.UserService.Delete(context.TODO(), uuidID)
+	err = uh.userService.Delete(context.TODO(), uuidID)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to delete user"})

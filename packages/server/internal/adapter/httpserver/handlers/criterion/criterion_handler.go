@@ -1,7 +1,6 @@
 package criterion
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -14,18 +13,14 @@ import (
 )
 
 type CriterionHandler struct {
-	CriterionService services.CriterionService
+	criterionService services.CriterionService
 }
 
 func NewCriterionHandler(criterionService services.CriterionService) *CriterionHandler {
 	return &CriterionHandler{
-		CriterionService: criterionService,
+		criterionService: criterionService,
 	}
 }
-
-// r.Get("/", criterionHandler.GetCriterions)
-// r.Put("/{id}", criterionHandler.UpdateCriterion)
-// r.Delete("/{id}", criterionHandler.DeleteCriterion)
 
 type CreateCriterionRequest struct {
 	Name string `json:"name"`
@@ -49,7 +44,7 @@ func (h *CriterionHandler) CreateCriterion(w http.ResponseWriter, r *http.Reques
 	criterion := &models.Criterion{
 		Name: request.Name,
 	}
-	err := h.CriterionService.Create(context.Background(), criterion)
+	err := h.criterionService.Create(r.Context(), criterion)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create criterion")
 	}
@@ -67,12 +62,11 @@ func (h *CriterionHandler) CreateCriterion(w http.ResponseWriter, r *http.Reques
 // @Produce      json
 // @Router       /criterions/ [get]
 func (h *CriterionHandler) GetCriterions(w http.ResponseWriter, r *http.Request) error {
-	criterions, err := h.CriterionService.Where(context.Background(), &models.Criterion{})
+	criterions, err := h.criterionService.Where(r.Context(), &models.Criterion{})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get criterions")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, criterions)
 	return nil
 }
@@ -110,12 +104,11 @@ func (h *CriterionHandler) UpdateCriterion(w http.ResponseWriter, r *http.Reques
 		Name: request.Name,
 	}
 
-	newCriterion, err := h.CriterionService.Update(context.Background(), criterion)
+	newCriterion, err := h.criterionService.Update(r.Context(), criterion)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to update criterion")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, newCriterion)
 	return nil
 }
@@ -134,12 +127,11 @@ func (h *CriterionHandler) DeleteCriterion(w http.ResponseWriter, r *http.Reques
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid UUID")
 	}
 
-	err = h.CriterionService.Delete(context.Background(), uuid)
+	err = h.criterionService.Delete(r.Context(), uuid)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete criterion")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 	return nil
 }

@@ -1,7 +1,6 @@
 package result
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -15,14 +14,14 @@ import (
 )
 
 type ResultHandler struct {
-	ResultService         services.ResultService
-	CollectionSongService services.CollectionSongService
+	resultService         services.ResultService
+	collectionSongService services.CollectionSongService
 }
 
 func NewResultHandler(resultService services.ResultService, collectionSongService services.CollectionSongService) *ResultHandler {
 	return &ResultHandler{
-		ResultService:         resultService,
-		CollectionSongService: collectionSongService,
+		resultService:         resultService,
+		collectionSongService: collectionSongService,
 	}
 }
 
@@ -35,8 +34,9 @@ func NewResultHandler(resultService services.ResultService, collectionSongServic
 // @Param id path string true "Collection ID"
 // @Param request body dto.SendResultRequest true "Send result"
 // @Router /collections/{id}/send-results [post]
-func (h *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) error {
-	userID := r.Context().Value("userID").(string)
+func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -53,12 +53,11 @@ func (h *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) error
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
 	}
 
-	results, err := h.ResultService.ProcessUserResults(r.Context(), userUUID, collectionUUID, request)
+	results, err := vh.resultService.ProcessUserResults(ctx, userUUID, collectionUUID, request)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to process results")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, results)
 	return nil
 }
@@ -70,8 +69,9 @@ func (h *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) error
 // @Produce json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/delete-user-results [delete]
-func (h *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request) error {
-	userID := r.Context().Value("userID").(string)
+func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -83,7 +83,7 @@ func (h *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	userResults, err := h.ResultService.Where(context.Background(), &models.Result{
+	userResults, err := vh.resultService.Where(ctx, &models.Result{
 		UserID:           userUUID,
 		CollectionSongID: collectionUUID,
 	})
@@ -95,12 +95,11 @@ func (h *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request
 	}
 
 	for _, result := range userResults {
-		if err := h.ResultService.Delete(context.Background(), result.ID); err != nil {
+		if err := vh.resultService.Delete(ctx, result.ID); err != nil {
 			return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete result")
 		}
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Results deleted successfully"})
 	return nil
 }
@@ -112,8 +111,9 @@ func (h *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/get-user-results [get]
-func (h *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) error {
-	userID := r.Context().Value("userID").(string)
+func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -125,12 +125,11 @@ func (h *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	results, err := h.ResultService.GetUserResults(r.Context(), userUUID, collectionUUID)
+	results, err := vh.resultService.GetUserResults(ctx, userUUID, collectionUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get results")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, results)
 	return nil
 }
@@ -142,19 +141,18 @@ func (h *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) e
 // @Produce json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/get-results [get]
-func (h *ResultHandler) GetCollectiveResults(w http.ResponseWriter, r *http.Request) error {
+func (vh *ResultHandler) GetCollectiveResults(w http.ResponseWriter, r *http.Request) error {
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	result, err := h.ResultService.GetCollectiveResults(r.Context(), collectionUUID)
+	result, err := vh.resultService.GetCollectiveResults(r.Context(), collectionUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collective results")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, result)
 	return nil
 }

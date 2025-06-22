@@ -33,7 +33,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	existingUsers, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
+	existingUsers, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to check existing users")
 	}
@@ -56,13 +56,12 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		ProfilePicture:  "https://photosrush.com/wp-content/uploads/dark-aesthetic-anime-pfp-girl-1.jpg",
 	}
 
-	if err := ah.UserService.Create(ctx, user); err != nil {
+	if err := ah.userService.Create(ctx, user); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, dtoBuilder.BuildUserDTO(user))
+	render.JSON(w, r, ah.dtoBuilder.BuildUserDTO(user))
 	return nil
 }
 
@@ -75,14 +74,14 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 // @Param		login body dto.LoginRequest true "User login data"
 // @Router		/auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	ctx := context.Background()
-
-	users, err := ah.UserService.Where(ctx, &models.User{Email: req.Email})
+	users, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil || users == nil || len(users) == 0 {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid credentials")
 	}
@@ -123,10 +122,9 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.JSON(w, r, map[string]any{
 		"accessToken": accessToken,
-		"user":        dtoBuilder.BuildUserDTO(user),
+		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
 	return nil
 }
@@ -140,29 +138,26 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 // @Security BearerAuth
 // @Router /auth/logout [post]
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return helpers.NewAPIError(http.StatusUnauthorized, "missing Authorization header")
 	}
-
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	userID, err := helpers.ParseToken(ah.JWTSecret, tokenStr)
+
+	userID, err := helpers.ParseToken(ah.jwtSecret, tokenStr)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid or expired token")
 	}
-
-	uuidParsed, err := uuid.Parse(userID)
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
-	users, err := ah.UserService.Where(ctx, &models.User{BaseModel: models.BaseModel{ID: uuidParsed}})
+	users, err := ah.userService.Where(ctx, &models.User{BaseModel: models.BaseModel{ID: userUUID}})
 	if err != nil || len(users) == 0 {
 		return helpers.NewAPIError(http.StatusUnauthorized, "user not found")
 	}
-
 	user := users[0]
 
 	if user.IsGoogleAccount {

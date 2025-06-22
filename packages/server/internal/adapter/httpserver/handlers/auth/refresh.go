@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -34,7 +33,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "failed to decode authData")
 	}
 
-	var authData map[string]interface{}
+	var authData map[string]any
 	if err := json.Unmarshal(authDataBytes, &authData); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "failed to parse authData")
 	}
@@ -44,11 +43,10 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "refreshToken not found in authData")
 	}
 
-	userID, err := helpers.ParseToken(ah.JWTSecret, refreshToken)
+	userID, err := helpers.ParseToken(ah.jwtSecret, refreshToken)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid or expired refresh token")
 	}
-
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -59,19 +57,19 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
 	}
 
-	user, err := ah.UserService.GetByID(ctx, userUUID, "Followers")
+	preloads := []string{"Followers"}
+	user, err := ah.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user")
 	}
 
-	newAuthData := map[string]interface{}{
+	newAuthData := map[string]any{
 		"refreshToken": newRefreshToken,
 	}
 	authJSON, err := json.Marshal(newAuthData)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to encode auth data")
 	}
-
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
 
 	http.SetCookie(w, &http.Cookie{
@@ -84,10 +82,9 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	dtoBuilder := dto.NewDTOBuilder(ah.UserService, nil)
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
-		"user":        dtoBuilder.BuildUserDTO(user),
+		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
 	return nil
 }

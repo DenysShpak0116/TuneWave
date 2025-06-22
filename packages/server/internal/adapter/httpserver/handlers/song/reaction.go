@@ -44,7 +44,7 @@ func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "something wrong with userID")
 	}
-	likes, dislikes, err := sh.SongService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
+	likes, dislikes, err := sh.songService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to set reaction")
 	}
@@ -87,7 +87,7 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) err
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
 
-	reactionType, err := sh.SongService.IsReactedByUser(r.Context(), songUUID, userUUID)
+	reactionType, err := sh.songService.IsReactedByUser(r.Context(), songUUID, userUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to check reaction")
 	}
@@ -120,7 +120,7 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 		return helpers.NewAPIError(http.StatusBadRequest, "song id is wrong")
 	}
 
-	song, err := sh.SongService.GetByID(
+	song, err := sh.songService.GetByID(
 		context.Background(),
 		songUUID,
 		"Authors",
@@ -135,7 +135,7 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "song does not exist")
 	}
-	if _, err := sh.SongService.Update(context.Background(), &models.Song{
+	if _, err := sh.songService.Update(context.Background(), &models.Song{
 		BaseModel: models.BaseModel{
 			ID: song.ID,
 		},

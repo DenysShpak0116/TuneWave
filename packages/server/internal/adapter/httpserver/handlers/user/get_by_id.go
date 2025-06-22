@@ -33,12 +33,12 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 		"Follows", "Follows.User",
 		"Followers", "Followers.Follower",
 	}
-	user, err := uh.UserService.GetByID(ctx, userUUID, userPreloads...)
+	user, err := uh.userService.GetByID(ctx, userUUID, userPreloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
-	dtoBuilder := *dto.NewDTOBuilder(uh.UserService, nil)
+	dtoBuilder := *dto.NewDTOBuilder(uh.userService, nil)
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dtoBuilder.BuildFullUserDTO(user))
@@ -78,7 +78,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		"Chats1.User1", "Chats1.User2",
 		"Chats2.User1", "Chats2.User2",
 	}
-	users, err := uh.UserService.Where(
+	users, err := uh.userService.Where(
 		context.Background(),
 		&models.User{
 			BaseModel: models.BaseModel{
@@ -182,7 +182,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 		"UserCollections.Collection.User",
 		"UserCollections.Collection.User.Followers",
 	}
-	users, err := uh.UserService.Where(
+	users, err := uh.userService.Where(
 		ctx,
 		&models.User{
 			BaseModel: models.BaseModel{
@@ -200,7 +200,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 
 	user := users[0]
 
-	dtoBuilder := dto.NewDTOBuilder(uh.UserService, uh.UserReactionService)
+	dtoBuilder := dto.NewDTOBuilder(uh.userService, uh.userReactionService)
 
 	collectionsDTO := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {

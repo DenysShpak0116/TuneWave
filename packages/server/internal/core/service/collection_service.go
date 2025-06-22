@@ -153,14 +153,8 @@ func (cs *CollectionService) GetCollectionSongs(
 	query := cs.CollectionSongRepository.NewQuery(ctx).
 		Where("collection_id = ?", collectionID).
 		Preload("Song").
-		Preload("Song.User").
-		Preload("Song.User.Followers").
 		Preload("Song.Authors.Author").
-		Preload("Song.SongTags.Tag").
-		Preload("Song.Comments").
-		Preload("Song.Comments.User").
-		Preload("Song.Comments.User.Followers").
-		Preload("Song.Reactions")
+		Preload("Song.SongTags.Tag")
 
 	query = query.Join("JOIN songs ON songs.id = collection_songs.song_id")
 

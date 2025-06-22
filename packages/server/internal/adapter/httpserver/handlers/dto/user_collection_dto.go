@@ -15,7 +15,7 @@ type UserCollectionDTO struct {
 	CoverURL    string    `json:"coverUrl"`
 }
 
-func NewUserCollectionDTO(collection *models.Collection) UserCollectionDTO {
+func (b *DTOBuilder) BuildUserCollectionDTO(collection *models.Collection) UserCollectionDTO {
 	return UserCollectionDTO{
 		ID:          collection.ID,
 		CreatedAt:   collection.CreatedAt,

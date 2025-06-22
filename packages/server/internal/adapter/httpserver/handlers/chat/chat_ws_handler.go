@@ -20,23 +20,26 @@ var upgrader = websocket.Upgrader{
 }
 
 type ChatHandler struct {
-	Manager        *ws.HubManager
-	ChatService    services.ChatService
-	MessageService services.MessageService
-	JWTSecret      string
+	manager        *ws.HubManager
+	chatService    services.ChatService
+	messageService services.MessageService
+	dtoBuilder     *dto.DTOBuilder
+	jwtSecret      string
 }
 
 func NewChatHandler(
 	manager *ws.HubManager,
 	chatService services.ChatService,
 	messageService services.MessageService,
+	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
 ) *ChatHandler {
 	return &ChatHandler{
-		Manager:        manager,
-		ChatService:    chatService,
-		MessageService: messageService,
-		JWTSecret:      cfg.JwtSecret,
+		manager:        manager,
+		chatService:    chatService,
+		messageService: messageService,
+		dtoBuilder:     dtoBuilder,
+		jwtSecret:      cfg.JwtSecret,
 	}
 }
 
@@ -56,7 +59,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	token := r.URL.Query().Get("authToken")
-	userIDRaw, err := helpers.ParseToken(ch.JWTSecret, token)
+	userIDRaw, err := helpers.ParseToken(ch.jwtSecret, token)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth token")
 	}
@@ -66,7 +69,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
-	chat, err := ch.ChatService.GetOrCreatePrivateChat(r.Context(), userUUID, targetUUID)
+	chat, err := ch.chatService.GetOrCreatePrivateChat(r.Context(), userUUID, targetUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get or create chat")
 	}
@@ -77,19 +80,18 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	chatIDStr := chat.ID.String()
-	hub := ch.Manager.GetHub(chatIDStr)
+	hub := ch.manager.GetHub(chatIDStr)
 
-	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.MessageService)
+	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService)
 
 	hub.Register <- client
 	go client.WritePump()
 	go client.ReadPump()
 
-	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
+	messages, err := ch.messageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
 	if err == nil {
 		for _, msg := range messages {
-			msgDTO := dtoBuilder.BuildMessageDTO(&msg)
+			msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)
 			b, _ := json.Marshal(msgDTO)
 			client.Send <- b
 		}

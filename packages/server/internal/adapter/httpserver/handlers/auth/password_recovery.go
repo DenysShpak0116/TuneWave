@@ -24,7 +24,7 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	token, err := ah.AuthService.HandleForgotPassword(req)
+	token, err := ah.authService.HandleForgotPassword(req)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to send email")
 	}
@@ -48,7 +48,7 @@ func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) err
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	if err := ah.AuthService.HandleResetPassword(req); err != nil {
+	if err := ah.authService.HandleResetPassword(req); err != nil {
 		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("failed to reset password: %v", err)})
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to reset password")
 	}

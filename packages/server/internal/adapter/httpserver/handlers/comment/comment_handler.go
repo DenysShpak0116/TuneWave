@@ -14,12 +14,14 @@ import (
 )
 
 type CommentHandler struct {
-	CommentService services.CommentService
+	commentService services.CommentService
+	dtoBuilder     *dto.DTOBuilder
 }
 
-func NewCommentHandler(commentService services.CommentService) *CommentHandler {
+func NewCommentHandler(commentService services.CommentService, dtoBuilder *dto.DTOBuilder) *CommentHandler {
 	return &CommentHandler{
-		CommentService: commentService,
+		commentService: commentService,
+		dtoBuilder:     dtoBuilder,
 	}
 }
 
@@ -39,6 +41,8 @@ type CreateCommentRequest struct {
 // @Param comment body CreateCommentRequest true "Comment creation data"
 // @Router /comments [post]
 func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	var req CreateCommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
@@ -48,7 +52,6 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
-
 	userUUID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -59,20 +62,18 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		UserID:  userUUID,
 		Content: req.Content,
 	}
-
-	if err := ch.CommentService.Create(r.Context(), comment); err != nil {
+	if err := ch.commentService.Create(ctx, comment); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create comment")
 	}
 
-	commentWithPreload, err := ch.CommentService.GetByID(r.Context(), comment.ID, "User", "User.Followers")
+	preloads := []string{"User", "User.Followers"}
+	newComment, err := ch.commentService.GetByID(ctx, comment.ID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get comment")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
-	commentDTO := dtoBuilder.BuildCommentDTO(commentWithPreload)
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, commentDTO)
+	render.JSON(w, r, ch.dtoBuilder.BuildCommentDTO(newComment))
 	return nil
 }
 
@@ -90,11 +91,10 @@ func (ch *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) 
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid comment ID")
 	}
 
-	if err := ch.CommentService.Delete(r.Context(), commentUUID); err != nil {
+	if err := ch.commentService.Delete(r.Context(), commentUUID); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete comment")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 	return nil
 }

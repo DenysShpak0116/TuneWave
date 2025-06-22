@@ -39,7 +39,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userFollowers, _ := uh.UserFollowerService.Where(ctx, &models.UserFollower{
+	userFollowers, _ := uh.userFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
@@ -51,7 +51,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}
-	err = uh.UserFollowerService.Create(ctx, userFollower)
+	err = uh.userFollowerService.Create(ctx, userFollower)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not follow this user")
 	}
@@ -62,7 +62,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		"Follower",
 		"Follower.Followers",
 	}
-	userFollowersToReturn, _ := uh.UserFollowerService.Where(
+	userFollowersToReturn, _ := uh.userFollowerService.Where(
 		ctx,
 		&models.UserFollower{
 			BaseModel: models.BaseModel{
@@ -73,7 +73,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 	)
 	userFollowerToReturn := &userFollowersToReturn[0]
 
-	dtoBuilder := dto.NewDTOBuilder(uh.UserService, nil)
+	dtoBuilder := dto.NewDTOBuilder(uh.userService, nil)
 	userDTO := dtoBuilder.BuildUserFollowerDTO(userFollowerToReturn)
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, userDTO)
@@ -105,7 +105,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userFollowers, err := uh.UserFollowerService.Where(ctx, &models.UserFollower{
+	userFollowers, err := uh.userFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
@@ -118,7 +118,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 
 	userFollower := userFollowers[0]
 
-	err = uh.UserFollowerService.Delete(ctx, userFollower.ID)
+	err = uh.userFollowerService.Delete(ctx, userFollower.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "can not unfollow this user")
 	}
@@ -144,7 +144,7 @@ func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error 
 		return helpers.NewAPIError(http.StatusBadRequest, "wrong target user id")
 	}
 
-	if userFollower, err := uh.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	if userFollower, err := uh.userFollowerService.Where(context.Background(), &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}); err != nil || len(userFollower) < 1 {

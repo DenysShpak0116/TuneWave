@@ -55,16 +55,16 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		Username:    userUpdateRequest.Username,
 		ProfileInfo: userUpdateRequest.ProfileInfo,
 	}
-	updatedUser, err := uh.UserService.Update(ctx, userUpdate)
+	updatedUser, err := uh.userService.Update(ctx, userUpdate)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{"error": "Failed to update user"})
 		return nil
 	}
 
-	updatedUser, err = uh.UserService.GetByID(ctx, updatedUser.ID, "Followers")
+	updatedUser, err = uh.userService.GetByID(ctx, updatedUser.ID, "Followers")
 
-	dtoBuilder := dto.NewDTOBuilder(uh.UserService, nil)
+	dtoBuilder := dto.NewDTOBuilder(uh.userService, nil)
 	userDTO := dtoBuilder.BuildUserDTO(updatedUser)
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]interface{}{
@@ -106,7 +106,7 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid User ID format")
 	}
 
-	err = uh.UserService.UpdateUserPfp(context.TODO(), services.UpdatePfpParams{
+	err = uh.userService.UpdateUserPfp(context.TODO(), services.UpdatePfpParams{
 		UserID:    userUUID,
 		Pfp:       pfpFile,
 		PfpHeader: pfpHeader,

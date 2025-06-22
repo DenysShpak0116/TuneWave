@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -48,7 +47,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	users, err := ah.UserService.Where(ctx, &models.User{Email: user.Email})
+	users, err := ah.userService.Where(ctx, &models.User{Email: user.Email})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user data")
 	}
@@ -75,7 +74,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 			ProfilePicture:  user.AvatarURL,
 		}
 
-		if err := ah.UserService.Create(ctx, currentUser); err != nil {
+		if err := ah.userService.Create(ctx, currentUser); err != nil {
 			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
 		}
 	}
@@ -85,7 +84,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
 	}
 
-	userDTO, err := ah.UserService.GetByID(ctx, currentUser.ID)
+	userToReturn, err := ah.userService.GetByID(ctx, currentUser.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to get user DTO")
 	}
@@ -93,7 +92,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	authData := map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
-		"user":         userDTO,
+		"user":         ah.dtoBuilder.BuildUserDTO(userToReturn),
 	}
 
 	authJSON, err := json.Marshal(authData)
@@ -135,7 +134,6 @@ func fetchGoogleNickname(token string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response body:", resp.Body)
 	var userModel UserWithNickname
 	if err := json.NewDecoder(resp.Body).Decode(&userModel); err != nil {
 		return "", err

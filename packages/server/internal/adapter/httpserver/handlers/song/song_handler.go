@@ -1,7 +1,6 @@
 package song
 
 import (
-	"context"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -17,10 +16,11 @@ import (
 )
 
 type SongHandler struct {
-	SongService           services.SongService
-	CollectionSongService services.CollectionSongService
-	UserReactionService   services.UserReactionService
-	CommentService        services.CommentService
+	songService           services.SongService
+	collectionSongService services.CollectionSongService
+	userReactionService   services.UserReactionService
+	commentService        services.CommentService
+	dtoBuilder            *dto.DTOBuilder
 }
 
 func NewSongHandler(
@@ -28,12 +28,14 @@ func NewSongHandler(
 	collectionSongService services.CollectionSongService,
 	userReactionService services.UserReactionService,
 	commentService services.CommentService,
+	dtoBuilder *dto.DTOBuilder,
 ) *SongHandler {
 	return &SongHandler{
-		SongService:           songService,
-		CollectionSongService: collectionSongService,
-		UserReactionService:   userReactionService,
-		CommentService:        commentService,
+		songService:           songService,
+		collectionSongService: collectionSongService,
+		userReactionService:   userReactionService,
+		commentService:        commentService,
+		dtoBuilder:            dtoBuilder,
 	}
 }
 
@@ -53,7 +55,13 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 
 	search := r.URL.Query().Get("search")
 	sortBy := r.URL.Query().Get("sortBy")
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
 	order := r.URL.Query().Get("order")
+	if order == "" {
+		order = "desc"
+	}
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
 		page = 1
@@ -61,12 +69,6 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit < 1 {
 		limit = 10
-	}
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-	if order == "" {
-		order = "desc"
 	}
 
 	params := services.SearchSongsParams{
@@ -77,17 +79,15 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 		Limit:  limit,
 	}
 	preloads := []string{"Authors", "Authors.Author"}
-	songs, err := sh.SongService.GetSongs(ctx, params, preloads...)
+	songs, err := sh.songService.GetSongs(ctx, params, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get songs")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(nil, sh.UserReactionService)
 	songDTOs := make([]dto.SongPreviewDTO, 0)
 	for _, song := range songs {
-		songDTOs = append(songDTOs, *dtoBuilder.BuildSongPreviewDTO(&song))
+		songDTOs = append(songDTOs, *sh.dtoBuilder.BuildSongPreviewDTO(&song))
 	}
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, songDTOs)
 	return nil
 }
@@ -116,13 +116,12 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 		"SongTags.Tag",
 		"User",
 	}
-	song, err := sh.SongService.GetByID(ctx, songUUID, preloads...)
+	song, err := sh.songService.GetByID(ctx, songUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get song")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(nil, sh.UserReactionService)
-	render.JSON(w, r, dtoBuilder.BuildSongDTO(song))
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(song))
 	return nil
 }
 
@@ -142,6 +141,8 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 // @Param cover formData file true "Cover image"
 // @Router /songs [post]
 func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
@@ -170,7 +171,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer coverFile.Close()
 
-	song, err := sh.SongService.SaveSong(context.Background(), services.SaveSongParams{
+	song, err := sh.songService.SaveSong(ctx, services.SaveSongParams{
 		UserID:      userIDuuid,
 		Title:       title,
 		Genre:       genre,
@@ -185,7 +186,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to save song")
 	}
 
-	songDTO, err := sh.SongService.GetByID(r.Context(), song.ID)
+	songDTO, err := sh.songService.GetByID(ctx, song.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get song")
 	}
@@ -211,6 +212,8 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 // @Param cover formData file false "Updated cover image"
 // @Router /songs/{id} [put]
 func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
@@ -247,7 +250,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		defer coverFile.Close()
 	}
 
-	err = sh.SongService.UpdateSong(context.Background(), services.UpdateSongParams{
+	err = sh.songService.UpdateSong(ctx, services.UpdateSongParams{
 		SongID:      songUUID,
 		Title:       title,
 		Genre:       genre,
@@ -262,13 +265,12 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to update song")
 	}
 
-	updatedSong, err := sh.SongService.GetByID(r.Context(), songUUID)
+	updatedSong, err := sh.songService.GetByID(ctx, songUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to retrieve updated song")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, updatedSong)
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(updatedSong))
 	return nil
 }
 
@@ -281,17 +283,17 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Router /songs/{id} [delete]
 func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	songID := chi.URLParam(r, "id")
 	songUUID, err := uuid.Parse(songID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
 
-	if err := sh.SongService.Delete(context.Background(), songUUID); err != nil {
+	if err := sh.songService.Delete(ctx, songUUID); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete song")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 	return nil
 }
@@ -308,7 +310,8 @@ type genrePreview struct {
 // @Produce json
 // @Router /genres [get]
 func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
-	genres := sh.SongService.GetGenres(context.Background())
+	ctx := r.Context()
+	genres := sh.songService.GetGenres(ctx)
 	if len(genres) == 0 {
 		render.JSON(w, r, []string{})
 		return nil
@@ -316,7 +319,7 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 
 	genrePreviews := make([]genrePreview, 0)
 	for _, genre := range genres {
-		song, err := sh.SongService.GetGenresMostPopularSong(context.Background(), genre)
+		song, err := sh.songService.GetGenresMostPopularSong(ctx, genre)
 		if err != nil || song == nil {
 			genrePreviews = append(genrePreviews, genrePreview{
 				GenreName:  genre,
@@ -330,7 +333,6 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, genrePreviews)
 	return nil
 }
@@ -362,20 +364,20 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 		limit = 10
 	}
 
-	comments, err := sh.CommentService.Where(
+	preloads := []string{"User"}
+	comments, err := sh.commentService.Where(
 		ctx,
 		&models.Comment{SongID: songUUID},
 		query.WithPagination(page, limit),
-		query.WithPreloads("User"),
+		query.WithPreloads(preloads...),
 	)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not retrieve comments")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	commentDTOs := make([]dto.CommentDTO, 0)
 	for _, comment := range comments {
-		commentDTOs = append(commentDTOs, *dtoBuilder.BuildCommentDTO(&comment))
+		commentDTOs = append(commentDTOs, *sh.dtoBuilder.BuildCommentDTO(&comment))
 	}
 	render.JSON(w, r, commentDTOs)
 	return nil

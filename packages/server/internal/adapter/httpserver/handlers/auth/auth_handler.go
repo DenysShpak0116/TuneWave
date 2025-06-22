@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
@@ -13,16 +14,18 @@ import (
 )
 
 type AuthHandler struct {
-	AuthService        services.AuthService
-	UserService        services.UserService
-	GoogleClientID     string
-	GoogleClientSecret string
-	JWTSecret          string
+	authService        services.AuthService
+	userService        services.UserService
+	dtoBuilder         *dto.DTOBuilder
+	googleClientID     string
+	googleClientSecret string
+	jwtSecret          string
 }
 
 func NewAuthHandler(
 	authService services.AuthService,
 	userService services.UserService,
+	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
 ) *AuthHandler {
 	goth.UseProviders(
@@ -36,11 +39,12 @@ func NewAuthHandler(
 	)
 
 	return &AuthHandler{
-		AuthService:        authService,
-		UserService:        userService,
-		GoogleClientID:     cfg.Google.ClientID,
-		GoogleClientSecret: cfg.Google.ClientSecret,
-		JWTSecret:          cfg.JwtSecret,
+		authService:        authService,
+		userService:        userService,
+		dtoBuilder:         dtoBuilder,
+		googleClientID:     cfg.Google.ClientID,
+		googleClientSecret: cfg.Google.ClientSecret,
+		jwtSecret:          cfg.JwtSecret,
 	}
 }
 
@@ -61,7 +65,7 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 		"exp":    time.Now().Add(5 * time.Hour).Unix(),
 	})
 
-	accessTokenStr, err := accessToken.SignedString([]byte(ah.JWTSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
 		return "", "", err
 	}
@@ -71,7 +75,7 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 		"exp":    time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
 
-	refreshTokenStr, err := refreshToken.SignedString([]byte(ah.JWTSecret))
+	refreshTokenStr, err := refreshToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
 		return "", "", err
 	}

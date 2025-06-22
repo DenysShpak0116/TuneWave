@@ -15,20 +15,23 @@ import (
 )
 
 type VectorHandler struct {
-	VactorService         services.VectorService
-	CollectionSongService services.CollectionSongService
-	CriterionService      services.CriterionService
+	vectorService         services.VectorService
+	collectionSongService services.CollectionSongService
+	criterionService      services.CriterionService
+	dtoBuilder            *dto.DTOBuilder
 }
 
 func NewVectorHandler(
 	vectorService services.VectorService,
 	collectionSongService services.CollectionSongService,
 	criterionService services.CriterionService,
+	dtoBuilder *dto.DTOBuilder,
 ) *VectorHandler {
 	return &VectorHandler{
-		VactorService:         vectorService,
-		CollectionSongService: collectionSongService,
-		CriterionService:      criterionService,
+		vectorService:         vectorService,
+		collectionSongService: collectionSongService,
+		criterionService:      criterionService,
+		dtoBuilder:            dtoBuilder,
 	}
 }
 
@@ -42,7 +45,7 @@ func NewVectorHandler(
 // @Param id path string true "Collection ID"
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [get]
-func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) error {
+func (vh *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	collectionID := chi.URLParam(r, "id")
@@ -58,7 +61,7 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) e
 	}
 
 	preloads := []string{"Vectors", "Vectors.Criterion"}
-	collectionSongs, err := h.CollectionSongService.Where(
+	collectionSongs, err := vh.collectionSongService.Where(
 		ctx,
 		&models.CollectionSong{
 			CollectionID: collectionUUID,
@@ -75,15 +78,13 @@ func (h *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) e
 		render.JSON(w, r, map[string]string{})
 		return nil
 	}
-	collectionSong := collectionSongs[0]
 
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
-	vectorsDTO := make([]dto.VectorDTO, 0)
-	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
+	vectorDTOs := make([]dto.VectorDTO, 0)
+	for _, vector := range collectionSongs[0].Vectors {
+		vectorDTOs = append(vectorDTOs, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, vectorsDTO)
+	render.JSON(w, r, vectorDTOs)
 	return nil
 }
 
@@ -105,7 +106,9 @@ type CreateSongVectorsRequest struct {
 // @Param song-id path string true "Song ID"
 // @Param vectors body CreateSongVectorsRequest true "Vectors"
 // @Router /collections/{id}/{song-id}/vectors [post]
-func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request) error {
+func (vh *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	collectionID := chi.URLParam(r, "id")
 	collectionUUID, err := uuid.Parse(collectionID)
 	if err != nil {
@@ -123,7 +126,7 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	collectionSongs, err := h.CollectionSongService.Where(r.Context(), &models.CollectionSong{
+	collectionSongs, err := vh.collectionSongService.Where(ctx, &models.CollectionSong{
 		CollectionID: collectionUUID,
 		SongID:       songUUID,
 	})
@@ -148,20 +151,20 @@ func (h *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 
 	for _, vector := range vectors {
-		if err := h.VactorService.Create(r.Context(), vector); err != nil {
+		if err := vh.vectorService.Create(ctx, vector); err != nil {
 			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create vector")
 		}
 	}
 
-	collectionSong, err = h.CollectionSongService.GetByID(r.Context(), collectionSong.ID, "Vectors", "Vectors.Criterion")
+	preloads := []string{"Vectors", "Vectors.Criterion"}
+	collectionSong, err = vh.collectionSongService.GetByID(ctx, collectionSong.ID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 	vectorsDTO := make([]dto.VectorDTO, 0)
 	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
+		vectorsDTO = append(vectorsDTO, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -188,7 +191,7 @@ type UpdateSongVectorsRequest struct {
 // @Param song-id path string true "Song ID"
 // @Param vectors body UpdateSongVectorsRequest true "Vectors"
 // @Router /collections/{id}/{song-id}/vectors [put]
-func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) error {
+func (vh *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	collectionID := chi.URLParam(r, "id")
@@ -209,7 +212,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 
 	for _, vector := range request.Vectors {
-		if _, err := h.VactorService.Update(ctx, &models.Vector{
+		if _, err := vh.vectorService.Update(ctx, &models.Vector{
 			BaseModel: models.BaseModel{
 				ID: vector.ID,
 			},
@@ -221,7 +224,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 	}
 
 	preloads := []string{"Vectors", "Vectors.Criterion"}
-	collectionSongs, err := h.CollectionSongService.Where(
+	collectionSongs, err := vh.collectionSongService.Where(
 		ctx,
 		&models.CollectionSong{
 			CollectionID: collectionUUID,
@@ -237,16 +240,12 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 		render.JSON(w, r, map[string]string{})
 		return nil
 	}
-	collectionSong := collectionSongs[0]
-
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
 
 	vectorsDTO := make([]dto.VectorDTO, 0)
-	for _, vector := range collectionSong.Vectors {
-		vectorsDTO = append(vectorsDTO, dtoBuilder.BuildVectorDTO(vector))
+	for _, vector := range collectionSongs[0].Vectors {
+		vectorsDTO = append(vectorsDTO, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, vectorsDTO)
 	return nil
 }
@@ -261,7 +260,7 @@ func (h *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request
 // @Param id path string true "Collection ID"
 // @Param song-id path string true "Song ID"
 // @Router /collections/{id}/{song-id}/vectors [delete]
-func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) error {
+func (vh *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	collectionID := chi.URLParam(r, "id")
@@ -279,7 +278,7 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 	preloads := []string{
 		"Vectors",
 	}
-	collectionSongs, err := h.CollectionSongService.Where(
+	collectionSongs, err := vh.collectionSongService.Where(
 		ctx,
 		&models.CollectionSong{
 			CollectionID: collectionUUID,
@@ -296,15 +295,13 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 		render.JSON(w, r, map[string]string{})
 		return nil
 	}
-	collectionSong := collectionSongs[0]
 
-	for _, vector := range collectionSong.Vectors {
-		if err := h.VactorService.Delete(r.Context(), vector.ID); err != nil {
+	for _, vector := range collectionSongs[0].Vectors {
+		if err := vh.vectorService.Delete(ctx, vector.ID); err != nil {
 			return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete vector")
 		}
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
 	return nil
 }
@@ -318,7 +315,7 @@ func (h *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/has-all-vectors [get]
-func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) error {
+func (vh *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	collectionID := chi.URLParam(r, "id")
@@ -327,7 +324,7 @@ func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) er
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
 
-	criterionCount, err := h.CriterionService.CountWhere(ctx, &models.Criterion{})
+	criterionCount, err := vh.criterionService.CountWhere(ctx, &models.Criterion{})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to count criteria")
 	}
@@ -337,14 +334,10 @@ func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) er
 		return nil
 	}
 
-	preloads := []string{
-		"Vectors",
-	}
-	collectionSongs, err := h.CollectionSongService.Where(
+	preloads := []string{"Vectors"}
+	collectionSongs, err := vh.collectionSongService.Where(
 		ctx,
-		&models.CollectionSong{
-			CollectionID: collectionUUID,
-		},
+		&models.CollectionSong{CollectionID: collectionUUID},
 		query.WithPreloads(preloads...),
 	)
 	if err != nil {
@@ -365,7 +358,6 @@ func (h *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) er
 	}
 	hasAllVectors := true
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]bool{"hasAllVectors": hasAllVectors})
 	return nil
 }

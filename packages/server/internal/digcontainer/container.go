@@ -10,6 +10,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/criterion"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
@@ -18,6 +19,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/songservice"
 
@@ -75,6 +77,10 @@ func BuildContainer() *dig.Container {
 	container.Provide(ws.NewHubManager)
 
 	// handlers
+	container.Provide(func(userService services.UserService, userReactionService services.UserReactionService) *dto.DTOBuilder {
+		return dto.NewDTOBuilder(userService, userReactionService)
+	})
+
 	container.Provide(chat.NewChatHandler)
 	container.Provide(auth.NewAuthHandler)
 	container.Provide(user.NewUserHandler)
