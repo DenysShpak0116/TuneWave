@@ -251,14 +251,14 @@
                     },
                     {
                         "type": "string",
-                        "description": "Sort by (title, created_at)",
-                        "name": "sort",
+                        "description": "Order by (title, created_at)",
+                        "name": "orderBy",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc, desc)",
-                        "name": "order",
+                        "description": "sort order (asc, desc)",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],
