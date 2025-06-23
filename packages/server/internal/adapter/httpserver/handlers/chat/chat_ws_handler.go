@@ -77,8 +77,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to upgrade connection")
 	}
 
-	chatIDStr := chat.ID.String()
-	hub := ch.manager.GetHub(chatIDStr)
+	hub := ch.manager.GetHub(chat.ID.String())
 
 	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService)
 

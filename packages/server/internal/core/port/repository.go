@@ -20,9 +20,9 @@ type Query[T any] interface {
 }
 
 type Repository[T any] interface {
-	Add(ctx context.Context, entity *T) error
+	Add(ctx context.Context, entities ...*T) error
 	Update(ctx context.Context, entity *T) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id ...uuid.UUID) error
 	Distinct(ctx context.Context, field string) []string
 	NewQuery(ctx context.Context) Query[T]
 }

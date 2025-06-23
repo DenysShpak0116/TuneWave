@@ -36,10 +36,6 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-type UserChatsResponse struct {
-	Chats []ChatPreview `json:"chats"`
-}
-
 type ChatPreview struct {
 	ID           uuid.UUID `json:"id"`
 	TargetUserID uuid.UUID `json:"targetUserId"`
@@ -65,16 +61,15 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	preloads := []string{
-		"Chats1", "Chats2",
-		"Chats1.Messages", "Chats2.Messages",
-		"Chats1.User1", "Chats1.User2",
-		"Chats2.User1", "Chats2.User2",
+		"Chats1", "Chats2", "Chats1.Messages", "Chats2.Messages",
+		"Chats1.User1", "Chats1.User2", "Chats2.User1", "Chats2.User2",
 	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
+	// TODO: change last message retrievement
 	chats := make([]ChatPreview, 0)
 	for _, chat := range user.Chats1 {
 		if len(chat.Messages) == 0 {
@@ -135,9 +130,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	render.JSON(w, r, UserChatsResponse{
-		Chats: chats,
-	})
+	render.JSON(w, r, chats)
 	return nil
 }
 

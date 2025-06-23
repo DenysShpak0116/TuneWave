@@ -119,12 +119,12 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "song does not exist")
 	}
-	if err := sh.songService.Update(ctx, &models.Song{
-		BaseModel: models.BaseModel{
-			ID: song.ID,
-		},
+
+	updateSongParams := &models.Song{
+		BaseModel:  models.BaseModel{ID: song.ID},
 		Listenings: song.Listenings + 1,
-	}); err != nil {
+	}
+	if err := sh.songService.Update(ctx, updateSongParams); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "v")
 	}
 

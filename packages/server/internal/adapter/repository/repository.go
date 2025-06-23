@@ -17,8 +17,8 @@ func NewRepository[T any](db *gorm.DB) port.Repository[T] {
 	return &GenericRepository[T]{db: db}
 }
 
-func (r *GenericRepository[T]) Add(ctx context.Context, entity *T) error {
-	err := r.db.WithContext(ctx).Create(entity).Error
+func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {
+	err := r.db.WithContext(ctx).Create(entities).Error
 	if err != nil {
 		return err
 	}
@@ -35,9 +35,9 @@ func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	return nil
 }
 
-func (r *GenericRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *GenericRepository[T]) Delete(ctx context.Context, id ...uuid.UUID) error {
 	var entity T
-	err := r.db.WithContext(ctx).Where("id = ?", id).Delete(&entity).Error
+	err := r.db.WithContext(ctx).Delete(&entity, id).Error
 	if err != nil {
 		return err
 	}

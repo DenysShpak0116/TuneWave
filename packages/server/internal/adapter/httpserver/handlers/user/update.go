@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
@@ -63,6 +62,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Param        file formData file true "Avatar file"
 // @Router 	 /users/avatar/ [put]
 func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid form data")
 	}
@@ -77,27 +77,21 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 		defer pfpFile.Close()
 	}
 
-	userID := r.Context().Value("userID").(string)
-	if userID == "" {
-		return helpers.NewAPIError(http.StatusBadRequest, "user id is required")
-	}
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid User ID format")
 	}
 
-	err = uh.userService.UpdateUserPfp(context.TODO(), services.UpdatePfpParams{
+	err = uh.userService.UpdateUserPfp(ctx, services.UpdatePfpParams{
 		UserID:    userUUID,
 		Pfp:       pfpFile,
 		PfpHeader: pfpHeader,
 	})
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "Failed to update avatar"})
-		return nil
+		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to update avatar")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Avatar updated successfully"})
 	return nil
 }

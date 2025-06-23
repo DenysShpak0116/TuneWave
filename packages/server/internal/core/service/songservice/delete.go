@@ -9,26 +9,28 @@ import (
 	"github.com/google/uuid"
 )
 
-func (ss *SongService) Delete(ctx context.Context, songID uuid.UUID) error {
-	song, err := ss.getSongByID(ctx, songID)
-	if err != nil {
-		return err
-	}
+func (ss *SongService) Delete(ctx context.Context, songIDs ...uuid.UUID) error {
+	for _, songID := range songIDs {
+		song, err := ss.getSongByID(ctx, songID)
+		if err != nil {
+			return err
+		}
 
-	if err := ss.cleanupSongAuthors(ctx, songID); err != nil {
-		return err
-	}
+		if err := ss.cleanupSongAuthors(ctx, songID); err != nil {
+			return err
+		}
 
-	if err := ss.cleanupSongTags(ctx, songID); err != nil {
-		return err
-	}
+		if err := ss.cleanupSongTags(ctx, songID); err != nil {
+			return err
+		}
 
-	if err := ss.Repository.Delete(ctx, song.ID); err != nil {
-		return fmt.Errorf("failed to delete song: %w", err)
-	}
+		if err := ss.Repository.Delete(ctx, song.ID); err != nil {
+			return fmt.Errorf("failed to delete song: %w", err)
+		}
 
-	if err := ss.removeSongFiles(ctx, song); err != nil {
-		return err
+		if err := ss.removeSongFiles(ctx, song); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -29,7 +29,6 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to send email")
 	}
 
-	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, map[string]string{"token": token})
 	return nil
 }
@@ -53,7 +52,6 @@ func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) err
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to reset password")
 	}
 
-	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Password reset successfully"})
 	return nil
 }

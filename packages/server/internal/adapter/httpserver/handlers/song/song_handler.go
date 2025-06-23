@@ -341,12 +341,10 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 // @Router /songs/{id}/comments [get]
 func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
-
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
@@ -358,8 +356,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 
 	preloads := []string{"User"}
 	comments, err := sh.commentService.Where(
-		ctx,
-		&models.Comment{SongID: songUUID},
+		ctx, &models.Comment{SongID: songUUID},
 		query.WithPagination(page, limit),
 		query.WithPreloads(preloads...),
 	)

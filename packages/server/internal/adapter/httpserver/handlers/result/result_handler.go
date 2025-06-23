@@ -41,7 +41,6 @@ func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
@@ -75,7 +74,6 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
@@ -92,10 +90,12 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 		return helpers.NewAPIError(http.StatusNotFound, "no results found for user")
 	}
 
+	ids := make([]uuid.UUID, 0)
 	for _, result := range userResults {
-		if err := vh.resultService.Delete(ctx, result.ID); err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete result")
-		}
+		ids = append(ids, result.ID)
+	}
+	if err := vh.resultService.Delete(ctx, ids...); err != nil {
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete result")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Results deleted successfully"})
@@ -116,7 +116,6 @@ func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")

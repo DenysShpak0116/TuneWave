@@ -45,22 +45,16 @@ func NewUserHandler(
 // @Router       /users [get]
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
 	}
-
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 10
 	}
 
-	users, err := h.userService.Where(
-		ctx,
-		&models.User{},
-		query.WithPagination(page, limit),
-	)
+	users, err := h.userService.Where(ctx, &models.User{}, query.WithPagination(page, limit))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get users")
 	}

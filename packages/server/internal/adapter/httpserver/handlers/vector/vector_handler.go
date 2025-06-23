@@ -47,7 +47,6 @@ func NewVectorHandler(
 // @Router /collections/{id}/{song-id}/vectors [get]
 func (vh *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
@@ -95,7 +94,6 @@ type CreateSongVectorsRequest struct {
 // @Router /collections/{id}/{song-id}/vectors [post]
 func (vh *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
@@ -127,10 +125,8 @@ func (vh *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	for _, vector := range vectors {
-		if err := vh.vectorService.Create(ctx, vector); err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create vector")
-		}
+	if err := vh.vectorService.Create(ctx, vectors...); err != nil {
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create vector")
 	}
 
 	preloads := []string{"Vectors", "Vectors.Criterion"}
@@ -169,15 +165,11 @@ type UpdateSongVectorsRequest struct {
 // @Router /collections/{id}/{song-id}/vectors [put]
 func (vh *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
-
-	songID := chi.URLParam(r, "song-id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "song-id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
@@ -229,15 +221,11 @@ func (vh *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Reques
 // @Router /collections/{id}/{song-id}/vectors [delete]
 func (vh *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
-
-	songID := chi.URLParam(r, "song-id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "song-id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
@@ -252,12 +240,13 @@ func (vh *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Reques
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 
+	ids := make([]uuid.UUID, 0)
 	for _, vector := range collectionSong.Vectors {
-		if err := vh.vectorService.Delete(ctx, vector.ID); err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete vector")
-		}
+		ids = append(ids, vector.ID)
 	}
-
+	if err := vh.vectorService.Delete(ctx, ids...); err != nil {
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete vector")
+	}
 	render.NoContent(w, r)
 	return nil
 }
@@ -273,9 +262,7 @@ func (vh *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Reques
 // @Router /collections/{id}/has-all-vectors [get]
 func (vh *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection id")
 	}
@@ -307,8 +294,7 @@ func (vh *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) e
 			return nil
 		}
 	}
-	hasAllVectors := true
 
-	render.JSON(w, r, map[string]bool{"hasAllVectors": hasAllVectors})
+	render.JSON(w, r, map[string]bool{"hasAllVectors": true})
 	return nil
 }

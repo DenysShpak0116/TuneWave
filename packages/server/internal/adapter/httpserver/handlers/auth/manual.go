@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -25,13 +24,12 @@ import (
 // @Param		user body dto.RegisterRequest true "User registration data"
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
 
 	existingUsers, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil {
@@ -75,7 +73,6 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 // @Router		/auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")

@@ -41,9 +41,7 @@ func (h *CriterionHandler) CreateCriterion(w http.ResponseWriter, r *http.Reques
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	criterion := &models.Criterion{
-		Name: request.Name,
-	}
+	criterion := &models.Criterion{Name: request.Name}
 	err := h.criterionService.Create(r.Context(), criterion)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create criterion")
