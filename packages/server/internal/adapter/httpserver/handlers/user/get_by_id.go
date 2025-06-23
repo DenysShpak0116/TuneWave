@@ -54,8 +54,7 @@ type ChatPreview struct {
 // @Router /chats [get]
 func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userId, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userId)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "invalid user ID")
 	}

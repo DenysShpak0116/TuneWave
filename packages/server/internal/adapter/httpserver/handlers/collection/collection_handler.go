@@ -52,13 +52,11 @@ func NewCollectionHandler(
 // @Router /collections [post]
 func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
 	}
 
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
@@ -222,8 +220,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 // @Router       /collections/users-collections [get]
 func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
@@ -314,8 +311,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
@@ -378,9 +374,7 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
-
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}

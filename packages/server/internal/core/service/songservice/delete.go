@@ -11,7 +11,7 @@ import (
 
 func (ss *SongService) Delete(ctx context.Context, songIDs ...uuid.UUID) error {
 	for _, songID := range songIDs {
-		song, err := ss.getSongByID(ctx, songID)
+		song, err := ss.GetByID(ctx, songID)
 		if err != nil {
 			return err
 		}
@@ -34,18 +34,6 @@ func (ss *SongService) Delete(ctx context.Context, songIDs ...uuid.UUID) error {
 	}
 
 	return nil
-}
-
-// TODO: replace with GetSongBYID
-func (ss *SongService) getSongByID(ctx context.Context, id uuid.UUID) (*models.Song, error) {
-	songs, err := ss.Repository.NewQuery(ctx).Where("id = ?", id).Find()
-	if err != nil {
-		return nil, err
-	}
-	if len(songs) == 0 {
-		return nil, fmt.Errorf("song not found")
-	}
-	return &songs[0], nil
 }
 
 func (ss *SongService) cleanupSongAuthors(ctx context.Context, songID uuid.UUID) error {

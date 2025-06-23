@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func ParseToken(jwtSecret, tokenStr string) (string, error) {
@@ -27,11 +28,16 @@ func ParseToken(jwtSecret, tokenStr string) (string, error) {
 	return claims["userId"].(string), nil
 }
 
-// TODO: change to UUID return val
-func GetUserID(ctx context.Context) (string, error) {
+func GetUserID(ctx context.Context) (uuid.UUID, error) {
 	userID, ok := ctx.Value("userID").(string)
 	if !ok {
-		return "", errors.New("userId not found in context")
+		return uuid.UUID{}, errors.New("userId not found in context")
 	}
-	return userID, nil
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return uuid.UUID{}, errors.New("userId could not be parsed to uuid")
+	}
+
+	return userUUID, nil
 }

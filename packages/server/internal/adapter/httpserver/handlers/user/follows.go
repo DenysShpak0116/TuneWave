@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO: figure out  response body
 // FollowUser	godoc
 // @Summary		Follow user using id param
 // @Description	Follow user using id param
@@ -25,9 +24,7 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
-
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
@@ -71,9 +68,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
-
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
@@ -102,8 +97,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 // @Router /users/{id}/is-followed [get]
 func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "wrong user id")
 	}

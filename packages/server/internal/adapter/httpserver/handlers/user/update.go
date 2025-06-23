@@ -77,8 +77,7 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 		defer pfpFile.Close()
 	}
 
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid User ID format")
 	}

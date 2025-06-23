@@ -36,8 +36,7 @@ func NewResultHandler(resultService services.ResultService, collectionSongServic
 // @Router /collections/{id}/send-results [post]
 func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
@@ -69,8 +68,7 @@ func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) erro
 // @Router /collections/{id}/delete-user-results [delete]
 func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
@@ -111,8 +109,7 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 // @Router /collections/{id}/get-user-results [get]
 func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, _ := helpers.GetUserID(ctx)
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
