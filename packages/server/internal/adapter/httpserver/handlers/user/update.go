@@ -28,12 +28,12 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	var userUpdateRequest dto.UserUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&userUpdateRequest); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request payload")
+		return helpers.BadRequest("invalid request payload")
 	}
 	defer r.Body.Close()
 
@@ -45,7 +45,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		ProfileInfo: userUpdateRequest.ProfileInfo,
 	}
 	if err := uh.userService.Update(ctx, updatedUser); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to update user")
+		return helpers.InternalServerError("Failed to update user")
 	}
 
 	render.JSON(w, r, uh.dtoBuilder.BuildUserDTO(updatedUser))
@@ -64,14 +64,14 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid form data")
+		return helpers.BadRequest("invalid form data")
 	}
 
 	var pfpFile multipart.File
 	var pfpHeader *multipart.FileHeader
 	pfpFile, pfpHeader, err := r.FormFile("file")
 	if err != nil && err != http.ErrMissingFile {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid cover image")
+		return helpers.BadRequest("invalid cover image")
 	}
 	if pfpFile != nil {
 		defer pfpFile.Close()
@@ -79,7 +79,7 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid User ID format")
+		return helpers.BadRequest("invalid User ID format")
 	}
 
 	err = uh.userService.UpdateUserPfp(ctx, services.UpdatePfpParams{
@@ -88,7 +88,7 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 		PfpHeader: pfpHeader,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to update avatar")
+		return helpers.InternalServerError("Failed to update avatar")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Avatar updated successfully"})

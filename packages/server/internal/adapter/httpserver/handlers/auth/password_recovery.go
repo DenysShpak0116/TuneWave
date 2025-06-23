@@ -21,12 +21,12 @@ import (
 func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) error {
 	var req dto.ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
+		return helpers.BadRequest("invalid request")
 	}
 
 	token, err := ah.authService.HandleForgotPassword(req)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to send email")
+		return helpers.InternalServerError("failed to send email")
 	}
 
 	render.JSON(w, r, map[string]string{"token": token})
@@ -44,12 +44,12 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) error {
 	var req dto.ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
+		return helpers.BadRequest("invalid request")
 	}
 
 	if err := ah.authService.HandleResetPassword(req); err != nil {
 		render.JSON(w, r, map[string]string{"error": fmt.Sprintf("failed to reset password: %v", err)})
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to reset password")
+		return helpers.InternalServerError("failed to reset password")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Password reset successfully"})

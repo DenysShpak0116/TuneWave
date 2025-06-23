@@ -52,40 +52,39 @@ func NewChatHandler(
 // @Param        authToken query string true "Bearer auth token"
 // @Router       /ws/chat [get]
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	targetUUID, err := uuid.Parse(r.URL.Query().Get("targetUserId"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid target user ID")
+		return helpers.BadRequest("invalid target user ID")
 	}
 
 	token := r.URL.Query().Get("authToken")
 	userIDRaw, err := helpers.ParseToken(ch.jwtSecret, token)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth token")
+		return helpers.BadRequest("invalid auth token")
 	}
 	userUUID, err := uuid.Parse(userIDRaw)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
-	chat, err := ch.chatService.GetOrCreatePrivateChat(r.Context(), userUUID, targetUUID)
+	chat, err := ch.chatService.GetOrCreatePrivateChat(ctx, userUUID, targetUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get or create chat")
+		return helpers.InternalServerError("failed to get or create chat")
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to upgrade connection")
+		return helpers.InternalServerError("failed to upgrade connection")
 	}
 
 	hub := ch.manager.GetHub(chat.ID.String())
-
 	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService)
-
 	hub.Register <- client
 	go client.WritePump()
 	go client.ReadPump()
 
-	messages, err := ch.messageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
+	messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID})
 	if err == nil {
 		for _, msg := range messages {
 			msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)

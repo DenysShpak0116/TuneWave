@@ -81,7 +81,7 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 	preloads := []string{"Authors", "Authors.Author"}
 	songs, err := sh.songService.GetSongs(ctx, params, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get songs")
+		return helpers.InternalServerError("failed to get songs")
 	}
 
 	songDTOs := make([]dto.SongPreviewDTO, 0)
@@ -104,7 +104,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	preloads := []string{
@@ -114,7 +114,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	}
 	song, err := sh.songService.GetByID(ctx, songUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get song")
+		return helpers.InternalServerError("failed to get song")
 	}
 
 	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(song))
@@ -141,12 +141,12 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
+		return helpers.BadRequest("error parsing form")
 	}
 
 	userIDuuid, err := uuid.Parse(r.FormValue("userId"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	title := r.FormValue("title")
@@ -156,13 +156,13 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 
 	songFile, songHeader, err := r.FormFile("song")
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "song file is required")
+		return helpers.BadRequest("song file is required")
 	}
 	defer songFile.Close()
 
 	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "cover image is required")
+		return helpers.BadRequest("cover image is required")
 	}
 	defer coverFile.Close()
 
@@ -178,12 +178,12 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		CoverHeader: coverHeader,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to save song")
+		return helpers.InternalServerError("failed to save song")
 	}
 
 	songDTO, err := sh.songService.GetByID(ctx, song.ID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get song")
+		return helpers.InternalServerError("failed to get song")
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -211,12 +211,12 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
+		return helpers.BadRequest("error parsing form")
 	}
 
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	title := r.FormValue("title")
@@ -228,7 +228,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	var songHeader *multipart.FileHeader
 	songFile, songHeader, err = r.FormFile("song")
 	if err != nil && err != http.ErrMissingFile {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song file")
+		return helpers.BadRequest("invalid song file")
 	}
 	if songFile != nil {
 		defer songFile.Close()
@@ -238,7 +238,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	var coverHeader *multipart.FileHeader
 	coverFile, coverHeader, err = r.FormFile("cover")
 	if err != nil && err != http.ErrMissingFile {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid cover image")
+		return helpers.BadRequest("invalid cover image")
 	}
 	if coverFile != nil {
 		defer coverFile.Close()
@@ -256,12 +256,12 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		CoverHeader: coverHeader,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to update song")
+		return helpers.InternalServerError("failed to update song")
 	}
 
 	updatedSong, err := sh.songService.GetByID(ctx, songUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to retrieve updated song")
+		return helpers.InternalServerError("Failed to retrieve updated song")
 	}
 
 	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(updatedSong))
@@ -280,11 +280,11 @@ func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	if err := sh.songService.Delete(ctx, songUUID); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete song")
+		return helpers.InternalServerError("failed to delete song")
 	}
 
 	render.NoContent(w, r)
@@ -343,7 +343,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
@@ -361,7 +361,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 		query.WithPreloads(preloads...),
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "could not retrieve comments")
+		return helpers.InternalServerError("could not retrieve comments")
 	}
 
 	commentDTOs := make([]dto.CommentDTO, 0)

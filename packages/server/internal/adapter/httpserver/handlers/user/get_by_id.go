@@ -23,13 +23,13 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	preloads := []string{"Follows", "Follows.User", "Followers", "Followers.Follower"}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusNotFound, "user not found")
+		return helpers.NotFound("user not found")
 	}
 
 	render.JSON(w, r, uh.dtoBuilder.BuildFullUserDTO(user))
@@ -56,7 +56,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusNotFound, "invalid user ID")
+		return helpers.NotFound("invalid user ID")
 	}
 
 	preloads := []string{
@@ -65,7 +65,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusNotFound, "user not found")
+		return helpers.NotFound("user not found")
 	}
 
 	// TODO: change last message retrievement
@@ -142,7 +142,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "wrong user id")
+		return helpers.BadRequest("wrong user id")
 	}
 
 	preloads := []string{
@@ -153,7 +153,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "could not find user")
+		return helpers.InternalServerError("could not find user")
 	}
 
 	collections := make([]dto.CollectionDTO, 0)

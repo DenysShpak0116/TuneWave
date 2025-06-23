@@ -29,16 +29,16 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
+		return helpers.BadRequest("invalid request body")
 	}
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	collectionSongs, err := sh.collectionSongService.Where(ctx, &models.CollectionSong{
@@ -51,7 +51,7 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 
 	err = sh.songService.AddToCollection(ctx, songUUID, collectionUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to add song to collection")
+		return helpers.InternalServerError("failed to add song to collection")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Song added to collection"})
@@ -72,16 +72,16 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
+		return helpers.BadRequest("invalid request body")
 	}
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	collectionSong, err := sh.collectionSongService.First(ctx, &models.CollectionSong{
@@ -89,12 +89,12 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 		SongID:       songUUID,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to find song in collection")
+		return helpers.InternalServerError("failed to find song in collection")
 	}
 
 	err = sh.collectionSongService.Delete(ctx, collectionSong.ID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to remove song from collection")
+		return helpers.InternalServerError("failed to remove song from collection")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Song removed from collection"})

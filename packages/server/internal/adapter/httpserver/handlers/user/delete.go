@@ -19,11 +19,11 @@ import (
 func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user id")
+		return helpers.BadRequest("invalid user id")
 	}
 
 	if err = uh.userService.Delete(r.Context(), userUUID); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete user")
+		return helpers.InternalServerError("failed to delete user")
 	}
 
 	render.NoContent(w, r)

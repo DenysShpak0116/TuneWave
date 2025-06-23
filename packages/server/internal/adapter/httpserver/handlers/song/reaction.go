@@ -29,22 +29,22 @@ type songReactionRequest struct {
 func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error {
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	var request songReactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
+		return helpers.BadRequest("invalid request body")
 	}
 
 	userUUID, err := uuid.Parse(request.UserID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "something wrong with userID")
+		return helpers.BadRequest("something wrong with userID")
 	}
 
 	likes, dislikes, err := sh.songService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to set reaction")
+		return helpers.InternalServerError("failed to set reaction")
 	}
 
 	render.Status(r, http.StatusOK)
@@ -76,16 +76,16 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) err
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user id")
+		return helpers.BadRequest("invalid user id")
 	}
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
+		return helpers.BadRequest("invalid song id")
 	}
 
 	reactionType, err := sh.songService.IsReactedByUser(r.Context(), songUUID, userUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to check reaction")
+		return helpers.InternalServerError("failed to check reaction")
 	}
 
 	render.Status(r, http.StatusOK)
@@ -112,12 +112,12 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 	}
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "song id is wrong")
+		return helpers.BadRequest("song id is wrong")
 	}
 
 	song, err := sh.songService.GetByID(ctx, songUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "song does not exist")
+		return helpers.BadRequest("song does not exist")
 	}
 
 	updateSongParams := &models.Song{
@@ -125,7 +125,7 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 		Listenings: song.Listenings + 1,
 	}
 	if err := sh.songService.Update(ctx, updateSongParams); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "v")
+		return helpers.InternalServerError("v")
 	}
 
 	render.NoContent(w, r)

@@ -53,19 +53,19 @@ func NewCollectionHandler(
 func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
+		return helpers.BadRequest("error parsing form")
 	}
 
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	title := r.FormValue("title")
 	description := r.FormValue("description")
 	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error getting cover file")
+		return helpers.BadRequest("error getting cover file")
 	}
 
 	collection, err := ch.collectionService.SaveCollection(
@@ -78,7 +78,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		},
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error saving collection")
+		return helpers.InternalServerError("error saving collection")
 	}
 
 	userCollection := &models.UserCollection{
@@ -86,13 +86,13 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		CollectionID: collection.ID,
 	}
 	if err := ch.userCollectionService.Create(ctx, userCollection); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error creating user collection")
+		return helpers.InternalServerError("error creating user collection")
 	}
 
 	preloads := []string{"User"}
 	newCollection, err := ch.collectionService.GetByID(ctx, collection.ID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
+		return helpers.InternalServerError("error getting collection")
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -112,13 +112,13 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 	ctx := r.Context()
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	preloads := []string{"User"}
 	collection, err := ch.collectionService.GetByID(ctx, collectionUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
+		return helpers.InternalServerError("error getting collection")
 	}
 
 	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(collection))
@@ -135,12 +135,12 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request) error {
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	err = ch.collectionService.Delete(r.Context(), collectionUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error deleting collection")
+		return helpers.InternalServerError("error deleting collection")
 	}
 
 	render.NoContent(w, r)
@@ -163,12 +163,12 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 	ctx := r.Context()
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	err = r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
+		return helpers.BadRequest("error parsing form")
 	}
 
 	title := r.FormValue("title")
@@ -180,14 +180,14 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 	if r.MultipartForm != nil && len(r.MultipartForm.File["cover"]) > 0 {
 		coverFile, coverHeader, err = r.FormFile("cover")
 		if err != nil {
-			return helpers.NewAPIError(http.StatusBadRequest, "error getting cover file")
+			return helpers.BadRequest("error getting cover file")
 		}
 	}
 
 	preloads := []string{"User"}
 	prevCollection, err := ch.collectionService.GetByID(ctx, collectionUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
+		return helpers.InternalServerError("error getting collection")
 	}
 
 	if _, err = ch.collectionService.UpdateCollection(
@@ -199,12 +199,12 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 			Cover:       coverFile,
 		},
 	); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error updating collection")
+		return helpers.InternalServerError("error updating collection")
 	}
 
 	newCollection, err := ch.collectionService.GetByID(ctx, prevCollection.ID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collection")
+		return helpers.InternalServerError("error getting collection")
 	}
 
 	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(newCollection))
@@ -222,7 +222,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 	ctx := r.Context()
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
+		return helpers.BadRequest("invalid user ID format")
 	}
 
 	preloads := []string{"Collection"}
@@ -232,7 +232,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		query.WithPreloads(preloads...),
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collections")
+		return helpers.InternalServerError("error getting user collections")
 	}
 
 	if len(userCollections) == 0 {
@@ -286,7 +286,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 		query.WithPreloads(preloads...),
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting collections")
+		return helpers.InternalServerError("error getting collections")
 	}
 
 	collectionsDTOs := make([]dto.CollectionDTO, 0)
@@ -309,11 +309,11 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 	ctx := r.Context()
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
+		return helpers.BadRequest("invalid user ID format")
 	}
 
 	// TODO: change to First with not found error
@@ -322,14 +322,14 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		CollectionID: collectionUUID,
 	}
 	if userCollections, err := ch.userCollectionService.Where(ctx, userCollectionParams); err != nil || len(userCollections) > 0 {
-		return helpers.NewAPIError(http.StatusBadRequest, "could not add collection")
+		return helpers.BadRequest("could not add collection")
 	}
 
 	if err = ch.userCollectionService.Create(ctx, &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	}); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "error adding song to collection")
+		return helpers.BadRequest("error adding song to collection")
 	}
 
 	preloads := []string{"Collection"}
@@ -338,7 +338,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		query.WithPreloads(preloads...),
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collections")
+		return helpers.InternalServerError("error getting user collections")
 	}
 
 	if len(userCollections) == 0 {
@@ -372,11 +372,11 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 	ctx := r.Context()
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
+		return helpers.BadRequest("invalid user ID format")
 	}
 
 	userCollection, err := ch.userCollectionService.First(ctx, &models.UserCollection{
@@ -384,12 +384,12 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 		CollectionID: collectionUUID,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collection")
+		return helpers.InternalServerError("error getting user collection")
 	}
 
 	err = ch.userCollectionService.Delete(ctx, userCollection.ID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "error removing song from collection")
+		return helpers.InternalServerError("error removing song from collection")
 	}
 
 	render.NoContent(w, r)
@@ -409,7 +409,7 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.Request) error {
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	search := r.URL.Query().Get("search")
@@ -434,16 +434,10 @@ func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.R
 	}
 
 	collectionSongs, err := ch.collectionService.GetCollectionSongs(
-		r.Context(),
-		collectionUUID,
-		search,
-		sortBy,
-		order,
-		page,
-		limit,
+		r.Context(), collectionUUID, search, sortBy, order, page, limit,
 	)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "could not retrieve collection songs")
+		return helpers.InternalServerError("could not retrieve collection songs")
 	}
 	songDTOs := make([]dto.SongPreviewDTO, 0)
 	for _, song := range collectionSongs {

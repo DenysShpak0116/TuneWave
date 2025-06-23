@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -39,18 +38,16 @@ type UserWithNickname struct {
 // @Param code query string true "Google OAuth code"
 // @Router /auth/google/callback [get]
 func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "failed to get user data")
+		return helpers.BadRequest("failed to get user data")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
 
 	// TODO: change logic to First function
 	users, err := ah.userService.Where(ctx, &models.User{Email: user.Email})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user data")
+		return helpers.InternalServerError("failed to get user data")
 	}
 
 	var currentUser *models.User
@@ -59,7 +56,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	} else {
 		nickname, err := fetchGoogleNickname(user.AccessToken)
 		if err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to fetch nickname")
+			return helpers.InternalServerError("failed to fetch nickname")
 		}
 		if nickname == "" {
 			nickname = user.Name
@@ -76,18 +73,18 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		}
 
 		if err := ah.userService.Create(ctx, currentUser); err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
+			return helpers.InternalServerError("failed to create user")
 		}
 	}
 
 	accessToken, refreshToken, err := ah.GenerateTokens(currentUser.ID.String())
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
+		return helpers.InternalServerError("failed to generate tokens")
 	}
 
 	userToReturn, err := ah.userService.GetByID(ctx, currentUser.ID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to get user DTO")
+		return helpers.InternalServerError("failed to get user DTO")
 	}
 
 	authData := map[string]any{
@@ -95,14 +92,12 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		"refreshToken": refreshToken,
 		"user":         ah.dtoBuilder.BuildUserDTO(userToReturn),
 	}
-
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to encode auth data")
+		return helpers.InternalServerError("failed to encode auth data")
 	}
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "authData",
 		Value:    authBase64,

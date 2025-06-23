@@ -42,19 +42,18 @@ type CreateCommentRequest struct {
 // @Router /comments [post]
 func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	
 	var req CreateCommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
+		return helpers.BadRequest("invalid request")
 	}
 
 	songUUID, err := uuid.Parse(req.SongID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
+		return helpers.BadRequest("invalid song ID")
 	}
 	userUUID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	comment := &models.Comment{
@@ -63,13 +62,13 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		Content: req.Content,
 	}
 	if err := ch.commentService.Create(ctx, comment); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create comment")
+		return helpers.InternalServerError("failed to create comment")
 	}
 
 	preloads := []string{"User", "User.Followers"}
 	newComment, err := ch.commentService.GetByID(ctx, comment.ID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get comment")
+		return helpers.InternalServerError("failed to get comment")
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -87,11 +86,11 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 func (ch *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) error {
 	commentUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid comment ID")
+		return helpers.BadRequest("invalid comment ID")
 	}
 
 	if err := ch.commentService.Delete(r.Context(), commentUUID); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete comment")
+		return helpers.InternalServerError("failed to delete comment")
 	}
 
 	render.NoContent(w, r)

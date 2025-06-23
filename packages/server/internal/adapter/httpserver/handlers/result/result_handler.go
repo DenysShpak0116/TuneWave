@@ -38,21 +38,21 @@ func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) erro
 	ctx := r.Context()
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	var request dto.SendResultRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
+		return helpers.BadRequest("invalid request body")
 	}
 
 	results, err := vh.resultService.ProcessUserResults(ctx, userUUID, collectionUUID, request)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to process results")
+		return helpers.InternalServerError("failed to process results")
 	}
 
 	render.JSON(w, r, results)
@@ -70,11 +70,11 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	userResults, err := vh.resultService.Where(ctx, &models.Result{
@@ -82,10 +82,10 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 		CollectionSongID: collectionUUID,
 	})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user results")
+		return helpers.InternalServerError("failed to get user results")
 	}
 	if len(userResults) == 0 {
-		return helpers.NewAPIError(http.StatusNotFound, "no results found for user")
+		return helpers.NotFound("no results found for user")
 	}
 
 	ids := make([]uuid.UUID, 0)
@@ -93,7 +93,7 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 		ids = append(ids, result.ID)
 	}
 	if err := vh.resultService.Delete(ctx, ids...); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete result")
+		return helpers.InternalServerError("failed to delete result")
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Results deleted successfully"})
@@ -111,16 +111,16 @@ func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	results, err := vh.resultService.GetUserResults(ctx, userUUID, collectionUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get results")
+		return helpers.InternalServerError("failed to get results")
 	}
 
 	render.JSON(w, r, results)
@@ -137,12 +137,12 @@ func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) 
 func (vh *ResultHandler) GetCollectiveResults(w http.ResponseWriter, r *http.Request) error {
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	result, err := vh.resultService.GetCollectiveResults(r.Context(), collectionUUID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collective results")
+		return helpers.InternalServerError("failed to get collective results")
 	}
 
 	render.JSON(w, r, result)

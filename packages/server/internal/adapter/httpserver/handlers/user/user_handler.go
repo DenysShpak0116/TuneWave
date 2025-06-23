@@ -56,7 +56,7 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) error {
 
 	users, err := h.userService.Where(ctx, &models.User{}, query.WithPagination(page, limit))
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get users")
+		return helpers.InternalServerError("failed to get users")
 	}
 
 	render.JSON(w, r, users)

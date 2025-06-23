@@ -28,21 +28,21 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
+		return helpers.BadRequest("invalid request")
 	}
 
 	existingUsers, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to check existing users")
+		return helpers.InternalServerError("failed to check existing users")
 	}
 
 	if len(existingUsers) > 0 {
-		return helpers.NewAPIError(http.StatusBadRequest, "user already exists")
+		return helpers.BadRequest("user already exists")
 	}
 
 	hash, err := HashPassword(req.Password)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to hash password")
+		return helpers.InternalServerError("failed to hash password")
 	}
 
 	user := &models.User{
@@ -55,7 +55,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := ah.userService.Create(ctx, user); err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to create user")
+		return helpers.InternalServerError("failed to create user")
 	}
 
 	render.Status(r, http.StatusCreated)
@@ -75,12 +75,12 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
+		return helpers.BadRequest("invalid request")
 	}
 
 	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid credentials")
+		return helpers.BadRequest("invalid credentials")
 	}
 
 	if user.IsGoogleAccount {
@@ -93,7 +93,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	accessToken, refreshToken, err := ah.GenerateTokens(user.ID.String())
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
+		return helpers.InternalServerError("failed to generate tokens")
 	}
 
 	authData := map[string]any{
@@ -102,7 +102,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to encode auth data")
+		return helpers.InternalServerError("failed to encode auth data")
 	}
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
@@ -147,7 +147,7 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	}
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
+		return helpers.BadRequest("invalid user ID format")
 	}
 	user, err := ah.userService.First(ctx, &models.User{BaseModel: models.BaseModel{ID: userUUID}})
 	if err != nil {
@@ -156,7 +156,7 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 
 	if user.IsGoogleAccount {
 		if err := gothic.Logout(w, r); err != nil {
-			return helpers.NewAPIError(http.StatusInternalServerError, "failed to logout Google user")
+			return helpers.InternalServerError("failed to logout Google user")
 		}
 	}
 

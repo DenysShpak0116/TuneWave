@@ -17,3 +17,15 @@ func NewAPIError(status int, format string, args ...interface{}) error {
 		Message: fmt.Sprintf(format, args...),
 	}
 }
+
+func BadRequest(format string, args ...interface{}) error {
+	return NewAPIError(400, format, args...)
+}
+
+func NotFound(format string, args ...interface{}) error {
+	return NewAPIError(404, format, args...)
+}
+
+func InternalServerError(format string, args ...interface{}) error {
+	return NewAPIError(500, format, args...)
+}

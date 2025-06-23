@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -21,26 +20,25 @@ import (
 // @Security     BearerAuth
 // @Router       /auth/refresh [post]
 func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
-
+	ctx := r.Context()
 	authCookie, err := r.Cookie("authData")
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "authData cookie not found")
+		return helpers.BadRequest("authData cookie not found")
 	}
 
 	authDataBytes, err := base64.URLEncoding.DecodeString(authCookie.Value)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "failed to decode authData")
+		return helpers.BadRequest("failed to decode authData")
 	}
 
 	var authData map[string]any
 	if err := json.Unmarshal(authDataBytes, &authData); err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "failed to parse authData")
+		return helpers.BadRequest("failed to parse authData")
 	}
 
 	refreshToken, ok := authData["refreshToken"].(string)
 	if !ok || refreshToken == "" {
-		return helpers.NewAPIError(http.StatusBadRequest, "refreshToken not found in authData")
+		return helpers.BadRequest("refreshToken not found in authData")
 	}
 
 	userID, err := helpers.ParseToken(ah.jwtSecret, refreshToken)
@@ -49,18 +47,18 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 	}
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	accessToken, newRefreshToken, err := ah.GenerateTokens(userID)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to generate tokens")
+		return helpers.InternalServerError("failed to generate tokens")
 	}
 
 	preloads := []string{"Followers"}
 	user, err := ah.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user")
+		return helpers.InternalServerError("failed to get user")
 	}
 
 	newAuthData := map[string]any{
@@ -68,7 +66,7 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
 	}
 	authJSON, err := json.Marshal(newAuthData)
 	if err != nil {
-		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to encode auth data")
+		return helpers.InternalServerError("Failed to encode auth data")
 	}
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
 
