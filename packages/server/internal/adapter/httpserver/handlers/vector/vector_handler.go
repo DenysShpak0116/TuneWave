@@ -285,9 +285,7 @@ func (vh *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to count criteria")
 	}
 	if criterionCount == 0 {
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, "there is no criteria")
-		return nil
+		return helpers.NewAPIError(http.StatusNotFound, "there is no criteria")
 	}
 
 	preloads := []string{"Vectors"}
@@ -300,14 +298,11 @@ func (vh *VectorHandler) HasAllVectors(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get collection song")
 	}
 	if len(collectionSongs) == 0 {
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, "there is no collection song")
-		return nil
+		return helpers.NewAPIError(http.StatusNotFound, "there is no collection song")
 	}
 
 	for _, collectionSong := range collectionSongs {
 		if len(collectionSong.Vectors) < int(criterionCount) {
-			render.Status(r, http.StatusOK)
 			render.JSON(w, r, map[string]bool{"hasAllVectors": false})
 			return nil
 		}
