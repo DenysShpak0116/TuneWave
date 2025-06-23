@@ -42,8 +42,7 @@ func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) erro
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -77,8 +76,7 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -119,8 +117,7 @@ func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) 
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -142,8 +139,7 @@ func (vh *ResultHandler) GetUserResults(w http.ResponseWriter, r *http.Request) 
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/get-results [get]
 func (vh *ResultHandler) GetCollectiveResults(w http.ResponseWriter, r *http.Request) error {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}

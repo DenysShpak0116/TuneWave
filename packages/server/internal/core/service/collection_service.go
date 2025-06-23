@@ -69,8 +69,7 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 	if len(collections) == 0 {
 		return nil, fmt.Errorf("collection with id %s not found", id)
 	}
-
-	collection := collections[0]
+	collection := &collections[0]
 
 	if err := cs.FileStorage.Remove(ctx, extractS3Key(collection.CoverURL)); err != nil {
 		return nil, err
@@ -91,11 +90,10 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 	collection.Title = collectionParams.Title
 	collection.Description = collectionParams.Description
 
-	newCollection, err := cs.Repository.Update(ctx, &collection)
-	if err != nil {
+	if err := cs.Repository.Update(ctx, collection); err != nil {
 		return nil, err
 	}
-	return newCollection, nil
+	return collection, nil
 }
 
 type SaveFileParams struct {

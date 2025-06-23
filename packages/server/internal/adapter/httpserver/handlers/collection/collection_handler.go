@@ -57,7 +57,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
 	}
 
-	userID := r.Context().Value("userID").(string)
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
@@ -113,8 +113,7 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // @Router /collections/{id} [get]
 func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -136,8 +135,7 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [delete]
 func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request) error {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -165,8 +163,7 @@ func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Req
 // @Router /collections/{id} [put]
 func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -226,11 +223,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 // @Router       /collections/users-collections [get]
 func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID, err := helpers.GetUserID(ctx)
-	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
-	}
-
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
@@ -325,29 +318,23 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 // @Router /collections/{id}/add-to-user [post]
 func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	userID, err := helpers.GetUserID(ctx)
-	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
-	}
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
 
-	if userCollections, err := ch.userCollectionService.Where(
-		ctx,
-		&models.UserCollection{
-			UserID:       userUUID,
-			CollectionID: collectionUUID,
-		},
-	); err != nil || len(userCollections) > 0 {
+	// TODO: change to First with not found error
+	userCollectionParams := &models.UserCollection{
+		UserID:       userUUID,
+		CollectionID: collectionUUID,
+	}
+	if userCollections, err := ch.userCollectionService.Where(ctx, userCollectionParams); err != nil || len(userCollections) > 0 {
 		return helpers.NewAPIError(http.StatusBadRequest, "could not add collection")
 	}
 
@@ -401,9 +388,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 // @Router /collections/{id}/remove-from-user [delete]
 func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	collectionID := chi.URLParam(r, "id")
-
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
@@ -412,24 +397,20 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
 
-	userCollection, err := ch.userCollectionService.Where(ctx, &models.UserCollection{
+	userCollection, err := ch.userCollectionService.First(ctx, &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "error getting user collection")
 	}
-	if len(userCollection) == 0 {
-		return helpers.NewAPIError(http.StatusNotFound, "user collection not found")
-	}
 
-	err = ch.userCollectionService.Delete(ctx, userCollection[0].ID)
+	err = ch.userCollectionService.Delete(ctx, userCollection.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "error removing song from collection")
 	}
@@ -449,8 +430,7 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 // @Param limit query int false "Number of items per page" default(10)
 // @Router /collections/{id}/songs [get]
 func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.Request) error {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}

@@ -1,7 +1,6 @@
 package song
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -28,8 +27,7 @@ type songReactionRequest struct {
 // @Param body body songReactionRequest true "Reaction request body"
 // @Router /songs/{id}/reaction [post]
 func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error {
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
@@ -39,11 +37,11 @@ func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request body")
 	}
 
-	userID := request.UserID
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := uuid.Parse(request.UserID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "something wrong with userID")
 	}
+
 	likes, dislikes, err := sh.songService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to set reaction")
@@ -80,9 +78,7 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user id")
 	}
-
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song id")
 	}
@@ -109,33 +105,21 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) err
 // @Param userId path string true "User ID"
 // @Router /songs/{id}/listen/{userId} [post]
 func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	userID := chi.URLParam(r, "userId")
 	if userID == "undefined" {
-		render.Status(r, http.StatusNoContent)
+		render.NoContent(w, r)
 	}
-
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "song id is wrong")
 	}
 
-	song, err := sh.songService.GetByID(
-		context.Background(),
-		songUUID,
-		"Authors",
-		"Authors.Author",
-		"SongTags",
-		"SongTags.Tag",
-		"Comments",
-		"Comments.User",
-		"User",
-		"Reactions",
-	)
+	song, err := sh.songService.GetByID(ctx, songUUID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "song does not exist")
 	}
-	if _, err := sh.songService.Update(context.Background(), &models.Song{
+	if err := sh.songService.Update(ctx, &models.Song{
 		BaseModel: models.BaseModel{
 			ID: song.ID,
 		},
@@ -144,6 +128,6 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 		return helpers.NewAPIError(http.StatusInternalServerError, "v")
 	}
 
-	render.Status(r, http.StatusNoContent)
+	render.NoContent(w, r)
 	return nil
 }

@@ -1,13 +1,10 @@
 package user
 
 import (
-	"context"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -24,21 +21,18 @@ import (
 // @Router		/users/{id}/follow [post]
 func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userID, err := helpers.GetUserID(ctx)
-	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth user token")
-	}
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
+	// TODO: change to First logic
 	userFollowers, _ := uh.userFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
@@ -51,32 +45,15 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}
-	err = uh.userFollowerService.Create(ctx, userFollower)
-	if err != nil {
+	if err = uh.userFollowerService.Create(ctx, userFollower); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not follow this user")
 	}
 
-	preloads := []string{
-		"User",
-		"User.Followers",
-		"Follower",
-		"Follower.Followers",
-	}
-	userFollowersToReturn, _ := uh.userFollowerService.Where(
-		ctx,
-		&models.UserFollower{
-			BaseModel: models.BaseModel{
-				ID: userFollower.ID,
-			},
-		},
-		query.WithPreloads(preloads...),
-	)
-	userFollowerToReturn := &userFollowersToReturn[0]
+	preloads := []string{"User", "User.Followers", "Follower", "Follower.Followers"}
+	userFollowerWithPreloads, _ := uh.userFollowerService.First(ctx, userFollower, preloads...)
 
-	dtoBuilder := dto.NewDTOBuilder(uh.userService, nil)
-	userDTO := dtoBuilder.BuildUserFollowerDTO(userFollowerToReturn)
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, userDTO)
+	render.JSON(w, r, uh.dtoBuilder.BuildUserFollowerDTO(userFollowerWithPreloads))
 	return nil
 }
 
@@ -90,40 +67,29 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 // @Router		/users/{id}/unfollow [delete]
 func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userID, err := helpers.GetUserID(ctx)
-	if err != nil {
-		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth user token")
-	}
+	userID, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid targed user id")
 	}
 
-	userFollowers, err := uh.userFollowerService.Where(ctx, &models.UserFollower{
+	userFollower, err := uh.userFollowerService.First(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "trouble with finding out if you followed to this user")
 	}
-	if len(userFollowers) == 0 {
-		return helpers.NewAPIError(http.StatusInternalServerError, "you are not followed for this user")
-	}
 
-	userFollower := userFollowers[0]
-
-	err = uh.userFollowerService.Delete(ctx, userFollower.ID)
-	if err != nil {
+	if err = uh.userFollowerService.Delete(ctx, userFollower.ID); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "can not unfollow this user")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.NoContent(w, r)
 	return nil
 }
@@ -135,16 +101,19 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 // @Param id path string true "The user ID you use to check if you are followed"
 // @Router /users/{id}/is-followed [get]
 func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error {
-	userID, _ := helpers.GetUserID(r.Context())
-	userUUID, _ := uuid.Parse(userID)
-
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+	ctx := r.Context()
+	userID, _ := helpers.GetUserID(ctx)
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return helpers.NewAPIError(http.StatusBadRequest, "wrong user id")
+	}
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "wrong target user id")
 	}
 
-	if userFollower, err := uh.userFollowerService.Where(context.Background(), &models.UserFollower{
+	// TODO: change to First logic
+	if userFollower, err := uh.userFollowerService.Where(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}); err != nil || len(userFollower) < 1 {
@@ -152,16 +121,10 @@ func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error 
 			return helpers.NewAPIError(http.StatusInternalServerError, "troubles to check if you followed")
 		}
 
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, map[string]bool{
-			"isFollowed": false,
-		})
+		render.JSON(w, r, map[string]bool{"isFollowed": false})
 		return nil
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]bool{
-		"isFollowed": true,
-	})
+	render.JSON(w, r, map[string]bool{"isFollowed": true})
 	return nil
 }

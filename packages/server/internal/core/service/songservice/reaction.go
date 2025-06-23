@@ -32,7 +32,7 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 			}
 		} else {
 			existingReaction.Type = reactionType
-			if _, err := ss.ReactionsRepository.Update(ctx, &existingReaction); err != nil {
+			if err := ss.ReactionsRepository.Update(ctx, &existingReaction); err != nil {
 				return 0, 0, err
 			}
 		}

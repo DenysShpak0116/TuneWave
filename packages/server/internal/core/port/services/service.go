@@ -11,7 +11,8 @@ type Service[T any] interface {
 	Create(ctx context.Context, entity *T) error
 	GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*T, error)
 	Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error)
-	Update(ctx context.Context, entity *T) (*T, error)
+	First(ctx context.Context, params *T, preloads ...string) (*T, error)
+	Update(ctx context.Context, entity *T) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	CountWhere(ctx context.Context, params *T) (int64, error)
 }

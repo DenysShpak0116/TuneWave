@@ -76,7 +76,7 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 		song.CoverURL = url
 	}
 
-	if _, err := ss.Repository.Update(ctx, song); err != nil {
+	if err := ss.Repository.Update(ctx, song); err != nil {
 		return err
 	}
 

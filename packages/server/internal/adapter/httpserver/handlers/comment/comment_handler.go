@@ -85,8 +85,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 // @Param id path string true "Comment ID"
 // @Router /comments/{id} [delete]
 func (ch *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) error {
-	commentID := chi.URLParam(r, "id")
-	commentUUID, err := uuid.Parse(commentID)
+	commentUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid comment ID")
 	}

@@ -59,7 +59,19 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.
 	return result, nil
 }
 
-func (s *GenericService[T]) Update(ctx context.Context, entity *T) (*T, error) {
+func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	result, err := s.Repository.NewQuery(ctx).Where(params).Preload(preloads...).Find()
+	if err != nil {
+		return nil, err
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("not found")
+	}
+
+	return &result[0], nil
+}
+
+func (s *GenericService[T]) Update(ctx context.Context, entity *T) error {
 	return s.Repository.Update(ctx, entity)
 }
 

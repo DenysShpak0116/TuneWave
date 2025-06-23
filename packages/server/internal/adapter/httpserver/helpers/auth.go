@@ -27,6 +27,7 @@ func ParseToken(jwtSecret, tokenStr string) (string, error) {
 	return claims["userId"].(string), nil
 }
 
+// TODO: change to UUID return val
 func GetUserID(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value("userID").(string)
 	if !ok {

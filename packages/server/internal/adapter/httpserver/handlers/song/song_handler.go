@@ -102,18 +102,14 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 // @Router /songs/{id} [get]
 func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
 
 	preloads := []string{
-		"Authors",
-		"Authors.Author",
-		"SongTags",
-		"SongTags.Tag",
+		"Authors", "Authors.Author",
+		"SongTags", "SongTags.Tag",
 		"User",
 	}
 	song, err := sh.songService.GetByID(ctx, songUUID, preloads...)
@@ -148,8 +144,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
 	}
 
-	userID := r.FormValue("userId")
-	userIDuuid, err := uuid.Parse(userID)
+	userIDuuid, err := uuid.Parse(r.FormValue("userId"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
@@ -219,8 +214,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "error parsing form")
 	}
 
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
@@ -284,8 +278,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Router /songs/{id} [delete]
 func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
@@ -349,8 +342,7 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}

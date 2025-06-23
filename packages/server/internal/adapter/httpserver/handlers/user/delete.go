@@ -1,9 +1,9 @@
 package user
 
 import (
-	"context"
 	"net/http"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -17,27 +17,15 @@ import (
 // @Param        id   path      string true "User ID (UUID format)"
 // @Router       /users/{id} [delete]
 func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) error {
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "User ID is required"})
-		return nil
-	}
-
-	uuidID, err := uuid.Parse(id)
+	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "Invalid User ID format"})
-		return nil
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid user id")
 	}
 
-	err = uh.userService.Delete(context.TODO(), uuidID)
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "Failed to delete user"})
-		return nil
+	if err = uh.userService.Delete(r.Context(), userUUID); err != nil {
+		return helpers.NewAPIError(http.StatusInternalServerError, "failed to delete user")
 	}
 
-	render.Status(r, http.StatusNoContent)
+	render.NoContent(w, r)
 	return nil
 }

@@ -86,8 +86,7 @@ type UpdateCriterionRequest struct {
 // @Param        criterion  body      UpdateCriterionRequest  true  "Update criterion"
 // @Router       /criterions/{id} [put]
 func (h *CriterionHandler) UpdateCriterion(w http.ResponseWriter, r *http.Request) error {
-	id := chi.URLParam(r, "id")
-	uuid, err := uuid.Parse(id)
+	uuid, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid UUID")
 	}
@@ -103,13 +102,11 @@ func (h *CriterionHandler) UpdateCriterion(w http.ResponseWriter, r *http.Reques
 		},
 		Name: request.Name,
 	}
-
-	newCriterion, err := h.criterionService.Update(r.Context(), criterion)
-	if err != nil {
+	if err := h.criterionService.Update(r.Context(), criterion); err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to update criterion")
 	}
 
-	render.JSON(w, r, newCriterion)
+	render.JSON(w, r, criterion)
 	return nil
 }
 
@@ -121,8 +118,7 @@ func (h *CriterionHandler) UpdateCriterion(w http.ResponseWriter, r *http.Reques
 // @Param        id  path      string  true  "Criterion ID"
 // @Router       /criterions/{id} [delete]
 func (h *CriterionHandler) DeleteCriterion(w http.ResponseWriter, r *http.Request) error {
-	id := chi.URLParam(r, "id")
-	uuid, err := uuid.Parse(id)
+	uuid, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid UUID")
 	}

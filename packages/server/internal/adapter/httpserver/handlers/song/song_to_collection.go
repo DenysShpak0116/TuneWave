@@ -27,12 +27,7 @@ type SongCollectionRequest struct {
 // @Router         /songs/{id}/add-to-collection [post]
 func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	songID := chi.URLParam(r, "id")
-	if songID == "" {
-		return helpers.NewAPIError(http.StatusBadRequest, "song ID is required")
-	}
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
@@ -75,12 +70,7 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 // @Router       /songs/{id}/remove-from-collection [delete]
 func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	songID := chi.URLParam(r, "id")
-	if songID == "" {
-		return helpers.NewAPIError(http.StatusBadRequest, "song ID is required")
-	}
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid song ID")
 	}
@@ -94,23 +84,19 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid collection ID")
 	}
 
-	collectionSongs, err := sh.collectionSongService.Where(ctx, &models.CollectionSong{
+	collectionSong, err := sh.collectionSongService.First(ctx, &models.CollectionSong{
 		CollectionID: collectionUUID,
 		SongID:       songUUID,
 	})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to find song in collection")
 	}
-	if len(collectionSongs) == 0 {
-		return helpers.NewAPIError(http.StatusNotFound, "song not found in collection")
-	}
 
-	err = sh.collectionSongService.Delete(ctx, collectionSongs[0].ID)
+	err = sh.collectionSongService.Delete(ctx, collectionSong.ID)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to remove song from collection")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Song removed from collection"})
 	return nil
 }

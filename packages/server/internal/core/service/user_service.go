@@ -48,19 +48,18 @@ func (us *UserService) GetUsers(
 }
 
 func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {
-	user, err := us.Repository.NewQuery(context.Background()).Where("email = ?", email).Find()
+	users, err := us.Repository.NewQuery(context.Background()).Where("email = ?", email).Find()
 	if err != nil {
 		return err
 	}
-
-	if len(user) == 0 {
+	if len(users) == 0 {
 		return fmt.Errorf("user not found")
 	}
+	user := &users[0]
 
-	user[0].PasswordHash = hashedPassword
+	user.PasswordHash = hashedPassword
 
-	_, err = us.Update(context.TODO(), &user[0])
-	if err != nil {
+	if err := us.Update(context.TODO(), user); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 	return nil
@@ -98,7 +97,7 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 		user.ProfilePicture = url
 	}
 
-	if _, err := us.Repository.Update(ctx, user); err != nil {
+	if err := us.Repository.Update(ctx, user); err != nil {
 		return err
 	}
 

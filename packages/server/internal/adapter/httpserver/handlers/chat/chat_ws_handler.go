@@ -52,8 +52,7 @@ func NewChatHandler(
 // @Param        authToken query string true "Bearer auth token"
 // @Router       /ws/chat [get]
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
-	targetID := r.URL.Query().Get("targetUserId")
-	targetUUID, err := uuid.Parse(targetID)
+	targetUUID, err := uuid.Parse(r.URL.Query().Get("targetUserId"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid target user ID")
 	}
@@ -63,7 +62,6 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid auth token")
 	}
-
 	userUUID, err := uuid.Parse(userIDRaw)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")

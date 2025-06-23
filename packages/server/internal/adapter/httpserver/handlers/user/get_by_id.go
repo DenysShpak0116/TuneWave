@@ -1,13 +1,10 @@
 package user
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -24,24 +21,18 @@ import (
 // @Router /users/{id} [get]
 func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	userID := chi.URLParam(r, "id")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
-	userPreloads := []string{
-		"Follows", "Follows.User",
-		"Followers", "Followers.Follower",
-	}
-	user, err := uh.userService.GetByID(ctx, userUUID, userPreloads...)
+
+	preloads := []string{"Follows", "Follows.User", "Followers", "Followers.Follower"}
+	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
-	dtoBuilder := *dto.NewDTOBuilder(uh.userService, nil)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dtoBuilder.BuildFullUserDTO(user))
+	render.JSON(w, r, uh.dtoBuilder.BuildFullUserDTO(user))
 	return nil
 }
 
@@ -66,7 +57,8 @@ type ChatPreview struct {
 // @Produce json
 // @Router /chats [get]
 func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
-	userId, _ := r.Context().Value("userID").(string)
+	ctx := r.Context()
+	userId, _ := helpers.GetUserID(ctx)
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "invalid user ID")
@@ -78,26 +70,13 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		"Chats1.User1", "Chats1.User2",
 		"Chats2.User1", "Chats2.User2",
 	}
-	users, err := uh.userService.Where(
-		context.Background(),
-		&models.User{
-			BaseModel: models.BaseModel{
-				ID: userUUID,
-			},
-		},
-		query.WithPreloads(preloads...),
-		query.WithPagination(1, 20),
-	)
+	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusNotFound, "user not found")
 	}
 
-	if len(users) == 0 {
-		return helpers.NewAPIError(http.StatusNotFound, "user not found")
-	}
-
 	chats := make([]ChatPreview, 0)
-	for _, chat := range users[0].Chats1 {
+	for _, chat := range user.Chats1 {
 		if len(chat.Messages) == 0 {
 			continue
 		}
@@ -126,7 +105,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 			TargetUserID: targetUserID,
 		})
 	}
-	for _, chat := range users[0].Chats2 {
+	for _, chat := range user.Chats2 {
 		if len(chat.Messages) == 0 {
 			continue
 		}
@@ -156,7 +135,6 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		})
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, UserChatsResponse{
 		Chats: chats,
 	})
@@ -169,9 +147,8 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 // @Param id path string true "User id"
 // @Router /users/{id}/collections [get]
 func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
-	userID := chi.URLParam(r, "id")
-	userUUID, err := uuid.Parse(userID)
+	ctx := r.Context()
+	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "wrong user id")
 	}
@@ -182,32 +159,15 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 		"UserCollections.Collection.User",
 		"UserCollections.Collection.User.Followers",
 	}
-	users, err := uh.userService.Where(
-		ctx,
-		&models.User{
-			BaseModel: models.BaseModel{
-				ID: userUUID,
-			},
-		},
-		query.WithPreloads(preloads...),
-	)
+	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "could not find user")
 	}
-	if len(users) == 0 {
-		return helpers.NewAPIError(http.StatusInternalServerError, "user does not exist")
-	}
 
-	user := users[0]
-
-	dtoBuilder := dto.NewDTOBuilder(uh.userService, uh.userReactionService)
-
-	collectionsDTO := make([]dto.CollectionDTO, 0)
+	collections := make([]dto.CollectionDTO, 0)
 	for _, userCollection := range user.UserCollections {
-		collectionsDTO = append(collectionsDTO, *dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
+		collections = append(collections, *uh.dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
 	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, collectionsDTO)
+	render.JSON(w, r, collections)
 	return nil
 }

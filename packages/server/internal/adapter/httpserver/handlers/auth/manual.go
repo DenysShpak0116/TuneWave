@@ -81,12 +81,10 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid request")
 	}
 
-	users, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
-	if err != nil || users == nil || len(users) == 0 {
+	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
+	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid credentials")
 	}
-
-	user := &users[0]
 
 	if user.IsGoogleAccount {
 		return helpers.NewAPIError(http.StatusForbidden, "This email is associated with a Google account. Please log in with Google.")
@@ -154,11 +152,10 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID format")
 	}
-	users, err := ah.userService.Where(ctx, &models.User{BaseModel: models.BaseModel{ID: userUUID}})
-	if err != nil || len(users) == 0 {
+	user, err := ah.userService.First(ctx, &models.User{BaseModel: models.BaseModel{ID: userUUID}})
+	if err != nil {
 		return helpers.NewAPIError(http.StatusUnauthorized, "user not found")
 	}
-	user := users[0]
 
 	if user.IsGoogleAccount {
 		if err := gothic.Logout(w, r); err != nil {

@@ -27,49 +27,29 @@ import (
 // @Router       /users/{id} [put]
 func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "User ID is required"})
-		return nil
+	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid user ID")
 	}
 
 	var userUpdateRequest dto.UserUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&userUpdateRequest); err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "Invalid request payload"})
-		return nil
+		return helpers.NewAPIError(http.StatusBadRequest, "invalid request payload")
 	}
 	defer r.Body.Close()
 
-	uuidID, err := uuid.Parse(id)
-	if err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "Invalid User ID format"})
-		return nil
-	}
-	userUpdate := &models.User{
+	updatedUser := &models.User{
 		BaseModel: models.BaseModel{
-			ID: uuidID,
+			ID: userUUID,
 		},
 		Username:    userUpdateRequest.Username,
 		ProfileInfo: userUpdateRequest.ProfileInfo,
 	}
-	updatedUser, err := uh.userService.Update(ctx, userUpdate)
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "Failed to update user"})
-		return nil
+	if err := uh.userService.Update(ctx, updatedUser); err != nil {
+		return helpers.NewAPIError(http.StatusInternalServerError, "Failed to update user")
 	}
 
-	updatedUser, err = uh.userService.GetByID(ctx, updatedUser.ID, "Followers")
-
-	dtoBuilder := dto.NewDTOBuilder(uh.userService, nil)
-	userDTO := dtoBuilder.BuildUserDTO(updatedUser)
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]interface{}{
-		"user": userDTO,
-	})
+	render.JSON(w, r, uh.dtoBuilder.BuildUserDTO(updatedUser))
 	return nil
 }
 

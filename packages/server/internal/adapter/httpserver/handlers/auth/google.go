@@ -47,6 +47,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
+	// TODO: change logic to First function
 	users, err := ah.userService.Where(ctx, &models.User{Email: user.Email})
 	if err != nil {
 		return helpers.NewAPIError(http.StatusInternalServerError, "failed to get user data")

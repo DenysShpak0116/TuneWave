@@ -26,19 +26,13 @@ func (r *GenericRepository[T]) Add(ctx context.Context, entity *T) error {
 	return nil
 }
 
-func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) (*T, error) {
+func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var fullEntity T
-	err = r.db.WithContext(ctx).First(&fullEntity, entity).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return &fullEntity, nil
+	return nil
 }
 
 func (r *GenericRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
