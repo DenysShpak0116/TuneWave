@@ -13,7 +13,6 @@ type APIFunc func(w http.ResponseWriter, r *http.Request) error
 func MakeHandler(h APIFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
-
 			switch e := err.(type) {
 			case *helpers.APIError:
 				log.Printf("[API ERROR] Status: %d, Message: %s", e.Status, e.Message)
@@ -27,4 +26,3 @@ func MakeHandler(h APIFunc) http.HandlerFunc {
 		}
 	}
 }
-

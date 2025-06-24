@@ -7,6 +7,7 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
+// TODO: remove
 func InitGothicSessionStore() {
 	key := "something-very-secret"
 	maxAge := 86400 * 30
