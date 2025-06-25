@@ -3,11 +3,13 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/markbates/goth/gothic"
 )
 
@@ -44,16 +46,9 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		return helpers.BadRequest("failed to get user data")
 	}
 
-	// TODO: change logic to First function
-	users, err := ah.userService.Where(ctx, &models.User{Email: user.Email})
-	if err != nil {
-		return helpers.InternalServerError("failed to get user data")
-	}
-
 	var currentUser *models.User
-	if len(users) > 0 {
-		currentUser = &users[0]
-	} else {
+	fetchedUser, err := ah.userService.First(ctx, &models.User{Email: user.Email})
+	if errors.Is(err, service.ErrNotFound) {
 		nickname, err := fetchGoogleNickname(user.AccessToken)
 		if err != nil {
 			return helpers.InternalServerError("failed to fetch nickname")
@@ -71,10 +66,13 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 			ProfileInfo:     "",
 			ProfilePicture:  user.AvatarURL,
 		}
-
 		if err := ah.userService.Create(ctx, currentUser); err != nil {
 			return helpers.InternalServerError("failed to create user")
 		}
+	} else if err != nil {
+		return helpers.InternalServerError("failed to get user data")
+	} else {
+		currentUser = fetchedUser
 	}
 
 	accessToken, refreshToken, err := ah.GenerateTokens(currentUser.ID.String())
@@ -82,15 +80,10 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		return helpers.InternalServerError("failed to generate tokens")
 	}
 
-	userToReturn, err := ah.userService.GetByID(ctx, currentUser.ID)
-	if err != nil {
-		return helpers.InternalServerError("failed to get user DTO")
-	}
-
 	authData := map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
-		"user":         ah.dtoBuilder.BuildUserDTO(userToReturn),
+		"user":         ah.dtoBuilder.BuildUserDTO(currentUser),
 	}
 	authJSON, err := json.Marshal(authData)
 	if err != nil {

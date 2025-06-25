@@ -7,7 +7,8 @@ import (
 )
 
 type Query[T any] interface {
-	Where(params interface{}, args ...interface{}) Query[T]
+	Where(params any, args ...any) Query[T]
+	First(params any, args ...any) (T, error)
 	Order(order string) Query[T]
 	Skip(offset int) Query[T]
 	Take(limit int) Query[T]
@@ -15,7 +16,7 @@ type Query[T any] interface {
 	Delete() error
 	Find() ([]T, error)
 	Count() (int64, error)
-	Join(query string, args ...interface{}) Query[T]
+	Join(query string, args ...any) Query[T]
 	Group(group string) Query[T]
 }
 
