@@ -16,7 +16,7 @@ import (
 // GoogleAuth godoc
 // @Summary Start Google authentication
 // @Description Redirects to Google OAuth 2.0 login
-// @Tags Auth
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Router /auth/google [get]
@@ -34,7 +34,7 @@ type UserWithNickname struct {
 // GoogleCallback godoc
 // @Summary Google OAuth callback
 // @Description Handles the callback after Google authentication, fetches user info, and generates access and refresh tokens.
-// @Tags Auth
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Param code query string true "Google OAuth code"

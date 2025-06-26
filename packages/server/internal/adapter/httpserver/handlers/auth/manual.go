@@ -18,7 +18,7 @@ import (
 // Register		godoc
 // @Summary		Register a new user
 // @Description	Registers a new user with email, password, and username. Returns the created user object.
-// @Tags		Auth
+// @Tags		auth
 // @Accept		json
 // @Produce		json
 // @Param		user body dto.RegisterRequest true "User registration data"
@@ -127,7 +127,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 // Logout godoc
 // @Summary Logout a user
 // @Description Logs out the user by invalidating their authentication token.
-// @Tags Auth
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Security BearerAuth

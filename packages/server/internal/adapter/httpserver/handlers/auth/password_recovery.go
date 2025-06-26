@@ -13,7 +13,7 @@ import (
 // ForgotPassword godoc
 // @Summary      Initiate password reset process
 // @Description  Sends a password reset link to the user's email
-// @Tags         Auth
+// @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Param        request body dto.ForgotPasswordRequest true "Email address for password reset"
@@ -36,7 +36,7 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 // ResetPassword godoc
 // @Summary      Reset password
 // @Description  Resets the user's password using the token received via email
-// @Tags         Auth
+// @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Param        request body dto.ResetPasswordRequest true "New password and token"

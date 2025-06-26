@@ -19,7 +19,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Initiate password reset process",
                 "parameters": [
@@ -46,7 +46,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Start Google authentication",
                 "responses": {}
@@ -62,7 +62,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Google OAuth callback",
                 "parameters": [
@@ -119,7 +119,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Logout a user",
                 "responses": {}
@@ -140,7 +140,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Refresh access and refresh tokens",
                 "responses": {}
@@ -156,7 +156,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Register a new user",
                 "parameters": [
@@ -183,7 +183,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Reset password",
                 "parameters": [

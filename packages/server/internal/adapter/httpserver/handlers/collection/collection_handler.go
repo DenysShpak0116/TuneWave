@@ -316,12 +316,11 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		return helpers.BadRequest("invalid user ID format")
 	}
 
-	// TODO: change to First with not found error
 	userCollectionParams := &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	}
-	if userCollections, err := ch.userCollectionService.Where(ctx, userCollectionParams); err != nil || len(userCollections) > 0 {
+	if _, err := ch.userCollectionService.First(ctx, userCollectionParams); err != nil {
 		return helpers.BadRequest("could not add collection")
 	}
 

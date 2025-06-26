@@ -14,7 +14,7 @@ import (
 // Refresh godoc
 // @Summary      Refresh access and refresh tokens
 // @Description  Takes a valid refresh token and returns a new pair of access and refresh tokens
-// @Tags         Auth
+// @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
