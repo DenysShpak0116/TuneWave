@@ -31,9 +31,12 @@ import (
 func BuildContainer() *dig.Container {
 	container := dig.New()
 
-	httpserver.InitGothicSessionStore()
-
 	container.Provide(config.MustLoad)
+
+	container.Invoke(func(cfg *config.Config) {
+		httpserver.InitGothicSessionStore(cfg.Google.GothicSessionKay, cfg.Google.MaxSessionAge, cfg.Env == "prod")
+	})
+
 	container.Provide(setupPrettySlog)
 	container.Provide(repository.NewGORMDB)
 
