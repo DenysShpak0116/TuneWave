@@ -63,14 +63,14 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// Login		godoc
-// @Summary		Login an existing user
-// @Description	Logs in an existing user with email and password, and returns access and refresh tokens.
-// @Tags		auth
-// @Accept		json
-// @Produce		json
-// @Param		login body dto.LoginRequest true "User login data"
-// @Router		/auth/login [post]
+// Login godoc
+// @Summary Login an existing user
+// @Description Logs in an existing user with email and password, and returns access and refresh tokens.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param login body dto.LoginRequest true "User login data"
+// @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	var req dto.LoginRequest

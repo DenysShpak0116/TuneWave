@@ -1,10 +1,12 @@
 package user
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -29,20 +31,19 @@ func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error 
 		return helpers.BadRequest("invalid targed user id")
 	}
 
-	// TODO: change to First logic
-	userFollowers, _ := uh.userFollowerService.Where(ctx, &models.UserFollower{
-		UserID:     targetUUID,
-		FollowerID: userUUID,
-	})
-	if len(userFollowers) > 0 {
-		return helpers.BadRequest("you are already followed to this user")
-	}
-
 	userFollower := &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}
-	if err = uh.userFollowerService.Create(ctx, userFollower); err != nil {
+	if _, err := uh.userFollowerService.First(ctx, userFollower); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return helpers.BadRequest("you are already followed to this user")
+		}
+
+		return helpers.InternalServerError("could not follow you to this user")
+	}
+
+	if err := uh.userFollowerService.Create(ctx, userFollower); err != nil {
 		return helpers.InternalServerError("could not follow this user")
 	}
 
@@ -106,17 +107,17 @@ func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error 
 		return helpers.BadRequest("wrong target user id")
 	}
 
-	// TODO: change to First logic
-	if userFollower, err := uh.userFollowerService.Where(ctx, &models.UserFollower{
+	userFollowersParams := &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
-	}); err != nil || len(userFollower) < 1 {
-		if err != nil {
-			return helpers.InternalServerError("troubles to check if you followed")
+	}
+	if _, err := uh.userFollowerService.First(ctx, userFollowersParams); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			render.JSON(w, r, map[string]bool{"isFollowed": false})
+			return nil
 		}
 
-		render.JSON(w, r, map[string]bool{"isFollowed": false})
-		return nil
+		return helpers.InternalServerError("troubles to check if you followed")
 	}
 
 	render.JSON(w, r, map[string]bool{"isFollowed": true})
