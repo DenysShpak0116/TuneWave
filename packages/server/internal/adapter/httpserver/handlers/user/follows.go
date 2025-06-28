@@ -98,6 +98,7 @@ func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) erro
 // @Router /users/{id}/is-followed [get]
 func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
+
 	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
 		return helpers.BadRequest("wrong user id")

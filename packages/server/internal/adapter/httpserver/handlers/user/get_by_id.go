@@ -5,6 +5,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -60,19 +61,19 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	preloads := []string{
-		"Chats1", "Chats2", "Chats1.Messages", "Chats2.Messages",
-		"Chats1.User1", "Chats1.User2", "Chats2.User1", "Chats2.User2",
+		"Chats1", "Chats2", "Chats1.User1",
+		"Chats1.User2", "Chats2.User1", "Chats2.User2",
 	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NotFound("user not found")
 	}
 
-	// TODO: change last message retrievement
 	chats := make([]ChatPreview, 0)
 	for _, chat := range user.Chats1 {
-		if len(chat.Messages) == 0 {
-			continue
+		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
+		if err != nil {
+			return helpers.InternalServerError("could not retrieve last message")
 		}
 
 		var (
@@ -95,13 +96,14 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 			ID:           chat.ID,
 			UserAvatar:   userAvatar,
 			Username:     username,
-			LastMessage:  chat.Messages[len(chat.Messages)-1].Content,
+			LastMessage:  lastMessage.Content,
 			TargetUserID: targetUserID,
 		})
 	}
 	for _, chat := range user.Chats2 {
-		if len(chat.Messages) == 0 {
-			continue
+		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
+		if err != nil {
+			return helpers.InternalServerError("could not retrieve last message")
 		}
 
 		var (
@@ -124,7 +126,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 			ID:           chat.ID,
 			UserAvatar:   userAvatar,
 			Username:     username,
-			LastMessage:  chat.Messages[len(chat.Messages)-1].Content,
+			LastMessage:  lastMessage.Content,
 			TargetUserID: targetUserID,
 		})
 	}

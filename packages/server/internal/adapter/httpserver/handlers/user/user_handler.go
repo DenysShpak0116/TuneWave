@@ -16,6 +16,7 @@ type UserHandler struct {
 	userService         services.UserService
 	userFollowerService services.UserFollowerService
 	userReactionService services.UserReactionService
+	messageService      services.MessageService
 	dtoBuilder          *dto.DTOBuilder
 }
 
@@ -23,12 +24,14 @@ func NewUserHandler(
 	userService services.UserService,
 	userFollowerService services.UserFollowerService,
 	userReactionService services.UserReactionService,
+	messageService services.MessageService,
 	dtoBuilder *dto.DTOBuilder,
 ) *UserHandler {
 	return &UserHandler{
 		userService:         userService,
 		userFollowerService: userFollowerService,
 		userReactionService: userReactionService,
+		messageService:      messageService,
 		dtoBuilder:          dtoBuilder,
 	}
 }

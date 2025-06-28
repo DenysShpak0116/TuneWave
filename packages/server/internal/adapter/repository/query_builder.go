@@ -65,6 +65,35 @@ func (qb *QueryBuilder[T]) First(params any, args ...any) (T, error) {
 	return result, err
 }
 
+func (qb *QueryBuilder[T]) Last(params any, args ...any) (T, error) {
+	var result T
+	var err error
+
+	db := qb.query
+	for _, preload := range qb.preloads {
+		db = db.Preload(preload)
+	}
+
+	switch p := params.(type) {
+	case nil:
+		err = db.Last(&result).Error
+	case uint, int, int64, uuid.UUID:
+		err = db.Last(&result, p).Error
+	case string:
+		if len(args) > 0 {
+			err = db.Where(p, args...).Last(&result).Error
+		} else {
+			err = db.Last(&result, p).Error
+		}
+	case *T:
+		err = db.Where(p).Last(&result).Error
+	default:
+		err = fmt.Errorf("unsupported parameter type for Last: %T", p)
+	}
+
+	return result, err
+}
+
 func (qb *QueryBuilder[T]) Order(order string) port.Query[T] {
 	qb.query = qb.query.Order(order)
 	return qb

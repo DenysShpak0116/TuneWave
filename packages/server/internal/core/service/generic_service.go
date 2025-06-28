@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
@@ -56,7 +55,17 @@ func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...st
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound
 	} else if err != nil {
-		log.Printf("service.First: %v\n", err)
+		return nil, ErrInternal
+	}
+
+	return &result, nil
+}
+
+func (s *GenericService[T]) Last(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	result, err := s.Repository.NewQuery(ctx).Preload(preloads...).Last(params)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	} else if err != nil {
 		return nil, ErrInternal
 	}
 

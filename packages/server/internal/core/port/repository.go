@@ -9,6 +9,7 @@ import (
 type Query[T any] interface {
 	Where(params any, args ...any) Query[T]
 	First(params any, args ...any) (T, error)
+	Last(params any, args ...any) (T, error)
 	Order(order string) Query[T]
 	Skip(offset int) Query[T]
 	Take(limit int) Query[T]
