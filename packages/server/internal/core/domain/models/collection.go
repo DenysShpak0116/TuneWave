@@ -10,10 +10,10 @@ type Collection struct {
 	CoverURL    string `json:"coverUrl"`
 
 	UserID uuid.UUID `json:"userId"`
-	User   User      `gorm:"constraint:OnDelete:CASCADE"`
+	User   User
 
-	CollectionSongs []CollectionSong `gorm:"foreignKey:CollectionID"`
-	UserCollections []UserCollection `gorm:"foreignKey:CollectionID"`
+	CollectionSongs []CollectionSong `gorm:"constraint:OnDelete:CASCADE"`
+	UserCollections []UserCollection `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type CollectionSong struct {
@@ -22,9 +22,9 @@ type CollectionSong struct {
 	SongID uuid.UUID `json:"songId"`
 	Song   Song
 
-	CollectionID uuid.UUID  `json:"collectionId"`
-	Collection   Collection `gorm:"constraint:OnDelete:CASCADE"`
+	CollectionID uuid.UUID `json:"collectionId"`
+	Collection   Collection
 
-	Vectors []Vector `gorm:"foreignKey:CollectionSongID"`
-	Results []Result `gorm:"foreignKey:CollectionSongID"`
+	Vectors []Vector `gorm:"constraint:OnDelete:CASCADE"`
+	Results []Result `gorm:"constraint:OnDelete:CASCADE"`
 }

@@ -3,23 +3,21 @@ package models
 type User struct {
 	BaseModel
 
+	ProfilePicture  string `json:"profilePictureUrl"`
+	PasswordHash    string `json:"passwordHash"`
+	ProfileInfo     string `json:"profileInfo"`
 	Username        string `json:"username"`
 	Email           string `gorm:"unique" json:"email"`
-	PasswordHash    string `json:"passwordHash"`
 	Role            string `json:"role"`
-	ProfileInfo     string `json:"profileInfo"`
-	ProfilePicture  string `json:"profilePictureUrl"`
 	IsGoogleAccount bool   `json:"isGoogleAccount"`
 
-	Songs           []Song           `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-	Comments        []Comment        `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-	Collections     []Collection     `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-	Reactions       []UserReaction   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-	UserCollections []UserCollection `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-
-	Chats1    []Chat         `gorm:"foreignKey:UserID1;" json:"chats1"`
-	Chats2    []Chat         `gorm:"foreignKey:UserID2;" json:"chats2"`
-	Messages  []Message      `gorm:"foreignKey:SenderID" json:"messages"`
-	Followers []UserFollower `gorm:"foreignKey:UserID;" json:"followers"`
-	Follows   []UserFollower `gorm:"foreignKey:FollowerID;" json:"follows"`
+	Follows         []UserFollower   `gorm:"foreignKey:FollowerID;constraint:OnDelete:CASCADE" json:"follows"`
+   Chats2          []Chat           `gorm:"foreignKey:UserID2;constraint:OnDelete:CASCADE" json:"chats2"`
+	Chats1          []Chat           `gorm:"foreignKey:UserID1;constraint:OnDelete:CASCADE" json:"chats1"`
+	Followers       []UserFollower   `gorm:"constraint:OnDelete:CASCADE" json:"followers"`
+	UserCollections []UserCollection `gorm:"constraint:OnDelete:CASCADE"`
+	Reactions       []UserReaction   `gorm:"constraint:OnDelete:CASCADE"`
+	Collections     []Collection     `gorm:"constraint:OnDelete:CASCADE"`
+	Comments        []Comment        `gorm:"constraint:OnDelete:CASCADE"`
+	Songs           []Song           `gorm:"constraint:OnDelete:CASCADE"`
 }

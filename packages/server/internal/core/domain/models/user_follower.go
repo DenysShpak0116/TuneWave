@@ -6,8 +6,8 @@ type UserFollower struct {
 	BaseModel
 
 	UserID uuid.UUID `json:"userId"`
-	User   User      `json:"user" gorm:"constraint:OnDelete:CASCADE"`
+	User   User      ` gorm:"foreignKey:UserID" json:"user"`
 
 	FollowerID uuid.UUID `json:"followerId"`
-	Follower   User      `gorm:"foreignKey:FollowerID;constraint:OnDelete:CASCADE" json:"follower"`
+	Follower   User      `gorm:"foreignKey:FollowerID" json:"follower"`
 }

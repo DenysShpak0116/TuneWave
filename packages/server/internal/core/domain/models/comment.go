@@ -10,8 +10,7 @@ type Comment struct {
 	Content string `json:"content"`
 
 	UserID uuid.UUID `json:"userId"`
-	User   User      `gorm:"constraint:OnDelete:CASCADE"`
+	User   User
 
 	SongID uuid.UUID `json:"songId"`
-	Song   Song      `gorm:"constraint:OnDelete:CASCADE"`
 }

@@ -7,9 +7,8 @@ type Message struct {
 
 	Content string `json:"content"`
 
-	ChatID uuid.UUID `json:"chatId"`
-	Chat   Chat
-
+	ChatID   uuid.UUID `json:"chatId"`
+	Chat     Chat      `gorm:"constraint:OnDelete:CASCADE"`
 	SenderID uuid.UUID `json:"senderId"`
-	Sender   User      `gorm:"foreignKey:SenderID"`
+	Sender   User      `gorm:"constraint:OnDelete:CASCADE"`
 }
