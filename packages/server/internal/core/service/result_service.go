@@ -126,7 +126,7 @@ func (rs *ResultService) saveUserRanks(ctx context.Context, userID, collectionID
 		result := &models.Result{
 			UserID:           userID,
 			CollectionSongID: cs.ID,
-			SongRang:         rank,
+			SongRank:         rank,
 		}
 		if err := rs.Create(ctx, result); err != nil {
 			return err
@@ -162,7 +162,7 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 				ID:        result.ID,
 				CreatedAt: result.CreatedAt,
 			},
-			SongRang: result.SongRang,
+			SongRank: result.SongRank,
 			UserID:   userID,
 			User: models.User{
 				BaseModel: models.BaseModel{
@@ -210,7 +210,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 				ID:        result.ID,
 				CreatedAt: result.CreatedAt,
 			},
-			SongRang: result.SongRang,
+			SongRank: result.SongRank,
 			UserID:   userID,
 			User: models.User{
 				BaseModel: models.BaseModel{
@@ -268,7 +268,7 @@ func (rs *ResultService) buildUserProfiles(collectionSongs []models.CollectionSo
 			if _, ok := userProfiles[username]; !ok {
 				userProfiles[username] = make(map[int][]string)
 			}
-			userProfiles[username][result.SongRang] = append(userProfiles[username][result.SongRang], cs.Song.Title)
+			userProfiles[username][result.SongRank] = append(userProfiles[username][result.SongRank], cs.Song.Title)
 		}
 	}
 	return songIDToName, userProfiles
@@ -314,12 +314,12 @@ func calculateCollectiveRanking(collectionSongs []models.CollectionSong, songIDT
 				var r1, r2 int
 				for _, r := range cs.Results {
 					if r.UserID == res.UserID {
-						r1 = r.SongRang
+						r1 = r.SongRank
 					}
 				}
 				for _, r := range cs2.Results {
 					if r.UserID == res.UserID {
-						r2 = r.SongRang
+						r2 = r.SongRank
 					}
 				}
 				if r1 < r2 {

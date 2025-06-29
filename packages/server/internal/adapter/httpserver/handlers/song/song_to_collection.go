@@ -2,10 +2,12 @@ package song
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -27,10 +29,6 @@ type SongCollectionRequest struct {
 // @Router         /songs/{id}/add-to-collection [post]
 func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		return helpers.BadRequest("invalid song ID")
-	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -40,12 +38,20 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 	if err != nil {
 		return helpers.BadRequest("invalid collection ID")
 	}
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("invalid song ID")
+	}
 
-	collectionSongs, err := sh.collectionSongService.Where(ctx, &models.CollectionSong{
+	collectionSong := &models.CollectionSong{
 		SongID:       songUUID,
 		CollectionID: collectionUUID,
-	})
-	if len(collectionSongs) != 0 || err != nil {
+	}
+	if _, err := sh.collectionSongService.First(ctx, collectionSong); !errors.Is(err, service.ErrNotFound) {
+		if err != nil {
+			return helpers.InternalServerError("could not add song to collection")
+		}
+
 		return helpers.NewAPIError(http.StatusConflict, "this song is already in collection")
 	}
 
@@ -70,11 +76,6 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 // @Router       /songs/{id}/remove-from-collection [delete]
 func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		return helpers.BadRequest("invalid song ID")
-	}
-
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return helpers.BadRequest("invalid request body")
@@ -82,6 +83,10 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
 		return helpers.BadRequest("invalid collection ID")
+	}
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	collectionSong, err := sh.collectionSongService.First(ctx, &models.CollectionSong{
@@ -92,8 +97,7 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 		return helpers.InternalServerError("failed to find song in collection")
 	}
 
-	err = sh.collectionSongService.Delete(ctx, collectionSong.ID)
-	if err != nil {
+	if err = sh.collectionSongService.Delete(ctx, collectionSong.ID); err != nil {
 		return helpers.InternalServerError("failed to remove song from collection")
 	}
 

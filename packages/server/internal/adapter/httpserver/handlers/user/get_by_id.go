@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
@@ -60,79 +61,50 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NotFound("invalid user ID")
 	}
 
-	preloads := []string{
-		"Chats1", "Chats2", "Chats1.User1",
-		"Chats1.User2", "Chats2.User1", "Chats2.User2",
-	}
+	preloads := []string{"Chats1", "Chats2", "Chats1.User1", "Chats1.User2", "Chats2.User1", "Chats2.User2"}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NotFound("user not found")
 	}
 
 	chats := make([]ChatPreview, 0)
-	for _, chat := range user.Chats1 {
-		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
-		if err != nil {
-			return helpers.InternalServerError("could not retrieve last message")
-		}
-
-		var (
-			userAvatar   string
-			username     string
-			targetUserID uuid.UUID
-		)
-
-		if chat.User2.ID == userUUID {
-			userAvatar = chat.User1.ProfilePicture
-			username = chat.User1.Username
-			targetUserID = chat.User1.ID
-		} else {
-			userAvatar = chat.User2.ProfilePicture
-			username = chat.User2.Username
-			targetUserID = chat.User2.ID
-		}
-
-		chats = append(chats, ChatPreview{
-			ID:           chat.ID,
-			UserAvatar:   userAvatar,
-			Username:     username,
-			LastMessage:  lastMessage.Content,
-			TargetUserID: targetUserID,
-		})
-	}
-	for _, chat := range user.Chats2 {
-		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
-		if err != nil {
-			return helpers.InternalServerError("could not retrieve last message")
-		}
-
-		var (
-			userAvatar   string
-			username     string
-			targetUserID uuid.UUID
-		)
-
-		if chat.User1.ID == userUUID {
-			userAvatar = chat.User2.ProfilePicture
-			username = chat.User2.Username
-			targetUserID = chat.User2.ID
-		} else {
-			userAvatar = chat.User1.ProfilePicture
-			username = chat.User1.Username
-			targetUserID = chat.User1.ID
-		}
-
-		chats = append(chats, ChatPreview{
-			ID:           chat.ID,
-			UserAvatar:   userAvatar,
-			Username:     username,
-			LastMessage:  lastMessage.Content,
-			TargetUserID: targetUserID,
-		})
-	}
-
+	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats1, uh)
+	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats2, uh)
 	render.JSON(w, r, chats)
 	return nil
+}
+
+func appendChatsForUser(ctx context.Context, chats []ChatPreview, userUUID uuid.UUID, userChats []models.Chat, uh *UserHandler) []ChatPreview {
+	for _, chat := range userChats {
+		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
+		if err != nil {
+			lastMessage = &models.Message{
+				Content: "",
+			}
+		}
+
+		var chatPreview ChatPreview
+		if chat.User1.ID == userUUID {
+			chatPreview = ChatPreview{
+				ID:           chat.ID,
+				UserAvatar:   chat.User2.ProfilePicture,
+				Username:     chat.User2.Username,
+				LastMessage:  lastMessage.Content,
+				TargetUserID: chat.User2.ID,
+			}
+		} else {
+			chatPreview = ChatPreview{
+				ID:           chat.ID,
+				UserAvatar:   chat.User1.ProfilePicture,
+				Username:     chat.User1.Username,
+				LastMessage:  lastMessage.Content,
+				TargetUserID: chat.User1.ID,
+			}
+		}
+
+		chats = append(chats, chatPreview)
+	}
+	return chats
 }
 
 // GetUserCollections godoc

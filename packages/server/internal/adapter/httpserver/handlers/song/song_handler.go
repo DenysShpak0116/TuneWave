@@ -1,7 +1,6 @@
 package song
 
 import (
-	"mime/multipart"
 	"net/http"
 	"strconv"
 
@@ -101,7 +100,6 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Router /songs/{id} [get]
 func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.BadRequest("invalid song ID")
@@ -112,7 +110,7 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 		"SongTags", "SongTags.Tag",
 		"User",
 	}
-	song, err := sh.songService.GetByID(ctx, songUUID, preloads...)
+	song, err := sh.songService.GetByID(r.Context(), songUUID, preloads...)
 	if err != nil {
 		return helpers.InternalServerError("failed to get song")
 	}
@@ -209,8 +207,7 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		return helpers.BadRequest("error parsing form")
 	}
 
@@ -224,9 +221,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	artists := r.Form["artists"]
 	tags := r.Form["tags"]
 
-	var songFile multipart.File
-	var songHeader *multipart.FileHeader
-	songFile, songHeader, err = r.FormFile("song")
+	songFile, songHeader, err := r.FormFile("song")
 	if err != nil && err != http.ErrMissingFile {
 		return helpers.BadRequest("invalid song file")
 	}
@@ -234,9 +229,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		defer songFile.Close()
 	}
 
-	var coverFile multipart.File
-	var coverHeader *multipart.FileHeader
-	coverFile, coverHeader, err = r.FormFile("cover")
+	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil && err != http.ErrMissingFile {
 		return helpers.BadRequest("invalid cover image")
 	}
@@ -244,7 +237,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		defer coverFile.Close()
 	}
 
-	err = sh.songService.UpdateSong(ctx, services.UpdateSongParams{
+	if err := sh.songService.UpdateSong(ctx, services.UpdateSongParams{
 		SongID:      songUUID,
 		Title:       title,
 		Genre:       genre,
@@ -254,8 +247,7 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		SongHeader:  songHeader,
 		Cover:       coverFile,
 		CoverHeader: coverHeader,
-	})
-	if err != nil {
+	}); err != nil {
 		return helpers.InternalServerError("failed to update song")
 	}
 
@@ -277,13 +269,12 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
 // @Produce json
 // @Router /songs/{id} [delete]
 func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.BadRequest("invalid song ID")
 	}
 
-	if err := sh.songService.Delete(ctx, songUUID); err != nil {
+	if err := sh.songService.Delete(r.Context(), songUUID); err != nil {
 		return helpers.InternalServerError("failed to delete song")
 	}
 
@@ -340,7 +331,6 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 // @Param limit query int false "Number of items per page" default(10)
 // @Router /songs/{id}/comments [get]
 func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.BadRequest("invalid song ID")
@@ -356,7 +346,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 
 	preloads := []string{"User"}
 	comments, err := sh.commentService.Where(
-		ctx, &models.Comment{SongID: songUUID},
+		r.Context(), &models.Comment{SongID: songUUID},
 		query.WithPagination(page, limit),
 		query.WithPreloads(preloads...),
 	)
