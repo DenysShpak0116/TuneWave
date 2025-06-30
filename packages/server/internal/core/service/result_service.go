@@ -148,7 +148,7 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
-		}).Preload("CollectionSong").Preload("CollectionSong.Song").Preload("User").Find()
+		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
 		if err != nil {
 			return nil, err
 		}
@@ -196,7 +196,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
-		}).Preload("CollectionSong").Preload("CollectionSong.Song").Preload("User").Find()
+		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
 		if err != nil {
 			return nil, err
 		}
