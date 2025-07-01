@@ -1,3 +1,5 @@
+//go:generate mockgen -source=criterion_service.go -destination=../../service/mocks/criterion_service_mock.go -package=mocks -typed
+
 package services
 
 import (
