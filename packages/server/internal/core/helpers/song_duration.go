@@ -19,16 +19,13 @@ func (r *ReadSeekCloser) Close() error {
 }
 
 func GetAudioDuration(file multipart.File) (time.Duration, error) {
-	// Чтение всех данных в память
 	data, err := io.ReadAll(file)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	// Создаем ReadSeekCloser
 	r := &ReadSeekCloser{Reader: bytes.NewReader(data)}
 
-	// Декодируем MP3
 	streamer, format, err := mp3.Decode(r)
 	if err != nil {
 		return 0, fmt.Errorf("failed to decode mp3: %w", err)

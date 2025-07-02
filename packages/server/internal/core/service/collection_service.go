@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"strings"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -71,7 +71,7 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 	}
 	collection := &collections[0]
 
-	if err := cs.FileStorage.Remove(ctx, extractS3Key(collection.CoverURL)); err != nil {
+	if err := cs.FileStorage.Remove(ctx, helpers.ExtractS3Key(collection.CoverURL)); err != nil {
 		return nil, err
 	}
 
@@ -116,11 +116,6 @@ func (cs *CollectionService) saveCoverFile(ctx context.Context, SaveFileParams S
 	}
 
 	return url, nil
-}
-
-func extractS3Key(fullURL string) string {
-	const baseURL = "https://tunewavebucket.s3.eu-west-3.amazonaws.com/"
-	return strings.TrimPrefix(fullURL, baseURL)
 }
 
 func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort, order string, preloads ...string) ([]models.Collection, error) {

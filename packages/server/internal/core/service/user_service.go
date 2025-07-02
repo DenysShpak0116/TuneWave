@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -78,7 +79,7 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 	user := &users[0]
 
 	if pfpParams.Pfp != nil && pfpParams.PfpHeader != nil {
-		oldUserPfpKey := extractS3Key(user.ProfilePicture)
+		oldUserPfpKey := helpers.ExtractS3Key(user.ProfilePicture)
 		if err := us.FileStorage.Remove(ctx, oldUserPfpKey); err != nil {
 			return fmt.Errorf("failed to remove old user file: %w", err)
 		}

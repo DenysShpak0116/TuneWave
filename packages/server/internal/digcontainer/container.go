@@ -21,7 +21,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/songservice"
 
 	"log/slog"
 
@@ -63,7 +62,7 @@ func BuildContainer() *dig.Container {
 
 	// service
 	container.Provide(service.NewMailService)
-	container.Provide(songservice.NewSongService)
+	container.Provide(service.NewSongService)
 	container.Provide(service.NewUserService)
 	container.Provide(service.NewAuthService)
 	container.Provide(service.NewCommentService)
