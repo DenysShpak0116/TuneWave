@@ -33,7 +33,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(config.MustLoad)
 
 	container.Invoke(func(cfg *config.Config) {
-		httpserver.InitGothicSessionStore(cfg.Google.GothicSessionKay, cfg.Google.MaxSessionAge, cfg.Env == "prod")
+		httpserver.InitGothicSessionStore(cfg.Google.GothicSessionKey, cfg.Google.MaxSessionAge, cfg.Env == "prod")
 	})
 
 	container.Provide(setupPrettySlog)

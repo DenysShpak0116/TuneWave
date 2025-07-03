@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -10,10 +11,17 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/markbates/goth/gothic"
 )
+
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Username string `json:"username"`
+}
 
 // Register		godoc
 // @Summary		Register a new user
@@ -25,18 +33,16 @@ import (
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	var req dto.RegisterRequest
+	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.BadRequest("invalid request")
 	}
 
-	existingUsers, err := ah.userService.Where(ctx, &models.User{Email: req.Email})
-	if err != nil {
-		return helpers.InternalServerError("failed to check existing users")
-	}
+	if _, err := ah.userService.First(ctx, &models.User{Email: req.Email}); !errors.Is(err, service.ErrNotFound) {
+		if err != nil {
+			return helpers.InternalServerError("failed to check existing users")
+		}
 
-	if len(existingUsers) > 0 {
 		return helpers.BadRequest("user already exists")
 	}
 

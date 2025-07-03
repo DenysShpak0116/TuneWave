@@ -40,7 +40,7 @@ type HttpConfig struct {
 type GoogleConfig struct {
 	ClientID         string `yaml:"client_id"`
 	ClientSecret     string `yaml:"client_secret"`
-	GothicSessionKay string `yaml:"gothic_session_key"`
+	GothicSessionKey string `yaml:"gothic_session_key"`
 	MaxSessionAge    int    `yaml:"max_session_age"`
 }
 
