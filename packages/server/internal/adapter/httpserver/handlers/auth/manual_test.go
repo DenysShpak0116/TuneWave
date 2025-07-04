@@ -15,6 +15,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -133,4 +134,143 @@ func TestRegister(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, res.StatusCode)
 		})
 	}
+}
+
+func TestLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAuthService := mocks.NewMockAuthService(ctrl)
+	mockUserService := mocks.NewMockUserService(ctrl)
+	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
+
+	cfg := &config.Config{
+		JwtSecret: "test-secret",
+		Google: config.GoogleConfig{
+			ClientID:     "test-client-id",
+			ClientSecret: "test-client-secret",
+		},
+	}
+
+	handler := NewAuthHandler(mockAuthService, mockUserService, dtoBuilder, cfg)
+
+	tests := []struct {
+		name           string
+		body           map[string]any
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name: "successful login",
+			body: map[string]any{
+				"email":    "user@example.com",
+				"password": "valid-password",
+			},
+			mockSetup: func() {
+				user := &models.User{
+					BaseModel:       models.BaseModel{ID: uuid.New()},
+					Email:           "user@example.com",
+					PasswordHash:    HashPasswordOrFail("valid-password"),
+					IsGoogleAccount: false,
+				}
+				mockUserService.EXPECT().
+					First(gomock.Any(), &models.User{Email: "user@example.com"}).
+					Return(user, nil)
+
+				mockUserService.EXPECT().
+					GetUserFollowersCount(gomock.Any(), gomock.Any()).
+					Return(5)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid json body",
+			body:           nil,
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "user not found",
+			body: map[string]any{
+				"email":    "notfound@example.com",
+				"password": "whatever",
+			},
+			mockSetup: func() {
+				mockUserService.EXPECT().
+					First(gomock.Any(), &models.User{Email: "notfound@example.com"}).
+					Return(nil, errors.New("not found"))
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "google account login attempt",
+			body: map[string]any{
+				"email":    "google@example.com",
+				"password": "irrelevant",
+			},
+			mockSetup: func() {
+				mockUserService.EXPECT().
+					First(gomock.Any(), &models.User{Email: "google@example.com"}).
+					Return(&models.User{
+						Email:           "google@example.com",
+						IsGoogleAccount: true,
+					}, nil)
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name: "wrong password",
+			body: map[string]any{
+				"email":    "user@example.com",
+				"password": "wrong-password",
+			},
+			mockSetup: func() {
+				mockUserService.EXPECT().
+					First(gomock.Any(), &models.User{Email: "user@example.com"}).
+					Return(&models.User{
+						Email:           "user@example.com",
+						PasswordHash:    HashPasswordOrFail("correct-password"),
+						IsGoogleAccount: false,
+					}, nil)
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			var reqBody []byte
+			var req *http.Request
+
+			if tt.body != nil {
+				reqBody, _ = json.Marshal(tt.body)
+				req = httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(reqBody))
+			} else {
+				req = httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader([]byte("invalid-json")))
+			}
+
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
+
+			render.Status(req, 0)
+
+			httpHandler := handlers.MakeHandler(handler.Login)
+			httpHandler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+		})
+	}
+}
+
+func HashPasswordOrFail(pw string) string {
+	hash, err := HashPassword(pw)
+	if err != nil {
+		panic("failed to hash password for test setup: " + err.Error())
+	}
+	return hash
 }

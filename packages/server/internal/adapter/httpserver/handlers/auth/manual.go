@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
@@ -69,6 +68,11 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 // Login godoc
 // @Summary Login an existing user
 // @Description Logs in an existing user with email and password, and returns access and refresh tokens.
@@ -79,7 +83,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	var req dto.LoginRequest
+	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return helpers.BadRequest("invalid request")
 	}
@@ -122,7 +126,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
-
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{
 		"accessToken": accessToken,
 		"user":        ah.dtoBuilder.BuildUserDTO(user),
