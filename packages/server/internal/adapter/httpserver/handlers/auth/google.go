@@ -128,7 +128,7 @@ func fetchGoogleNickname(token string) (string, error) {
 		return "", err
 	}
 
-	if userModel.Nicknames == nil || len(userModel.Nicknames) == 0 {
+	if len(userModel.Nicknames) == 0 {
 		return "", err
 	}
 	return userModel.Nicknames[0].Value, nil
