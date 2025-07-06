@@ -112,7 +112,7 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 	ctx := r.Context()
 	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		return helpers.BadRequest("invalid collection ID")
+		return helpers.BadRequest("invalid collection ID. Err: %s", err.Error())
 	}
 
 	preloads := []string{"User"}
@@ -121,6 +121,7 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 		return helpers.InternalServerError("error getting collection")
 	}
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(collection))
 	return nil
 }
