@@ -167,8 +167,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 		return helpers.BadRequest("invalid collection ID")
 	}
 
-	err = r.ParseMultipartForm(32 << 20)
-	if err != nil {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		return helpers.BadRequest("error parsing form")
 	}
 
@@ -208,6 +207,7 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 		return helpers.InternalServerError("error getting collection")
 	}
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(newCollection))
 	return nil
 }

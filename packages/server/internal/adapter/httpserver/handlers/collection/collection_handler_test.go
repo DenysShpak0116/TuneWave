@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
@@ -232,6 +233,243 @@ func TestCollectionHandler_GetCollectionByID(t *testing.T) {
 				rctx := chi.NewRouteContext()
 				rctx.URLParams.Add("id", collectionID.String())
 
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.setup()
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestCollectionHandler_DeleteCollection(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCollectionService := mocks.NewMockCollectionService(ctrl)
+	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
+	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
+	mockUserService := mocks.NewMockUserService(ctrl)
+
+	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
+	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
+
+	httpHandler := handlers.MakeHandler(handler.DeleteCollection)
+
+	tests := []struct {
+		name           string
+		expectedStatus int
+		setup          func() *http.Request
+	}{
+		{
+			name:           "success",
+			expectedStatus: http.StatusNoContent,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+
+				mockCollectionService.EXPECT().Delete(gomock.Any(), collectionID).Return(nil)
+
+				req := httptest.NewRequest("DELETE", "/collections/"+collectionID.String(), nil)
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
+
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "invalid UUID format",
+			expectedStatus: http.StatusBadRequest,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("DELETE", "/collections/invalid-uuid", nil)
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", "invalid-uuid")
+
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "Delete returns error",
+			expectedStatus: http.StatusInternalServerError,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+
+				mockCollectionService.EXPECT().Delete(gomock.Any(), collectionID).Return(errors.New("some error"))
+
+				req := httptest.NewRequest("DELETE", "/collections/"+collectionID.String(), nil)
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
+
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.setup()
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestCollectionHandler_UpdateCollection(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCollectionService := mocks.NewMockCollectionService(ctrl)
+	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
+	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
+	mockUserService := mocks.NewMockUserService(ctrl)
+
+	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
+	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
+
+	httpHandler := handlers.MakeHandler(handler.UpdateCollection)
+
+	tests := []struct {
+		name           string
+		expectedStatus int
+		setup          func() *http.Request
+	}{
+		{
+			name:           "success",
+			expectedStatus: http.StatusOK,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+				userID := uuid.New()
+
+				mockCollectionService.EXPECT().GetByID(gomock.Any(), collectionID, gomock.Any()).Return(&models.Collection{
+					BaseModel: models.BaseModel{ID: collectionID},
+					Title:     "Old Title",
+					User: models.User{
+						BaseModel: models.BaseModel{ID: userID},
+					},
+				}, nil)
+
+				mockCollectionService.EXPECT().UpdateCollection(gomock.Any(), collectionID, gomock.Any()).Return(&models.Collection{
+					BaseModel:   models.BaseModel{ID: collectionID},
+					Title:       "New Title",
+					Description: "New Description",
+				}, nil)
+
+				mockCollectionService.EXPECT().GetByID(gomock.Any(), collectionID, gomock.Any()).Return(&models.Collection{
+					BaseModel:   models.BaseModel{ID: collectionID},
+					Title:       "New Title",
+					Description: "New Description",
+					User: models.User{
+						BaseModel: models.BaseModel{ID: userID},
+						Username:  "Test User",
+					},
+				}, nil)
+
+				mockUserService.EXPECT().GetUserFollowersCount(gomock.Any(), gomock.Any()).Return(int64(0))
+
+				var body bytes.Buffer
+				writer := multipart.NewWriter(&body)
+				writer.WriteField("title", "New Title")
+				writer.WriteField("description", "New Description")
+				part, _ := writer.CreateFormFile("cover", "cover.jpg")
+				part.Write([]byte("fake image content"))
+				writer.Close()
+
+				req := httptest.NewRequest("PUT", "/collections/"+collectionID.String(), &body)
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "invalid UUID",
+			expectedStatus: http.StatusBadRequest,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("PUT", "/collections/invalid-id", nil)
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", "invalid-id")
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "error parsing form",
+			expectedStatus: http.StatusBadRequest,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+				req := httptest.NewRequest("PUT", "/collections/"+collectionID.String(), strings.NewReader("invalid form data"))
+				req.Header.Set("Content-Type", "multipart/form-data; boundary=--invalid")
+
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "GetByID returns error",
+			expectedStatus: http.StatusInternalServerError,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+
+				mockCollectionService.EXPECT().GetByID(gomock.Any(), collectionID, gomock.Any()).Return(nil, errors.New("not found"))
+
+				var body bytes.Buffer
+				writer := multipart.NewWriter(&body)
+				writer.WriteField("title", "Some Title")
+				writer.WriteField("description", "Some Description")
+				writer.Close()
+
+				req := httptest.NewRequest("PUT", "/collections/"+collectionID.String(), &body)
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
+				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+				return req.WithContext(ctx)
+			},
+		},
+		{
+			name:           "UpdateCollection returns error",
+			expectedStatus: http.StatusInternalServerError,
+			setup: func() *http.Request {
+				collectionID := uuid.New()
+				userID := uuid.New()
+
+				mockCollectionService.EXPECT().GetByID(gomock.Any(), collectionID, gomock.Any()).Return(&models.Collection{
+					BaseModel: models.BaseModel{ID: collectionID},
+					User: models.User{
+						BaseModel: models.BaseModel{ID: userID},
+					},
+				}, nil)
+
+				mockCollectionService.EXPECT().UpdateCollection(gomock.Any(), collectionID, gomock.Any()).Return(nil, errors.New("update failed"))
+
+				var body bytes.Buffer
+				writer := multipart.NewWriter(&body)
+				writer.WriteField("title", "New Title")
+				writer.WriteField("description", "New Description")
+				writer.Close()
+
+				req := httptest.NewRequest("PUT", "/collections/"+collectionID.String(), &body)
+				req.Header.Set("Content-Type", writer.FormDataContentType())
+
+				rctx := chi.NewRouteContext()
+				rctx.URLParams.Add("id", collectionID.String())
 				ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
 				return req.WithContext(ctx)
 			},
