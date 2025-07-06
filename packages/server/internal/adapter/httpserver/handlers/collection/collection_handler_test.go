@@ -34,46 +34,39 @@ func TestCollectionHandler_CreateCollection(t *testing.T) {
 	tests := []struct {
 		name           string
 		expectedStatus int
-		setupMocks     func() *http.Request
+		setup          func() *http.Request
 	}{
 		{
 			name:           "success",
 			expectedStatus: http.StatusCreated,
-			setupMocks: func() *http.Request {
-				userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+			setup: func() *http.Request {
+				userID := "123e4567-e89b-12d3-a456-426614174000"
+				userUUID := uuid.MustParse(userID)
 				collectionID := uuid.New()
 
 				mockCollectionService.EXPECT().SaveCollection(gomock.Any(), gomock.Any()).Return(&models.Collection{
 					BaseModel:   models.BaseModel{ID: collectionID},
 					Title:       "Test Title",
 					Description: "Test Description",
-					UserID:      userID,
+					UserID:      userUUID,
 				}, nil)
-
 				mockUserCollectionService.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil)
-
+				mockUserService.EXPECT().GetUserFollowersCount(gomock.Any(), userUUID).Return(int64(0))
 				mockCollectionService.EXPECT().GetByID(gomock.Any(), collectionID, gomock.Any()).Return(&models.Collection{
 					BaseModel:   models.BaseModel{ID: collectionID},
 					Title:       "Test Title",
 					Description: "Test Description",
-					UserID:      userID,
+					UserID:      uuid.MustParse(userID),
 					User: models.User{
-						BaseModel: models.BaseModel{ID: userID},
+						BaseModel: models.BaseModel{ID: userUUID},
 						Username:  "Test User",
 					},
 				}, nil)
 
-				mockUserService.EXPECT().GetByID(gomock.Any(), userID).Return(&models.User{
-					BaseModel: models.BaseModel{ID: userID},
-					Username:  "Test User",
-				}, nil)
-
 				var body bytes.Buffer
 				writer := multipart.NewWriter(&body)
-
-				_ = writer.WriteField("title", "Test Title")
-				_ = writer.WriteField("description", "Test Description")
-
+				writer.WriteField("title", "Test Title")
+				writer.WriteField("description", "Test Description")
 				part, _ := writer.CreateFormFile("cover", "cover.jpg")
 				part.Write([]byte("fake image content"))
 
@@ -90,7 +83,7 @@ func TestCollectionHandler_CreateCollection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := tt.setupMocks()
+			req := tt.setup()
 			rr := httptest.NewRecorder()
 			httpHandler.ServeHTTP(rr, req)
 
