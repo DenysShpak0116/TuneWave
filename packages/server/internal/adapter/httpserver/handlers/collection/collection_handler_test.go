@@ -486,3 +486,105 @@ func TestCollectionHandler_UpdateCollection(t *testing.T) {
 		})
 	}
 }
+
+func TestCollectionHandler_GetUsersCollections(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCollectionService := mocks.NewMockCollectionService(ctrl)
+	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
+	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
+	mockUserService := mocks.NewMockUserService(ctrl)
+
+	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
+	handler := NewCollectionHandler(
+		mockCollectionService,
+		mockUserCollectionService,
+		mockUserReactionService,
+		mockUserService,
+		dtoBuilder,
+	)
+
+	httpHandler := handlers.MakeHandler(handler.GetUsersCollections)
+
+	fixedUserID := uuid.New()
+	fixedCollection := models.Collection{
+		BaseModel: models.BaseModel{ID: uuid.New()},
+		Title:     "Test Collection",
+	}
+	fixedUserCollection := models.UserCollection{
+		UserID:     fixedUserID,
+		Collection: fixedCollection,
+	}
+
+	tests := []struct {
+		name           string
+		expectedStatus int
+		setup          func() *http.Request
+		expectMocks    func()
+	}{
+		{
+			name:           "success",
+			expectedStatus: http.StatusOK,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("GET", "/collections", nil)
+				ctx := context.WithValue(req.Context(), "userID", fixedUserID)
+				return req.WithContext(ctx)
+			},
+			expectMocks: func() {
+				mockUserCollectionService.EXPECT().
+					Where(gomock.Any(), &models.UserCollection{UserID: fixedUserID}, gomock.Any()).
+					Return([]models.UserCollection{fixedUserCollection}, nil)
+			},
+		},
+		{
+			name:           "invalid user ID",
+			expectedStatus: http.StatusBadRequest,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("GET", "/collections", nil)
+				return req
+			},
+			expectMocks: func() {},
+		},
+		{
+			name:           "internal service error",
+			expectedStatus: http.StatusInternalServerError,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("GET", "/collections", nil)
+				ctx := context.WithValue(req.Context(), "userID", fixedUserID)
+				return req.WithContext(ctx)
+			},
+			expectMocks: func() {
+				mockUserCollectionService.EXPECT().
+					Where(gomock.Any(), &models.UserCollection{UserID: fixedUserID}, gomock.Any()).
+					Return(nil, errors.New("db error"))
+			},
+		},
+		{
+			name:           "empty result",
+			expectedStatus: http.StatusOK,
+			setup: func() *http.Request {
+				req := httptest.NewRequest("GET", "/collections", nil)
+				ctx := context.WithValue(req.Context(), "userID", fixedUserID)
+				return req.WithContext(ctx)
+			},
+			expectMocks: func() {
+				mockUserCollectionService.EXPECT().
+					Where(gomock.Any(), &models.UserCollection{UserID: fixedUserID}, gomock.Any()).
+					Return([]models.UserCollection{}, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.setup()
+			tt.expectMocks()
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
