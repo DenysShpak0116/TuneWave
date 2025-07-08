@@ -179,13 +179,13 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return helpers.InternalServerError("failed to save song")
 	}
 
-	songDTO, err := sh.songService.GetByID(ctx, song.ID)
+	songToReturn, err := sh.songService.GetByID(ctx, song.ID)
 	if err != nil {
 		return helpers.InternalServerError("failed to get song")
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, songDTO)
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(songToReturn))
 	return nil
 }
 
