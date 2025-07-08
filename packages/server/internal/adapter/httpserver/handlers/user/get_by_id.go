@@ -123,7 +123,6 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 		"UserCollections",
 		"UserCollections.Collection",
 		"UserCollections.Collection.User",
-		"UserCollections.Collection.User.Followers",
 	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
