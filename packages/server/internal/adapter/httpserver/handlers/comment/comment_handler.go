@@ -65,7 +65,7 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		return helpers.InternalServerError("failed to create comment")
 	}
 
-	preloads := []string{"User", "User.Followers"}
+	preloads := []string{"User"}
 	newComment, err := ch.commentService.GetByID(ctx, comment.ID, preloads...)
 	if err != nil {
 		return helpers.InternalServerError("failed to get comment")
