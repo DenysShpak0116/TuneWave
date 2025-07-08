@@ -443,6 +443,8 @@ func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.R
 	for _, song := range collectionSongs {
 		songDTOs = append(songDTOs, *ch.dtoBuilder.BuildSongPreviewDTO(&song))
 	}
+
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, collectionSongs)
 	return nil
 }
