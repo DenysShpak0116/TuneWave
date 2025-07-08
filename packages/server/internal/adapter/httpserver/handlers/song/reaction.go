@@ -48,7 +48,7 @@ func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]interface{}{
+	render.JSON(w, r, map[string]any{
 		"likes":    likes,
 		"dislikes": dislikes,
 	})
@@ -109,6 +109,7 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 	userID := chi.URLParam(r, "userId")
 	if userID == "undefined" {
 		render.NoContent(w, r)
+		return nil
 	}
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
