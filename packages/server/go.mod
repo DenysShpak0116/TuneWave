@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.2
-	github.com/dranikpg/dto-mapper v0.2.1
 	github.com/faiface/beep v1.1.0
 	github.com/fatih/color v1.18.0
 	github.com/go-chi/chi/v5 v5.2.1
@@ -30,10 +29,8 @@ require (
 )
 
 require (
-	github.com/cweill/gotests v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
 )
 
 require (
@@ -74,7 +71,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/files v1.0.1 // indirect
-	go.uber.org/mock v0.5.2 // indirect
+	go.uber.org/mock v0.5.2
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.17.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
@@ -84,7 +81,6 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
