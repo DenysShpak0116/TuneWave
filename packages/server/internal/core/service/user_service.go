@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -67,16 +69,14 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 }
 
 func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.UpdatePfpParams) error {
-	users, err := us.Repository.NewQuery(ctx).
-		Where("id = ?", pfpParams.UserID).
-		Find()
+	user, err := us.Repository.NewQuery(ctx).First(pfpParams.UserID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrNotFound
+		}
+
 		return fmt.Errorf("failed to find user: %w", err)
 	}
-	if len(users) == 0 {
-		return fmt.Errorf("user not found")
-	}
-	user := &users[0]
 
 	if pfpParams.Pfp != nil && pfpParams.PfpHeader != nil {
 		oldUserPfpKey := helpers.ExtractS3Key(user.ProfilePicture)
@@ -98,7 +98,7 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 		user.ProfilePicture = url
 	}
 
-	if err := us.Repository.Update(ctx, user); err != nil {
+	if err := us.Repository.Update(ctx, &user); err != nil {
 		return err
 	}
 

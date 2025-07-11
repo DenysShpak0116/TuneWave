@@ -70,7 +70,7 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 	var pfpFile multipart.File
 	var pfpHeader *multipart.FileHeader
 	pfpFile, pfpHeader, err := r.FormFile("file")
-	if err != nil && err != http.ErrMissingFile {
+	if err != nil {
 		return helpers.BadRequest("invalid cover image")
 	}
 	if pfpFile != nil {
@@ -82,12 +82,12 @@ func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) erro
 		return helpers.BadRequest("invalid User ID format")
 	}
 
-	err = uh.userService.UpdateUserPfp(ctx, services.UpdatePfpParams{
+	updateParams := services.UpdatePfpParams{
 		UserID:    userUUID,
 		Pfp:       pfpFile,
 		PfpHeader: pfpHeader,
-	})
-	if err != nil {
+	}
+	if err := uh.userService.UpdateUserPfp(ctx, updateParams); err != nil {
 		return helpers.InternalServerError("Failed to update avatar")
 	}
 
