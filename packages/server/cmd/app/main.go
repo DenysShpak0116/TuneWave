@@ -43,11 +43,6 @@ func main() {
 	err = container.Invoke(func(router *chi.Mux, cfg *config.Config) {
 		log.Println("Starting server on port", cfg.Http.Port)
 
-		go func() {
-			log.Println("pprof server listening on :6060")
-			log.Println(http.ListenAndServe("localhost:6060", nil))
-		}()
-
 		srv := &http.Server{
 			Addr:    "localhost:" + strconv.Itoa(cfg.Http.Port),
 			Handler: router,
