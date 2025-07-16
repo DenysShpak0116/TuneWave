@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"syscall"
 
-	_ "net/http/pprof"
-
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/digcontainer"
