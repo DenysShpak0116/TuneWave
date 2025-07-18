@@ -9,11 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/handlers/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services/mocks"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/testutils/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
