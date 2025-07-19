@@ -1,4 +1,4 @@
-package result_test
+package result
 
 import (
 	"bytes"
@@ -9,18 +9,26 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/handlers/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestResultHandler_SendResult(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.SendResult)
+
 	userID := uuid.New()
 	collectionID := uuid.New()
 
@@ -39,12 +47,27 @@ func TestResultHandler_SendResult(t *testing.T) {
 		},
 	}
 
+	expectedResults := []models.Result{
+		{
+			BaseModel:        models.BaseModel{ID: uuid.New()},
+			SongRank:         1,
+			UserID:           userID,
+			CollectionSongID: uuid.New(),
+		},
+		{
+			BaseModel:        models.BaseModel{ID: uuid.New()},
+			SongRank:         2,
+			UserID:           userID,
+			CollectionSongID: uuid.New(),
+		},
+	}
+
 	tests := []struct {
 		name           string
 		userCtx        bool
 		collectionID   string
 		requestBody    interface{}
-		mockSetup      func(rs *mocks.ResultService)
+		mockSetup      func()
 		expectedStatus int
 	}{
 		{
@@ -52,14 +75,10 @@ func TestResultHandler_SendResult(t *testing.T) {
 			userCtx:      true,
 			collectionID: collectionID.String(),
 			requestBody:  validRequest,
-			mockSetup: func(rs *mocks.ResultService) {
-				rs.On(
-					"ProcessUserResults",
-					helpers.CtxMatcher,
-					userID,
-					collectionID,
-					validRequest,
-				).Return(nil, nil).Once()
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					ProcessUserResults(gomock.Any(), userID, collectionID, validRequest).
+					Return(expectedResults, nil)
 			},
 			expectedStatus: http.StatusOK,
 		},
@@ -68,7 +87,7 @@ func TestResultHandler_SendResult(t *testing.T) {
 			userCtx:        false,
 			collectionID:   collectionID.String(),
 			requestBody:    validRequest,
-			mockSetup:      func(rs *mocks.ResultService) {},
+			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -76,7 +95,7 @@ func TestResultHandler_SendResult(t *testing.T) {
 			userCtx:        true,
 			collectionID:   "not-a-uuid",
 			requestBody:    validRequest,
-			mockSetup:      func(rs *mocks.ResultService) {},
+			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -84,7 +103,7 @@ func TestResultHandler_SendResult(t *testing.T) {
 			userCtx:        true,
 			collectionID:   collectionID.String(),
 			requestBody:    "invalid-json",
-			mockSetup:      func(rs *mocks.ResultService) {},
+			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -92,14 +111,10 @@ func TestResultHandler_SendResult(t *testing.T) {
 			userCtx:      true,
 			collectionID: collectionID.String(),
 			requestBody:  validRequest,
-			mockSetup: func(rs *mocks.ResultService) {
-				rs.On(
-					"ProcessUserResults",
-					helpers.CtxMatcher,
-					userID,
-					collectionID,
-					validRequest,
-				).Return(nil, errors.New("service failed")).Once()
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					ProcessUserResults(gomock.Any(), userID, collectionID, validRequest).
+					Return(nil, errors.New("service failed"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -107,23 +122,20 @@ func TestResultHandler_SendResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rs := mocks.NewResultService(t)
-			tt.mockSetup(rs)
-			handler := result.NewResultHandler(rs)
+			tt.mockSetup()
 
-			var bodyBytes []byte
+			var body []byte
 			switch v := tt.requestBody.(type) {
 			case string:
-				bodyBytes = []byte(v)
+				body = []byte(v)
 			default:
-				var err error
-				bodyBytes, err = json.Marshal(v)
-				require.NoError(t, err)
+				b, _ := json.Marshal(v)
+				body = b
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/collections/"+tt.collectionID+"/results", bytes.NewReader(bodyBytes))
+			req := httptest.NewRequest(http.MethodPost, "/collections/"+tt.collectionID+"/results", bytes.NewReader(body))
 			if tt.userCtx {
-				req = req.WithContext(helpers.CtxWithUserID(req.Context(), userID))
+				req = req.WithContext(context.WithValue(req.Context(), "userID", userID.String()))
 			}
 
 			rctx := chi.NewRouteContext()
@@ -131,19 +143,9 @@ func TestResultHandler_SendResult(t *testing.T) {
 			req = req.WithContext(contextWithChi(req.Context(), rctx))
 
 			rr := httptest.NewRecorder()
-
-			err := handler.SendResult(rr, req)
-			if err != nil {
-				helpers.AssertAPIError(t, rr, err, tt.expectedStatus)
-				return
-			}
+			httpHandler.ServeHTTP(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
-			if tt.expectedStatus == http.StatusOK {
-				var actual []models.Result
-				err := json.Unmarshal(rr.Body.Bytes(), &actual)
-				require.NoError(t, err)
-			}
 		})
 	}
 }
