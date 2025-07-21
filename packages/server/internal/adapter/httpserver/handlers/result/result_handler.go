@@ -50,12 +50,12 @@ func (vh *ResultHandler) SendResult(w http.ResponseWriter, r *http.Request) erro
 		return helpers.BadRequest("invalid request body")
 	}
 
-	results, err := vh.resultService.ProcessUserResults(ctx, userUUID, collectionUUID, request)
+	_, err = vh.resultService.ProcessUserResults(ctx, userUUID, collectionUUID, request)
 	if err != nil {
 		return helpers.InternalServerError("failed to process results")
 	}
 
-	render.JSON(w, r, results)
+	render.Status(r, http.StatusCreated)
 	return nil
 }
 
