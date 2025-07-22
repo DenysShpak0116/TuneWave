@@ -346,6 +346,76 @@ func TestResultHandler_GetUserResults(t *testing.T) {
 	}
 }
 
+func TestResultHandler_GetCollectiveResults(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.GetCollectiveResults)
+
+	collectionID := uuid.New()
+	collectiveResults := map[string]any{
+		"results": []map[string]any{
+			{"songId": uuid.New().String(), "rank": 1},
+			{"songId": uuid.New().String(), "rank": 2},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		collectionID   string
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name:         "success",
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetCollectiveResults(gomock.Any(), collectionID).
+					Return(collectiveResults, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid collection id",
+			collectionID:   "not-a-uuid",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "service error",
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetCollectiveResults(gomock.Any(), collectionID).
+					Return(nil, errors.New("db error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			req := httptest.NewRequest(http.MethodGet, "/collections/"+tt.collectionID+"/collective-results", nil)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.collectionID)
+			req = req.WithContext(contextWithChi(req.Context(), rctx))
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
 func contextWithChi(ctx context.Context, rctx *chi.Context) context.Context {
 	return context.WithValue(ctx, chi.RouteCtxKey, rctx)
 }
