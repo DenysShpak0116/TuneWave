@@ -1,3 +1,5 @@
+//go:generate mockgen -source=file_storage.go -destination=../../adapter/repository/mocks/file_storage_mock.go -package=mocks -typed
+
 package port
 
 import (
