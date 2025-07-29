@@ -241,7 +241,7 @@ func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.
 		return nil
 	}
 
-	usersCollectionsDTOs := make([]dto.UserCollectionDTO, 0)
+	usersCollectionsDTOs := make([]dto.UserCollectionDTO, 0, len(userCollections))
 	for _, userCollection := range userCollections {
 		usersCollectionsDTOs = append(
 			usersCollectionsDTOs,
@@ -290,7 +290,7 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 		return helpers.InternalServerError("error getting collections")
 	}
 
-	collectionsDTOs := make([]dto.CollectionDTO, 0)
+	collectionsDTOs := make([]dto.CollectionDTO, 0, len(collections))
 	for _, collection := range collections {
 		collectionsDTOs = append(collectionsDTOs, *ch.dtoBuilder.BuildCollectionDTO(&collection))
 	}
@@ -346,7 +346,7 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 		return nil
 	}
 
-	collections := make([]models.Collection, len(userCollections))
+	collections := make([]models.Collection, 0, len(userCollections))
 	for i, userCollection := range userCollections {
 		collections[i] = userCollection.Collection
 	}
@@ -439,7 +439,7 @@ func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.R
 	if err != nil {
 		return helpers.InternalServerError("could not retrieve collection songs")
 	}
-	songDTOs := make([]dto.SongPreviewDTO, 0)
+	songDTOs := make([]dto.SongPreviewDTO, 0, len(collectionSongs))
 	for _, song := range collectionSongs {
 		songDTOs = append(songDTOs, *ch.dtoBuilder.BuildSongPreviewDTO(&song))
 	}

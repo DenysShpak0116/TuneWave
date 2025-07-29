@@ -67,7 +67,7 @@ type SongPreviewDTO struct {
 }
 
 func (b *DTOBuilder) BuildSongPreviewDTO(song *models.Song) *SongPreviewDTO {
-	songAuthors := make([]AuthorDTO, 0)
+	songAuthors := make([]AuthorDTO, 0, len(song.Authors))
 	for _, songAuthor := range song.Authors {
 		songAuthors = append(songAuthors, *b.BuildAuthorDTO(&songAuthor))
 	}

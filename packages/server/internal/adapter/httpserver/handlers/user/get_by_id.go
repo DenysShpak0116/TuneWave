@@ -67,7 +67,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NotFound("user not found")
 	}
 
-	chats := make([]ChatPreview, 0)
+	chats := make([]ChatPreview, 0, len(user.Chats1)+len(user.Chats2))
 	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats1, uh)
 	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats2, uh)
 	render.JSON(w, r, chats)
@@ -129,7 +129,7 @@ func (uh *UserHandler) GetUserCollections(w http.ResponseWriter, r *http.Request
 		return helpers.InternalServerError("could not find user")
 	}
 
-	collections := make([]dto.CollectionDTO, 0)
+	collections := make([]dto.CollectionDTO, 0, len(user.UserCollections))
 	for _, userCollection := range user.UserCollections {
 		collections = append(collections, *uh.dtoBuilder.BuildCollectionDTO(&userCollection.Collection))
 	}

@@ -66,7 +66,7 @@ func (vh *VectorHandler) GetSongVectors(w http.ResponseWriter, r *http.Request) 
 		return helpers.InternalServerError("failed to get collection song")
 	}
 
-	vectorDTOs := make([]dto.VectorDTO, 0)
+	vectorDTOs := make([]dto.VectorDTO, 0, len(collectionSong.Vectors))
 	for _, vector := range collectionSong.Vectors {
 		vectorDTOs = append(vectorDTOs, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
@@ -135,7 +135,7 @@ func (vh *VectorHandler) CreateSongVectors(w http.ResponseWriter, r *http.Reques
 		return helpers.InternalServerError("failed to get collection song")
 	}
 
-	vectorsDTO := make([]dto.VectorDTO, 0)
+	vectorsDTO := make([]dto.VectorDTO, 0, len(collectionSong.Vectors))
 	for _, vector := range collectionSong.Vectors {
 		vectorsDTO = append(vectorsDTO, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
@@ -201,7 +201,7 @@ func (vh *VectorHandler) UpdateSongVectors(w http.ResponseWriter, r *http.Reques
 		return helpers.InternalServerError("failed to get collection song")
 	}
 
-	vectorsDTO := make([]dto.VectorDTO, 0)
+	vectorsDTO := make([]dto.VectorDTO, 0, len(collectionSong.Vectors))
 	for _, vector := range collectionSong.Vectors {
 		vectorsDTO = append(vectorsDTO, vh.dtoBuilder.BuildVectorDTO(vector))
 	}
@@ -240,7 +240,7 @@ func (vh *VectorHandler) DeleteSongVectors(w http.ResponseWriter, r *http.Reques
 		return helpers.InternalServerError("failed to get collection song")
 	}
 
-	ids := make([]uuid.UUID, 0)
+	ids := make([]uuid.UUID, 0, len(collectionSong.Vectors))
 	for _, vector := range collectionSong.Vectors {
 		ids = append(ids, vector.ID)
 	}

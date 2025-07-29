@@ -87,7 +87,7 @@ func (vh *ResultHandler) DeleteUserResults(w http.ResponseWriter, r *http.Reques
 		return helpers.NotFound("no results found for user")
 	}
 
-	ids := make([]uuid.UUID, 0)
+	ids := make([]uuid.UUID, 0, len(userResults))
 	for _, result := range userResults {
 		ids = append(ids, result.ID)
 	}

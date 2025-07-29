@@ -40,12 +40,12 @@ type FullUserDTO struct {
 }
 
 func (b *DTOBuilder) BuildFullUserDTO(user *models.User) FullUserDTO {
-	follows := make([]UserDTO, 0)
+	follows := make([]UserDTO, 0, len(user.Follows))
 	for _, follow := range user.Follows {
 		follows = append(follows, *b.BuildUserDTO(&follow.User))
 	}
 
-	followers := make([]UserDTO, 0)
+	followers := make([]UserDTO, 0, len(user.Followers))
 	for _, follower := range user.Followers {
 		followers = append(followers, *b.BuildUserDTO(&follower.Follower))
 	}

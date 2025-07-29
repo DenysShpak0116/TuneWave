@@ -83,7 +83,7 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
 		return helpers.InternalServerError("failed to get songs")
 	}
 
-	songDTOs := make([]dto.SongPreviewDTO, 0)
+	songDTOs := make([]dto.SongPreviewDTO, 0, len(songs))
 	for _, song := range songs {
 		songDTOs = append(songDTOs, *sh.dtoBuilder.BuildSongPreviewDTO(&song))
 	}
@@ -301,7 +301,7 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	genrePreviews := make([]genrePreview, 0)
+	genrePreviews := make([]genrePreview, 0, len(genres))
 	for _, genre := range genres {
 		song, err := sh.songService.GetGenresMostPopularSong(ctx, genre)
 		if err != nil || song == nil {
@@ -354,7 +354,7 @@ func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) e
 		return helpers.InternalServerError("could not retrieve comments")
 	}
 
-	commentDTOs := make([]dto.CommentDTO, 0)
+	commentDTOs := make([]dto.CommentDTO, 0, len(comments))
 	for _, comment := range comments {
 		commentDTOs = append(commentDTOs, *sh.dtoBuilder.BuildCommentDTO(&comment))
 	}
