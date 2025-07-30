@@ -42,7 +42,7 @@ func main() {
 		log.Println("Starting server on port", cfg.Http.Port)
 
 		srv := &http.Server{
-			Addr:    "localhost:" + strconv.Itoa(cfg.Http.Port),
+			Addr:    ":" + strconv.Itoa(cfg.Http.Port),
 			Handler: router,
 		}
 
