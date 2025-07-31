@@ -30,8 +30,6 @@ func (qb *QueryBuilder[T]) Where(params any, args ...any) port.Query[T] {
 		qb.query = qb.query.Where(p)
 	case string:
 		qb.query = qb.query.Where(p, args...)
-	default:
-		fmt.Println("unsupported parameter type for Where")
 	}
 	return qb
 }

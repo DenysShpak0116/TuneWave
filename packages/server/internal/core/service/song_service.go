@@ -236,7 +236,6 @@ func (ss *SongService) saveSongFile(ctx context.Context, songParams services.Sav
 	}
 
 	duration, err := helpers.GetAudioDuration(&readSeekCloser{bytes.NewReader(buf.Bytes())})
-	fmt.Printf("Duration: %v\n", duration)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to get audio duration: %w", err)
 	}
