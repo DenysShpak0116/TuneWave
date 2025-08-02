@@ -48,7 +48,7 @@ func (as *AuthService) HandleForgotPassword(email string) (string, error) {
 	return token, nil
 }
 
-func (as *AuthService) HandleResetPassword(token, newPassword string) error {
+func (as *AuthService) HandleResetPassword(ctx context.Context, token, newPassword string) error {
 	foundToken, err := as.TokenRepository.NewQuery(context.Background()).
 		First("token = ?", token)
 	if err != nil {
@@ -68,6 +68,6 @@ func (as *AuthService) HandleResetPassword(token, newPassword string) error {
 		return err
 	}
 
-	_ = as.TokenRepository.Delete(context.TODO(), foundToken.ID)
+	_ = as.TokenRepository.Delete(ctx, foundToken.ID)
 	return nil
 }

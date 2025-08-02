@@ -2,7 +2,9 @@
 
 package services
 
+import "context"
+
 type AuthService interface {
 	HandleForgotPassword(email string) (string, error)
-	HandleResetPassword(token, newPassword string) error
+	HandleResetPassword(ctx context.Context, token, newPassword string) error
 }
