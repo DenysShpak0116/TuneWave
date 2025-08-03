@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -127,7 +128,7 @@ func TestResetPassword(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockAuthService.EXPECT().
-					HandleResetPassword("valid-token", "newpass123").
+					HandleResetPassword(context.Background(), "valid-token", "newpass123").
 					Return(nil)
 			},
 			expectedStatus: http.StatusOK,
@@ -146,7 +147,7 @@ func TestResetPassword(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockAuthService.EXPECT().
-					HandleResetPassword("bad-token", "newpass123").
+					HandleResetPassword(context.Background(), "bad-token", "newpass123").
 					Return(errors.New("invalid token"))
 			},
 			expectedStatus: http.StatusInternalServerError,
