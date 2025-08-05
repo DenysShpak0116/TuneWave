@@ -5,6 +5,10 @@ import (
 	"slices"
 )
 
+const (
+	default_limit = 20
+)
+
 type Option interface {
 	apply(*listParams)
 }
@@ -28,7 +32,7 @@ func (f optionFunc) apply(p *listParams) {
 func WithPagination(page, limit int) Option {
 	return optionFunc(func(p *listParams) {
 		if limit <= 0 || limit > 100 {
-			limit = 20
+			limit = default_limit
 		}
 		if page <= 0 {
 			page = 1
@@ -72,7 +76,7 @@ func Build(opts ...Option) *listParams {
 	}
 
 	if params.Limit >= 0 && params.Limit != -1 {
-		params.Limit = 20
+		params.Limit = default_limit
 	}
 	if params.Offset < 0 {
 		params.Offset = 0
