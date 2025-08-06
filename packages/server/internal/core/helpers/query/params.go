@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	default_limit = 20
+	DefaultLimit = 20,
+	MinimaLimit = 0,
+	MinimalPage = 0,
 )
 
 type Option interface {
@@ -31,10 +33,10 @@ func (f optionFunc) apply(p *listParams) {
 
 func WithPagination(page, limit int) Option {
 	return optionFunc(func(p *listParams) {
-		if limit <= 0 || limit > 100 {
-			limit = default_limit
+		if limit <= MinimalLimit || limit > 100 {
+			limit = DefaultLimit
 		}
-		if page <= 0 {
+		if page <= MinimalPage {
 			page = 1
 		}
 		p.Limit = limit
@@ -75,8 +77,8 @@ func Build(opts ...Option) *listParams {
 		opt.apply(params)
 	}
 
-	if params.Limit >= 0 && params.Limit != -1 {
-		params.Limit = default_limit
+	if params.Limit >= MinimalLimit && params.Limit != -1 {
+		params.Limit = DefaultLimit
 	}
 	if params.Offset < 0 {
 		params.Offset = 0
