@@ -8,7 +8,8 @@ import (
 const (
 	DefaultLimit = 20,
 	MinimaLimit = 0,
-	MinimalPage = 0,
+	MaxLimit = 100,
+	MinimalPage = 1,
 )
 
 type Option interface {
@@ -33,11 +34,11 @@ func (f optionFunc) apply(p *listParams) {
 
 func WithPagination(page, limit int) Option {
 	return optionFunc(func(p *listParams) {
-		if limit <= MinimalLimit || limit > 100 {
+		if limit <= MinimalLimit || limit > MaxLimit {
 			limit = DefaultLimit
 		}
-		if page <= MinimalPage {
-			page = 1
+		if page < MinimalPage {
+			page = MinimalPage
 		}
 		p.Limit = limit
 		p.Offset = (page - 1) * limit
