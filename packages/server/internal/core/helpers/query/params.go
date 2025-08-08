@@ -6,10 +6,10 @@ import (
 )
 
 const (
-	DefaultLimit = 20,
-	MinimaLimit = 0,
-	MaxLimit = 100,
-	MinimalPage = 1,
+	DefaultLimit = 20
+	MinimalLimit = 0
+	MaxLimit = 100
+	MinimalPage = 1
 )
 
 type Option interface {
