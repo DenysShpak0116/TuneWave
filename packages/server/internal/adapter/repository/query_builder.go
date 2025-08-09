@@ -138,7 +138,7 @@ func (qb *QueryBuilder[T]) Delete() error {
 	return qb.query.Delete(new(T)).Error
 }
 
-func (qb *QueryBuilder[T]) Join(query string, args ...interface{}) port.Query[T] {
+func (qb *QueryBuilder[T]) Join(query string, args ...any) port.Query[T] {
 	qb.query = qb.query.Joins(query, args...)
 	return qb
 }

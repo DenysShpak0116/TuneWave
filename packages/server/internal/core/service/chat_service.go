@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
@@ -20,6 +21,8 @@ func NewChatService(repo port.Repository[models.Chat]) services.ChatService {
 }
 
 func (cs *ChatService) GetOrCreatePrivateChat(ctx context.Context, user1, user2 uuid.UUID) (*models.Chat, error) {
+	cacheKey := fmt.Sprintf("chat:%d%d", user1, user2)
+	_ = cacheKey
 	chats, err := cs.Repository.NewQuery(ctx).
 		Where("(user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)", user1, user2, user2, user1).
 		Find()
