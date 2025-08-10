@@ -5,11 +5,13 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type GenericRepository[T any] struct {
 	db       *gorm.DB
+	redis *redis.Client // Add Redis client
 	preloads []string
 }
 
