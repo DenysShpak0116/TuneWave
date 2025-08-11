@@ -11,12 +11,15 @@ import (
 
 type GenericRepository[T any] struct {
 	db       *gorm.DB
-	redis *redis.Client // Add Redis client
+	redis    *redis.Client
 	preloads []string
 }
 
-func NewRepository[T any](db *gorm.DB) port.Repository[T] {
-	return &GenericRepository[T]{db: db}
+func NewRepository[T any](db *gorm.DB, redis *redis.Client) port.Repository[T] {
+	return &GenericRepository[T]{
+		db:    db,
+		redis: redis,
+	}
 }
 
 func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {

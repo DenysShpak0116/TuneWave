@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
-	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -17,13 +16,6 @@ type QueryBuilder[T any] struct {
 	repo     *GenericRepository[T]
 	query    *gorm.DB
 	preloads []string
-}
-
-func NewGenericRepository[T any](db *gorm.DB, redis *redis.Client) *GenericRepository[T] {
-	return &GenericRepository[T]{
-		db:    db,
-		redis: redis,
-	}
 }
 
 func (r *GenericRepository[T]) NewQuery(ctx context.Context) port.Query[T] {
@@ -91,7 +83,7 @@ func (qb *QueryBuilder[T]) First(params any, args ...any) (T, error) {
 	if err == nil && qb.repo.redis != nil {
 		data, err := json.Marshal(result)
 		if err == nil {
-			qb.repo.redis.Set(qb.ctx, cacheKey, data, 10*time.Minute) // Set TTL to 10 minutes
+			qb.repo.redis.Set(qb.ctx, cacheKey, data, 10*time.Minute)
 		}
 	}
 
@@ -122,10 +114,9 @@ func (qb *QueryBuilder[T]) Find() ([]T, error) {
 	}
 
 	if qb.repo.redis != nil {
-		// Cache the result
 		data, err := json.Marshal(entities)
 		if err == nil {
-			qb.repo.redis.Set(qb.ctx, cacheKey, data, 10*time.Minute) // Set TTL to 10 minutes
+			qb.repo.redis.Set(qb.ctx, cacheKey, data, 10*time.Minute)
 		}
 	}
 

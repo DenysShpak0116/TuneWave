@@ -21,6 +21,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
+	"github.com/redis/go-redis/v9"
 
 	"log/slog"
 
@@ -38,7 +39,13 @@ func BuildContainer() *dig.Container {
 
 	container.Provide(setupPrettySlog)
 	container.Provide(repository.NewGORMDB)
-
+	container.Provide(func(cfg *config.Config) *redis.Client {
+		return redis.NewClient(&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       0,
+		})
+	})
 	// repository
 	container.Provide(repository.NewFileStorage)
 	container.Provide(repository.NewRepository[models.User])
