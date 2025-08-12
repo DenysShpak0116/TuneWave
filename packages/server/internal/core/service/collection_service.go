@@ -141,8 +141,6 @@ func (cs *CollectionService) GetCollectionSongs(
 	search, sortBy, order string,
 	page, limit int,
 ) ([]models.Song, error) {
-	cacheKey := fmt.Sprintf("collectionSongs:%d", collectionID)
-	_ = cacheKey
 	offset := (page - 1) * limit
 
 	query := cs.CollectionSongRepository.NewQuery(ctx).

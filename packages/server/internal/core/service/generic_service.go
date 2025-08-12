@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
@@ -24,8 +23,6 @@ func (s *GenericService[T]) Create(ctx context.Context, entities ...*T) error {
 }
 
 func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*T, error) {
-	cacheKey := fmt.Sprintf("%d", id)
-	_ = cacheKey
 	entity, err := s.Repository.NewQuery(ctx).Preload(preloads...).First(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound
