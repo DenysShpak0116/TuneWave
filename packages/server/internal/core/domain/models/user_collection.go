@@ -6,8 +6,8 @@ type UserCollection struct {
 	BaseModel
 
 	UserID uuid.UUID `json:"userId"`
-	User   User      `json:"user" gorm:"constraint:OnDelete:CASCADE"`
+	User   User      `json:"user"`
 
 	CollectionID uuid.UUID  `json:"collectionId"`
-	Collection   Collection `json:"collection" gorm:"constraint:OnDelete:CASCADE"`
+	Collection   Collection `json:"collection"`
 }

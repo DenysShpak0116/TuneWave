@@ -7,7 +7,7 @@ type Tag struct {
 
 	Name string `json:"name"`
 
-	SongTags []SongTag
+	SongTags []SongTag `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type SongTag struct {

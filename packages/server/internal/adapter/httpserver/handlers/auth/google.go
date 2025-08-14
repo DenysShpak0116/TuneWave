@@ -1,27 +1,28 @@
 package auth
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/markbates/goth/gothic"
 )
 
 // GoogleAuth godoc
 // @Summary Start Google authentication
 // @Description Redirects to Google OAuth 2.0 login
-// @Tags Auth
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Router /auth/google [get]
-func (ah *AuthHandler) GoogleAuth(res http.ResponseWriter, req *http.Request) {
+func (ah *AuthHandler) GoogleAuth(res http.ResponseWriter, req *http.Request) error {
 	gothic.BeginAuthHandler(res, req)
+	return nil
 }
 
 type UserWithNickname struct {
@@ -33,35 +34,24 @@ type UserWithNickname struct {
 // GoogleCallback godoc
 // @Summary Google OAuth callback
 // @Description Handles the callback after Google authentication, fetches user info, and generates access and refresh tokens.
-// @Tags Auth
+// @Tags auth
 // @Accept  json
 // @Produce  json
 // @Param code query string true "Google OAuth code"
 // @Router /auth/google/callback [get]
-func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to get user data", err)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	users, err := ah.UserService.Where(ctx, &models.User{Email: user.Email})
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user data", err)
-		return
+		return helpers.BadRequest("failed to get user data")
 	}
 
 	var currentUser *models.User
-	if len(users) > 0 {
-		currentUser = &users[0]
-	} else {
+	fetchedUser, err := ah.userService.First(ctx, &models.User{Email: user.Email})
+	if errors.Is(err, service.ErrNotFound) {
 		nickname, err := fetchGoogleNickname(user.AccessToken)
 		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to fetch nickname", err)
-			return
+			return helpers.InternalServerError("failed to fetch nickname")
 		}
 		if nickname == "" {
 			nickname = user.Name
@@ -76,39 +66,31 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 			ProfileInfo:     "",
 			ProfilePicture:  user.AvatarURL,
 		}
-
-		if err := ah.UserService.Create(ctx, currentUser); err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to create user", err)
-			return
+		if err := ah.userService.Create(ctx, currentUser); err != nil {
+			return helpers.InternalServerError("failed to create user")
 		}
+	} else if err != nil {
+		return helpers.InternalServerError("failed to get user data")
+	} else {
+		currentUser = fetchedUser
 	}
 
 	accessToken, refreshToken, err := ah.GenerateTokens(currentUser.ID.String())
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
-		return
-	}
-
-	userDTO, err := ah.UserService.GetFullDTOByID(ctx, currentUser.ID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user DTO", err)
-		return
+		return helpers.InternalServerError("failed to generate tokens")
 	}
 
 	authData := map[string]any{
 		"accessToken":  accessToken,
 		"refreshToken": refreshToken,
-		"user":         userDTO,
+		"user":         ah.dtoBuilder.BuildUserDTO(currentUser),
 	}
-
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
-		return
+		return helpers.InternalServerError("failed to encode auth data")
 	}
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
-
 	http.SetCookie(w, &http.Cookie{
 		Name:     "authData",
 		Value:    authBase64,
@@ -120,6 +102,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "http://localhost:5173/", http.StatusSeeOther)
+	return nil
 }
 
 func fetchGoogleNickname(token string) (string, error) {
@@ -140,13 +123,12 @@ func fetchGoogleNickname(token string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response body:", resp.Body)
 	var userModel UserWithNickname
 	if err := json.NewDecoder(resp.Body).Decode(&userModel); err != nil {
 		return "", err
 	}
 
-	if userModel.Nicknames == nil || len(userModel.Nicknames) == 0 {
+	if len(userModel.Nicknames) == 0 {
 		return "", err
 	}
 	return userModel.Nicknames[0].Value, nil

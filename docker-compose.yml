@@ -1,0 +1,37 @@
+services:
+  frontend:
+    image: tunewave-frontend:latest
+    build:
+      context: ./packages/web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - tunewave-network
+  backend:
+    image: tunewave-backend:latest
+    build:
+      context: ./packages/server
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - tunewave-network
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - tunewave-network
+networks:
+  tunewave-network:
+    driver: bridge
+volumes:
+  redis-data:

@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type GenericService[T any] struct {
@@ -16,47 +18,66 @@ func NewGenericService[T any](repo port.Repository[T]) *GenericService[T] {
 	return &GenericService[T]{Repository: repo}
 }
 
-func (s *GenericService[T]) Create(ctx context.Context, entity *T) error {
-	return s.Repository.Add(ctx, entity)
+func (s *GenericService[T]) Create(ctx context.Context, entities ...*T) error {
+	return s.Repository.Add(ctx, entities...)
 }
 
 func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads ...string) (*T, error) {
-	query := s.Repository.NewQuery(ctx).Where("id = ?", id).Take(1)
-	for _, preload := range preloads {
-		query = query.Preload(preload)
+	entity, err := s.Repository.NewQuery(ctx).Preload(preloads...).First(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, ErrInternal
 	}
 
-	entities, err := query.Find()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(entities) == 0 {
-		return nil, fmt.Errorf("entity with id %s not found", id)
-	}
-	return &entities[0], nil
+	return &entity, nil
 }
 
-func (s *GenericService[T]) Where(ctx context.Context, params *T, preloads ...string) ([]T, error) {
-	query := s.Repository.NewQuery(ctx).Where(params)
-	for _, preload := range preloads {
-		query = query.Preload(preload)
-	}
+func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error) {
+	cfg := query.Build(opts...)
 
-	result, err := query.Find()
-	if err != nil {
-		return nil, err
+	query := s.Repository.NewQuery(ctx).Where(params).Order(cfg.SortBy)
+	if cfg.Limit != -1 {
+		query = query.Skip(cfg.Offset).Take(cfg.Limit)
+	}
+	result, err := query.Preload(cfg.Preloads...).Find()
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, ErrInternal
 	}
 
 	return result, nil
 }
 
-func (s *GenericService[T]) Update(ctx context.Context, entity *T) (*T, error) {
+func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	result, err := s.Repository.NewQuery(ctx).Preload(preloads...).First(params)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, ErrInternal
+	}
+
+	return &result, nil
+}
+
+func (s *GenericService[T]) Last(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	result, err := s.Repository.NewQuery(ctx).Preload(preloads...).Last(params)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, ErrInternal
+	}
+
+	return &result, nil
+}
+
+func (s *GenericService[T]) Update(ctx context.Context, entity *T) error {
 	return s.Repository.Update(ctx, entity)
 }
 
-func (s *GenericService[T]) Delete(ctx context.Context, id uuid.UUID) error {
-	return s.Repository.Delete(ctx, id)
+func (s *GenericService[T]) Delete(ctx context.Context, id ...uuid.UUID) error {
+	return s.Repository.Delete(ctx, id...)
 }
 
 func (s *GenericService[T]) CountWhere(ctx context.Context, params *T) (int64, error) {

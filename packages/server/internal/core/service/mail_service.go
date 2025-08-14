@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"gopkg.in/gomail.v2"
@@ -34,7 +32,6 @@ func (ms *MailService) SendEmail(to string, subject string, body string) error {
 	d := gomail.NewDialer(ms.SMTPServer, ms.SMTPPort, ms.FromMail, ms.FromPassword)
 	d.SSL = true
 	if err := d.DialAndSend(m); err != nil {
-		fmt.Printf("Failed to send email: %v\n", err)
 		return err
 	}
 	return nil

@@ -19,9 +19,9 @@ type Song struct {
 	UserID uuid.UUID `json:"userId"`
 	User   User
 
-	SongTags        []SongTag        `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	Comments        []Comment        `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	Authors         []SongAuthor     `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	CollectionSongs []CollectionSong `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
-	Reactions       []UserReaction   `gorm:"foreignKey:SongID;constraint:OnDelete:CASCADE"`
+	SongTags        []SongTag        `gorm:"constraint:OnDelete:CASCADE"`
+	Comments        []Comment        `gorm:"constraint:OnDelete:CASCADE"`
+	Authors         []SongAuthor     `gorm:"constraint:OnDelete:CASCADE"`
+	CollectionSongs []CollectionSong `gorm:"constraint:OnDelete:CASCADE"`
+	Reactions       []UserReaction   `gorm:"constraint:OnDelete:CASCADE"`
 }

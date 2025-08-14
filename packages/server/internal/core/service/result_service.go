@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -29,7 +28,7 @@ func NewResultService(repo port.Repository[models.Result], collectionSongReposit
 	}
 }
 
-func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collectionID uuid.UUID, request dto.SendResultRequest) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collectionID uuid.UUID, request dto.SendResultRequest) ([]models.Result, error) {
 	matrix, err := buildComparisonMatrix(request.Results)
 	if err != nil {
 		return nil, err
@@ -127,7 +126,7 @@ func (rs *ResultService) saveUserRanks(ctx context.Context, userID, collectionID
 		result := &models.Result{
 			UserID:           userID,
 			CollectionSongID: cs.ID,
-			SongRang:         rank,
+			SongRank:         rank,
 		}
 		if err := rs.Create(ctx, result); err != nil {
 			return err
@@ -136,7 +135,7 @@ func (rs *ResultService) saveUserRanks(ctx context.Context, userID, collectionID
 	return nil
 }
 
-func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collectionID uuid.UUID) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collectionID uuid.UUID) ([]models.Result, error) {
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
 	}).Find()
@@ -144,12 +143,12 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 		return nil, err
 	}
 
-	var userResults []dtos.UserResultsDTO
+	var userResults []models.Result
 	for _, cs := range collectionSongs {
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
-		}).Preload("CollectionSong").Preload("CollectionSong.Song").Preload("User").Find()
+		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
 		if err != nil {
 			return nil, err
 		}
@@ -158,19 +157,33 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 		}
 
 		result := results[0]
-		userResults = append(userResults, dtos.UserResultsDTO{
-			CollectionSongID: result.CollectionSongID,
-			SongID:           result.CollectionSong.SongID,
-			SongName:         result.CollectionSong.Song.Title,
-			UserID:           userID,
-			UserName:         result.User.Username,
-			SongRang:         result.SongRang,
+		userResults = append(userResults, models.Result{
+			BaseModel: models.BaseModel{
+				ID:        result.ID,
+				CreatedAt: result.CreatedAt,
+			},
+			SongRank: result.SongRank,
+			UserID:   userID,
+			User: models.User{
+				BaseModel: models.BaseModel{
+					ID:        userID,
+					CreatedAt: result.User.CreatedAt,
+				},
+				Username:       result.User.Username,
+				Email:          result.User.Email,
+				PasswordHash:   result.User.PasswordHash,
+				Role:           result.User.Role,
+				ProfileInfo:    result.User.ProfileInfo,
+				ProfilePicture: result.User.ProfilePicture,
+			},
+			CollectionSongID: collectionID,
+			CollectionSong:   cs,
 		})
 	}
 	return userResults, nil
 }
 
-func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionID uuid.UUID) ([]dtos.UserResultsDTO, error) {
+func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionID uuid.UUID) ([]models.Result, error) {
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
 	}).Find()
@@ -178,12 +191,12 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		return nil, err
 	}
 
-	userResults := make([]dtos.UserResultsDTO, 0)
+	userResults := make([]models.Result, 0)
 	for _, cs := range collectionSongs {
 		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
-		}).Preload("CollectionSong").Preload("CollectionSong.Song").Preload("User").Find()
+		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
 		if err != nil {
 			return nil, err
 		}
@@ -192,19 +205,32 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		}
 
 		result := results[0]
-		userResults = append(userResults, dtos.UserResultsDTO{
-			CollectionSongID: result.CollectionSongID,
-			SongID:           result.CollectionSong.SongID,
-			SongName:         result.CollectionSong.Song.Title,
-			UserID:           userID,
-			UserName:         result.User.Username,
-			SongRang:         result.SongRang,
+		userResults = append(userResults, models.Result{
+			BaseModel: models.BaseModel{
+				ID:        result.ID,
+				CreatedAt: result.CreatedAt,
+			},
+			SongRank: result.SongRank,
+			UserID:   userID,
+			User: models.User{
+				BaseModel: models.BaseModel{
+					ID:        userID,
+					CreatedAt: result.User.CreatedAt,
+				},
+				Username:       result.User.Username,
+				Email:          result.User.Email,
+				PasswordHash:   result.User.PasswordHash,
+				Role:           result.User.Role,
+				ProfileInfo:    result.User.ProfileInfo,
+				ProfilePicture: result.User.ProfilePicture,
+			},
+			CollectionSongID: collectionID,
+			CollectionSong:   cs,
 		})
 	}
 
 	return userResults, nil
 }
-
 
 func (rs *ResultService) GetCollectiveResults(ctx context.Context, collectionID uuid.UUID) (map[string]interface{}, error) {
 	collectionSongs, err := rs.fetchCollectionSongsWithResults(ctx, collectionID)
@@ -242,7 +268,7 @@ func (rs *ResultService) buildUserProfiles(collectionSongs []models.CollectionSo
 			if _, ok := userProfiles[username]; !ok {
 				userProfiles[username] = make(map[int][]string)
 			}
-			userProfiles[username][result.SongRang] = append(userProfiles[username][result.SongRang], cs.Song.Title)
+			userProfiles[username][result.SongRank] = append(userProfiles[username][result.SongRank], cs.Song.Title)
 		}
 	}
 	return songIDToName, userProfiles
@@ -288,12 +314,12 @@ func calculateCollectiveRanking(collectionSongs []models.CollectionSong, songIDT
 				var r1, r2 int
 				for _, r := range cs.Results {
 					if r.UserID == res.UserID {
-						r1 = r.SongRang
+						r1 = r.SongRank
 					}
 				}
 				for _, r := range cs2.Results {
 					if r.UserID == res.UserID {
-						r2 = r.SongRang
+						r2 = r.SongRank
 					}
 				}
 				if r1 < r2 {

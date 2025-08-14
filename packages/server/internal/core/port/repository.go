@@ -1,3 +1,5 @@
+//go:generate mockgen -source=repository.go -destination=../../adapter/repository/mocks/repository_mock.go -package=mocks -typed
+
 package port
 
 import (
@@ -7,7 +9,9 @@ import (
 )
 
 type Query[T any] interface {
-	Where(params interface{}, args ...interface{}) Query[T]
+	Where(params any, args ...any) Query[T]
+	First(params any, args ...any) (T, error)
+	Last(params any, args ...any) (T, error)
 	Order(order string) Query[T]
 	Skip(offset int) Query[T]
 	Take(limit int) Query[T]
@@ -15,14 +19,14 @@ type Query[T any] interface {
 	Delete() error
 	Find() ([]T, error)
 	Count() (int64, error)
-	Join(query string, args ...interface{}) Query[T]
+	Join(query string, args ...any) Query[T]
 	Group(group string) Query[T]
 }
 
 type Repository[T any] interface {
-	Add(ctx context.Context, entity *T) error
-	Update(ctx context.Context, entity *T) (*T, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	Add(ctx context.Context, entities ...*T) error
+	Update(ctx context.Context, entity *T) error
+	Delete(ctx context.Context, id ...uuid.UUID) error
 	Distinct(ctx context.Context, field string) []string
 	NewQuery(ctx context.Context) Query[T]
 }

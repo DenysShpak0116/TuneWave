@@ -29,7 +29,6 @@ import (
 // @description Provide the Bearer token in the format: "Bearer {token}"
 func main() {
 	container := digcontainer.BuildContainer()
-	// invoke container db
 	err := container.Invoke(func(db *gorm.DB) {
 		if err := repository.AutoMigrate(db); err != nil {
 			log.Fatalf("Migration failed: %s", err)
@@ -39,12 +38,11 @@ func main() {
 		log.Fatalf("Failed to invoke DB migration: %s", err)
 	}
 
-	//invoke http server
 	err = container.Invoke(func(router *chi.Mux, cfg *config.Config) {
 		log.Println("Starting server on port", cfg.Http.Port)
 
 		srv := &http.Server{
-			Addr:    "localhost:" + strconv.Itoa(cfg.Http.Port),
+			Addr:    ":" + strconv.Itoa(cfg.Http.Port),
 			Handler: router,
 		}
 
