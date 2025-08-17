@@ -36,8 +36,8 @@ type CreateCommentRequest struct {
 // @Description Creates a new comment for a song. Returns the created comment object.
 // @Tags comments
 // @Security     BearerAuth
-// @Accept  json
-// @Produce  json
+// @Accept json
+// @Produce json
 // @Param comment body CreateCommentRequest true "Comment creation data"
 // @Router /comments [post]
 func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) error {

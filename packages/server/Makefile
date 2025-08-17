@@ -1,5 +1,3 @@
-# Makefile for TuneWave server
-
 .PHONY: run
 
 run:
