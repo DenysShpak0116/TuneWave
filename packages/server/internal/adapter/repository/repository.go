@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+	"reflect"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/google/uuid"
@@ -10,24 +12,29 @@ import (
 )
 
 type GenericRepository[T any] struct {
-	db       *gorm.DB
-	redis    *redis.Client
-	preloads []string
+	db     *gorm.DB
+	redis  *redis.Client
+	logger *slog.Logger
 }
 
-func NewRepository[T any](db *gorm.DB, redis *redis.Client) port.Repository[T] {
+func NewRepository[T any](db *gorm.DB, redis *redis.Client, logger *slog.Logger) port.Repository[T] {
 	return &GenericRepository[T]{
-		db:    db,
-		redis: redis,
+		db:     db,
+		redis:  redis,
+		logger: logger,
 	}
 }
 
 func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {
-	err := r.db.WithContext(ctx).Create(entities).Error
-	if err != nil {
+	const op = "adapter.repository.Add"
+	r.logger.With(slog.String("op", op))
+
+	if err := r.db.WithContext(ctx).Create(entities).Error; err != nil {
+		r.logger.Error("error while creating %s, err: %s", reflect.TypeOf(entities).Name(), err.Error())
 		return err
 	}
 
+	r.logger.Info("%s succesfully created", reflect.TypeOf(entities).Name())
 	return nil
 }
 
