@@ -27,33 +27,41 @@ func NewRepository[T any](db *gorm.DB, redis *redis.Client, logger *slog.Logger)
 
 func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {
 	const op = "adapter.repository.Add"
-	r.logger.With(slog.String("op", op))
+	logger := r.logger.With(slog.String("op", op))
 
 	if err := r.db.WithContext(ctx).Create(entities).Error; err != nil {
-		r.logger.Error("error while creating %s, err: %s", reflect.TypeOf(entities).Name(), err.Error())
+		logger.Error("error while creating %s, err: %s", reflect.TypeOf(entities).Name(), err.Error())
 		return err
 	}
 
-	r.logger.Info("%s succesfully created", reflect.TypeOf(entities).Name())
+	logger.Info("%s successfully created", reflect.TypeOf(entities).Name())
 	return nil
 }
 
 func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
-	err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error
-	if err != nil {
+	const op = "adapter.repository.Update"
+	logger := r.logger.With(slog.String("op", op))
+
+	if err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error; err != nil {
+		logger.Error("error while updating %s, err: %s", reflect.TypeOf(entity).Name(), err.Error())
 		return err
 	}
 
+	logger.Info("%s successfully updated", reflect.TypeOf(entity).Name())
 	return nil
 }
 
 func (r *GenericRepository[T]) Delete(ctx context.Context, id ...uuid.UUID) error {
+	const op = "adapter.repository.Delete"
+	logger := r.logger.With(slog.String("op", op))
+
 	var entity T
-	err := r.db.WithContext(ctx).Delete(&entity, id).Error
-	if err != nil {
+	if err := r.db.WithContext(ctx).Delete(&entity, id).Error; err != nil {
+		logger.Error("error while deleting %s, err: %s", reflect.TypeOf(entity).Name(), err.Error())
 		return err
 	}
 
+	logger.Info("%s successfully deleted", reflect.TypeOf(entity).Name())
 	return nil
 }
 
