@@ -30,11 +30,17 @@ func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {
 	logger := r.logger.With(slog.String("op", op))
 
 	if err := r.db.WithContext(ctx).Create(entities).Error; err != nil {
-		logger.Error("error while creating %s, err: %s", reflect.TypeOf(entities).Name(), err.Error())
+		logger.Error(
+			"error while creating",
+			"object",
+			reflect.TypeOf(entities).Name(),
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 
-	logger.Info("%s successfully created", reflect.TypeOf(entities).Name())
+	logger.Info("successfully created", "object", reflect.TypeOf(entities).Name())
 	return nil
 }
 
@@ -43,11 +49,17 @@ func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	logger := r.logger.With(slog.String("op", op))
 
 	if err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error; err != nil {
-		logger.Error("error while updating %s, err: %s", reflect.TypeOf(entity).Name(), err.Error())
+		logger.Error(
+			"error while updating",
+			"object",
+			reflect.TypeOf(entity).Name(),
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 
-	logger.Info("%s successfully updated", reflect.TypeOf(entity).Name())
+	logger.Info("successfully updated", "object", reflect.TypeOf(entity).Name())
 	return nil
 }
 
@@ -57,11 +69,17 @@ func (r *GenericRepository[T]) Delete(ctx context.Context, id ...uuid.UUID) erro
 
 	var entity T
 	if err := r.db.WithContext(ctx).Delete(&entity, id).Error; err != nil {
-		logger.Error("error while deleting %s, err: %s", reflect.TypeOf(entity).Name(), err.Error())
+		logger.Error(
+			"error while deleting",
+			"object",
+			reflect.TypeOf(entity).Name(),
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 
-	logger.Info("%s successfully deleted", reflect.TypeOf(entity).Name())
+	logger.Info("successfully deleted", "object", reflect.TypeOf(entity).Name())
 	return nil
 }
 
@@ -69,8 +87,10 @@ func (r *GenericRepository[T]) Distinct(ctx context.Context, field string) []str
 	var fieldList []string
 
 	var entities []T
-	err := r.db.WithContext(ctx).Model(&entities).Distinct(field).Pluck(field, &fieldList).Error
-	if err != nil {
+	if err := r.db.WithContext(ctx).
+		Model(&entities).
+		Distinct(field).
+		Pluck(field, &fieldList).Error; err != nil {
 		return []string{}
 	}
 
