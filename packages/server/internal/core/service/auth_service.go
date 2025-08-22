@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -17,21 +18,29 @@ type AuthService struct {
 	MailService     services.MailService
 	TokenRepository port.Repository[models.Token]
 	UserService     services.UserService
+	logger          *slog.Logger
 }
 
 func NewAuthService(
 	mailService services.MailService,
 	tokenRepository port.Repository[models.Token],
 	userService services.UserService,
+	logger *slog.Logger,
 ) services.AuthService {
 	return &AuthService{
 		MailService:     mailService,
 		TokenRepository: tokenRepository,
 		UserService:     userService,
+		logger:          logger,
 	}
 }
 
 func (as *AuthService) HandleForgotPassword(email string) (string, error) {
+	const op = "core.service.AuthSerivce.HandleForgotPassword"
+	logger := as.logger.With(
+		slog.String("op", op),
+	)
+
 	token := uuid.New().String()
 	expiresAt := time.Now().Add(1 * time.Hour)
 
@@ -41,10 +50,12 @@ func (as *AuthService) HandleForgotPassword(email string) (string, error) {
 		ExpiresAt: expiresAt,
 	}
 	if err := as.TokenRepository.Add(context.Background(), newToken); err != nil {
+		logger.Error("Failed to add token", "err", err.Error())
 		return "", err
 	}
 
 	as.MailService.SendEmail(email, "Password Reset", fmt.Sprintf("Token for password: %s", token))
+	logger.Info("Token sent succesfully", "email", email)
 	return token, nil
 }
 
