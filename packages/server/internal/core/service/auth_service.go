@@ -60,9 +60,15 @@ func (as *AuthService) HandleForgotPassword(email string) (string, error) {
 }
 
 func (as *AuthService) HandleResetPassword(ctx context.Context, token, newPassword string) error {
+	const op = "core.service.AuthSerivce.HandleForgotPassword"
+	logger := as.logger.With(
+		slog.String("op", op),
+	)
+
 	foundToken, err := as.TokenRepository.NewQuery(context.Background()).
 		First("token = ?", token)
 	if err != nil {
+		logger.Error("Error while trying to find token", "err", err.Error())
 		return errors.New("invalid token")
 	}
 
@@ -72,13 +78,17 @@ func (as *AuthService) HandleResetPassword(ctx context.Context, token, newPasswo
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
+		logger.Error("Error while trying to save new password", "err", err.Error())
 		return err
 	}
 
 	if err = as.UserService.UpdateUserPassword(foundToken.Email, string(hash)); err != nil {
+		logger.Error("Error while trying to update users password", "err", err.Error())
 		return err
 	}
 
 	_ = as.TokenRepository.Delete(ctx, foundToken.ID)
+
+	logger.Info("Password successfully updated")
 	return nil
 }
