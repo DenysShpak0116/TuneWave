@@ -60,7 +60,7 @@ func (as *AuthService) HandleForgotPassword(email string) (string, error) {
 }
 
 func (as *AuthService) HandleResetPassword(ctx context.Context, token, newPassword string) error {
-	const op = "core.service.AuthSerivce.HandleForgotPassword"
+	const op = "core.service.AuthSerivce.HandleResetPassworde"
 	logger := as.logger.With(
 		slog.String("op", op),
 	)

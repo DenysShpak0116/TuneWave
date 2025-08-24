@@ -13,7 +13,7 @@ type MessageService struct {
 func NewMessageService(repo port.Repository[models.Message]) services.MessageService {
 	return &MessageService{
 		GenericService: GenericService[models.Message]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }

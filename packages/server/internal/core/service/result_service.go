@@ -22,7 +22,7 @@ type ResultService struct {
 func NewResultService(repo port.Repository[models.Result], collectionSongRepository port.Repository[models.CollectionSong]) services.ResultService {
 	return &ResultService{
 		GenericService: GenericService[models.Result]{
-			Repository: repo,
+			repository: repo,
 		},
 		CollectionSongRepository: collectionSongRepository,
 	}
@@ -145,7 +145,7 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 
 	var userResults []models.Result
 	for _, cs := range collectionSongs {
-		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
+		results, err := rs.repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
 		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
@@ -193,7 +193,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 
 	userResults := make([]models.Result, 0)
 	for _, cs := range collectionSongs {
-		results, err := rs.Repository.NewQuery(ctx).Where(&models.Result{
+		results, err := rs.repository.NewQuery(ctx).Where(&models.Result{
 			CollectionSongID: cs.ID,
 			UserID:           userID,
 		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()

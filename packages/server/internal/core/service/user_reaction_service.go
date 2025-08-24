@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
@@ -13,9 +14,9 @@ type UserReactionService struct {
 	*GenericService[models.UserReaction]
 }
 
-func NewUserReactionService(repo port.Repository[models.UserReaction]) services.UserReactionService {
+func NewUserReactionService(repo port.Repository[models.UserReaction], logger *slog.Logger) services.UserReactionService {
 	return &UserReactionService{
-		GenericService: NewGenericService(repo),
+		GenericService: NewGenericService(repo, logger),
 	}
 }
 

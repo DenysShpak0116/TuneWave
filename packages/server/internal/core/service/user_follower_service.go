@@ -13,7 +13,7 @@ type UserFollowerService struct {
 func NewUserFollowerService(repo port.Repository[models.UserFollower]) services.UserFollowerService {
 	return &UserFollowerService{
 		GenericService: GenericService[models.UserFollower]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }

@@ -13,7 +13,7 @@ type VectorService struct {
 func NewVectorService(repo port.Repository[models.Vector]) services.VectorService {
 	return &VectorService{
 		GenericService: GenericService[models.Vector]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }

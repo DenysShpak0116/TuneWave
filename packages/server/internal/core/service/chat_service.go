@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
@@ -13,14 +14,14 @@ type ChatService struct {
 	*GenericService[models.Chat]
 }
 
-func NewChatService(repo port.Repository[models.Chat]) services.ChatService {
+func NewChatService(repo port.Repository[models.Chat], logger *slog.Logger) services.ChatService {
 	return &ChatService{
-		GenericService: NewGenericService(repo),
+		GenericService: NewGenericService(repo, logger),
 	}
 }
 
 func (cs *ChatService) GetOrCreatePrivateChat(ctx context.Context, user1, user2 uuid.UUID) (*models.Chat, error) {
-	chats, err := cs.Repository.NewQuery(ctx).
+	chats, err := cs.repository.NewQuery(ctx).
 		Where("(user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)", user1, user2, user2, user1).
 		Find()
 	if err != nil {
@@ -31,7 +32,7 @@ func (cs *ChatService) GetOrCreatePrivateChat(ctx context.Context, user1, user2 
 	}
 
 	chat := &models.Chat{UserID1: user1, UserID2: user2}
-	if err = cs.Repository.Add(ctx, chat); err != nil {
+	if err = cs.repository.Add(ctx, chat); err != nil {
 		return nil, err
 	}
 

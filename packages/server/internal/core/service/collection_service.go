@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"time"
 
@@ -27,9 +28,10 @@ func NewCollectionService(
 	fileStorage port.FileStorage,
 	collectionSongRepository port.Repository[models.CollectionSong],
 	reactionRepository port.Repository[models.UserReaction],
+	logger *slog.Logger,
 ) services.CollectionService {
 	return &CollectionService{
-		GenericService:           NewGenericService(repo),
+		GenericService:           NewGenericService(repo, logger),
 		FileStorage:              fileStorage,
 		CollectionSongRepository: collectionSongRepository,
 		ReactionRepository:       reactionRepository,
@@ -53,14 +55,14 @@ func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParam
 		UserID:      collectionParams.UserID,
 	}
 
-	if err := cs.Repository.Add(ctx, collection); err != nil {
+	if err := cs.repository.Add(ctx, collection); err != nil {
 		return nil, err
 	}
 	return collection, nil
 }
 
 func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID, collectionParams services.UpdateCollectionParams) (*models.Collection, error) {
-	collections, err := cs.Repository.NewQuery(ctx).
+	collections, err := cs.repository.NewQuery(ctx).
 		Where("id = ?", id).
 		Find()
 	if err != nil {
@@ -90,7 +92,7 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 	collection.Title = collectionParams.Title
 	collection.Description = collectionParams.Description
 
-	if err := cs.Repository.Update(ctx, collection); err != nil {
+	if err := cs.repository.Update(ctx, collection); err != nil {
 		return nil, err
 	}
 	return collection, nil
@@ -119,7 +121,7 @@ func (cs *CollectionService) saveCoverFile(ctx context.Context, SaveFileParams S
 }
 
 func (cs *CollectionService) GetMany(ctx context.Context, limit, page int, sort, order string, preloads ...string) ([]models.Collection, error) {
-	query := cs.Repository.NewQuery(ctx).
+	query := cs.repository.NewQuery(ctx).
 		Take(limit).
 		Skip(page).
 		Order(fmt.Sprintf("%s %s", sort, order))

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -34,9 +35,10 @@ func NewSongService(
 	songTagRepository port.Repository[models.SongTag],
 	reactionsRepository port.Repository[models.UserReaction],
 	collectionSongReporitory port.Repository[models.CollectionSong],
+	logger *slog.Logger,
 ) services.SongService {
 	return &SongService{
-		GenericService:           NewGenericService(songRepo),
+		GenericService:           NewGenericService(songRepo, logger),
 		FileStorage:              fileStorage,
 		AuthorRepository:         authorRepo,
 		SongAuthorRepository:     songAuthorRepo,
@@ -48,7 +50,7 @@ func NewSongService(
 }
 
 func (ss *SongService) GetSongs(ctx context.Context, params services.SearchSongsParams, preloads ...string) ([]models.Song, error) {
-	query := ss.Repository.NewQuery(ctx).
+	query := ss.repository.NewQuery(ctx).
 		Join("LEFT JOIN song_authors ON song_authors.song_id = songs.id").
 		Join("LEFT JOIN authors ON authors.id = song_authors.author_id").
 		Where("songs.title ILIKE ? OR authors.name ILIKE ? OR LOWER(songs.genre) = LOWER(?)",
@@ -89,7 +91,7 @@ func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactio
 }
 
 func (ss *SongService) UpdateSong(ctx context.Context, songParams services.UpdateSongParams) error {
-	songs, err := ss.Repository.NewQuery(ctx).
+	songs, err := ss.repository.NewQuery(ctx).
 		Where("id = ?", songParams.SongID).
 		Find()
 	if err != nil {
@@ -153,7 +155,7 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 		song.CoverURL = url
 	}
 
-	if err := ss.Repository.Update(ctx, song); err != nil {
+	if err := ss.repository.Update(ctx, song); err != nil {
 		return err
 	}
 
@@ -207,7 +209,7 @@ func (ss *SongService) SaveSong(ctx context.Context, songParams services.SaveSon
 		UserID:     songParams.UserID,
 	}
 
-	if err := ss.Repository.Add(ctx, song); err != nil {
+	if err := ss.repository.Add(ctx, song); err != nil {
 		return nil, err
 	}
 
@@ -377,11 +379,11 @@ func (ss *SongService) IsReactedByUser(ctx context.Context, songID uuid.UUID, us
 }
 
 func (ss *SongService) GetGenres(ctx context.Context) []string {
-	return ss.Repository.Distinct(ctx, "genre")
+	return ss.repository.Distinct(ctx, "genre")
 }
 
 func (ss *SongService) GetGenresMostPopularSong(ctx context.Context, genre string) (*models.Song, error) {
-	songs, err := ss.Repository.NewQuery(ctx).
+	songs, err := ss.repository.NewQuery(ctx).
 		Join("JOIN user_reactions r ON r.song_id = songs.id").
 		Where("genre = ? AND r.type = ?", genre, "like").
 		Group("songs.id").
@@ -414,7 +416,7 @@ func (ss *SongService) Delete(ctx context.Context, songIDs ...uuid.UUID) error {
 			return err
 		}
 
-		if err := ss.Repository.Delete(ctx, song.ID); err != nil {
+		if err := ss.repository.Delete(ctx, song.ID); err != nil {
 			return fmt.Errorf("failed to delete song: %w", err)
 		}
 

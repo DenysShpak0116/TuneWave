@@ -13,7 +13,7 @@ type UserCollectionService struct {
 func NewUserCollectionService(repo port.Repository[models.UserCollection]) services.UserCollectionService {
 	return &UserCollectionService{
 		GenericService: GenericService[models.UserCollection]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }

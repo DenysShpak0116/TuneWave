@@ -13,7 +13,7 @@ type CollectionSongService struct {
 func NewCollectionSongService(repo port.Repository[models.CollectionSong]) services.CollectionSongService {
 	return &CollectionSongService{
 		GenericService: GenericService[models.CollectionSong]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }

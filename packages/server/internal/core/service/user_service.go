@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -28,9 +29,10 @@ func NewUserService(
 	songService services.SongService,
 	fileStorage port.FileStorage,
 	userFollowersRepository port.Repository[models.UserFollower],
+	logger *slog.Logger,
 ) services.UserService {
 	return &UserService{
-		GenericService:          NewGenericService(repo),
+		GenericService:          NewGenericService(repo, logger),
 		SongService:             songService,
 		FileStorage:             fileStorage,
 		UserFollowersRepository: userFollowersRepository,
@@ -42,7 +44,7 @@ func (us *UserService) GetUsers(
 	page int,
 	limit int,
 ) ([]models.User, error) {
-	users, err := us.Repository.NewQuery(ctx).Take(limit).Skip((page - 1) * limit).Preload("Followers").Find()
+	users, err := us.repository.NewQuery(ctx).Take(limit).Skip((page - 1) * limit).Preload("Followers").Find()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
@@ -51,7 +53,7 @@ func (us *UserService) GetUsers(
 }
 
 func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {
-	users, err := us.Repository.NewQuery(context.Background()).Where("email = ?", email).Find()
+	users, err := us.repository.NewQuery(context.Background()).Where("email = ?", email).Find()
 	if err != nil {
 		return err
 	}
@@ -69,7 +71,7 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 }
 
 func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.UpdatePfpParams) error {
-	user, err := us.Repository.NewQuery(ctx).First(pfpParams.UserID)
+	user, err := us.repository.NewQuery(ctx).First(pfpParams.UserID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrNotFound
@@ -98,7 +100,7 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 		user.ProfilePicture = url
 	}
 
-	if err := us.Repository.Update(ctx, &user); err != nil {
+	if err := us.repository.Update(ctx, &user); err != nil {
 		return err
 	}
 

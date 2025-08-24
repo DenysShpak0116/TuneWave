@@ -13,7 +13,7 @@ type CriterionService struct {
 func NewCriterionService(repo port.Repository[models.Criterion]) services.CriterionService {
 	return &CriterionService{
 		GenericService: GenericService[models.Criterion]{
-			Repository: repo,
+			repository: repo,
 		},
 	}
 }
