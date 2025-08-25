@@ -34,6 +34,7 @@ func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads 
 		slog.String("op", op),
 		slog.String("id", id.String()),
 	)
+
 	entity, err := s.repository.NewQuery(ctx).Preload(preloads...).First(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Error("Entity not found", "entity_type", fmt.Sprintf("%T", entity))
@@ -48,6 +49,11 @@ func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads 
 }
 
 func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error) {
+	const op = "core.service.GenericService.GetByID"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+
 	cfg := query.Build(opts...)
 
 	query := s.repository.NewQuery(ctx).Where(params).Order(cfg.SortBy)
@@ -56,11 +62,14 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.
 	}
 	result, err := query.Preload(cfg.Preloads...).Find()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.Error("Entities not found")
 		return nil, ErrNotFound
 	} else if err != nil {
+		logger.Error("Internal error while retrieving entities")
 		return nil, ErrInternal
 	}
 
+	logger.Info("Successfully retrieved")
 	return result, nil
 }
 
