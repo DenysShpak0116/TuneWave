@@ -74,13 +74,21 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.
 }
 
 func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	const op = "core.service.GenericService.GetByID"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+
 	result, err := s.repository.NewQuery(ctx).Preload(preloads...).First(params)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.Error("Entity is not found")
 		return nil, ErrNotFound
 	} else if err != nil {
+		logger.Error("Internal error while retrieving entity")
 		return nil, ErrInternal
 	}
 
+	logger.Info("Successfully retrieved")
 	return &result, nil
 }
 
