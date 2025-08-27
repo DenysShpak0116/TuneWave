@@ -49,7 +49,7 @@ func (s *GenericService[T]) GetByID(ctx context.Context, id uuid.UUID, preloads 
 }
 
 func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.Option) ([]T, error) {
-	const op = "core.service.GenericService.GetByID"
+	const op = "core.service.GenericService.Where"
 	logger := s.logger.With(
 		slog.String("op", op),
 	)
@@ -74,7 +74,7 @@ func (s *GenericService[T]) Where(ctx context.Context, params *T, opts ...query.
 }
 
 func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...string) (*T, error) {
-	const op = "core.service.GenericService.GetByID"
+	const op = "core.service.GenericService.First"
 	logger := s.logger.With(
 		slog.String("op", op),
 	)
@@ -93,13 +93,21 @@ func (s *GenericService[T]) First(ctx context.Context, params *T, preloads ...st
 }
 
 func (s *GenericService[T]) Last(ctx context.Context, params *T, preloads ...string) (*T, error) {
+	const op = "core.service.GenericService.Last"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+
 	result, err := s.repository.NewQuery(ctx).Preload(preloads...).Last(params)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.Error("Entity is not found")
 		return nil, ErrNotFound
 	} else if err != nil {
+		logger.Error("Internal error while retrieving entity")
 		return nil, ErrInternal
 	}
 
+	logger.Info("Successfully retrieved")
 	return &result, nil
 }
 
@@ -112,11 +120,18 @@ func (s *GenericService[T]) Delete(ctx context.Context, id ...uuid.UUID) error {
 }
 
 func (s *GenericService[T]) CountWhere(ctx context.Context, params *T) (int64, error) {
+	const op = "core.service.GenericService.CountWhere"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+
 	entities, err := s.repository.NewQuery(ctx).
 		Where(params).Count()
 	if err != nil {
+		logger.Error("Error counting by predicate", "err", err)
 		return 0, err
 	}
 
+	logger.Info("Successfully counted")
 	return entities, nil
 }
