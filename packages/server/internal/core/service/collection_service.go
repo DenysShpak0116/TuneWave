@@ -39,12 +39,18 @@ func NewCollectionService(
 }
 
 func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParams services.SaveCollectionParams) (*models.Collection, error) {
+	const op = "core.service.CollectionService.SaveCollection"
+	logger := cs.logger.With(
+		slog.String("op", op),
+	)
+
 	coverURL, err := cs.saveCoverFile(ctx, SaveFileParams{
 		UserID:   collectionParams.UserID,
 		Filename: collectionParams.CoverHeader.Filename,
 		File:     collectionParams.Cover,
 	})
 	if err != nil {
+		logger.Error("Error while saving collection", "err", err.Error())
 		return nil, err
 	}
 
@@ -54,26 +60,36 @@ func (cs *CollectionService) SaveCollection(ctx context.Context, collectionParam
 		CoverURL:    coverURL,
 		UserID:      collectionParams.UserID,
 	}
-
 	if err := cs.repository.Add(ctx, collection); err != nil {
+		logger.Error("Error while saving collection", "err", err.Error())
 		return nil, err
 	}
+
+	logger.Info("Collecting saved successfully")
 	return collection, nil
 }
 
 func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID, collectionParams services.UpdateCollectionParams) (*models.Collection, error) {
+	const op = "core.service.CollectionService.SaveCollection"
+	logger := cs.logger.With(
+		slog.String("op", op),
+	)
+
 	collections, err := cs.repository.NewQuery(ctx).
 		Where("id = ?", id).
 		Find()
 	if err != nil {
+		logger.Error("Error while updating collection", "err", err)
 		return nil, err
 	}
 	if len(collections) == 0 {
+		logger.Error("Error to find collection")
 		return nil, fmt.Errorf("collection with id %s not found", id)
 	}
 	collection := &collections[0]
 
 	if err := cs.FileStorage.Remove(ctx, helpers.ExtractS3Key(collection.CoverURL)); err != nil {
+		logger.Error("Error removing old collection's cover", "err", err.Error())
 		return nil, err
 	}
 
@@ -84,6 +100,7 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 			File:     collectionParams.Cover,
 		})
 		if err != nil {
+			logger.Error("Error adding new cover to collection", "err", err.Error())
 			return nil, err
 		}
 		collection.CoverURL = coverURL
@@ -93,8 +110,11 @@ func (cs *CollectionService) UpdateCollection(ctx context.Context, id uuid.UUID,
 	collection.Description = collectionParams.Description
 
 	if err := cs.repository.Update(ctx, collection); err != nil {
+		logger.Error("Error updaing collection", "err", err.Error())
 		return nil, err
 	}
+
+	logger.Info("Collectiong successfully updated", "id", id.String())
 	return collection, nil
 }
 
