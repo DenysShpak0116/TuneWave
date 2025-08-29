@@ -163,6 +163,11 @@ func (cs *CollectionService) GetCollectionSongs(
 	search, sortBy, order string,
 	page, limit int,
 ) ([]models.Song, error) {
+	const op = "core.service.CollectionService.SaveCollection"
+	logger := cs.logger.With(
+		slog.String("op", op),
+	)
+
 	offset := (page - 1) * limit
 
 	query := cs.CollectionSongRepository.NewQuery(ctx).
@@ -201,6 +206,7 @@ func (cs *CollectionService) GetCollectionSongs(
 
 	collectionSongs, err := query.Find()
 	if err != nil {
+		logger.Error("Error while trying to find collection songs", "collectionId", collectionID.String(), "err", err.Error())
 		return nil, err
 	}
 
@@ -209,5 +215,6 @@ func (cs *CollectionService) GetCollectionSongs(
 		songs = append(songs, collectionSong.Song)
 	}
 
+	logger.Info("Collection songs found", "collectionId", collectionID.String())
 	return songs, nil
 }
