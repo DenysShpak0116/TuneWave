@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"math"
 	"sort"
 	"strconv"
@@ -19,18 +20,25 @@ type ResultService struct {
 	CollectionSongRepository port.Repository[models.CollectionSong]
 }
 
-func NewResultService(repo port.Repository[models.Result], collectionSongRepository port.Repository[models.CollectionSong]) services.ResultService {
+func NewResultService(repo port.Repository[models.Result], collectionSongRepository port.Repository[models.CollectionSong], logger *slog.Logger) services.ResultService {
 	return &ResultService{
 		GenericService: GenericService[models.Result]{
 			repository: repo,
+			logger:     logger,
 		},
 		CollectionSongRepository: collectionSongRepository,
 	}
 }
 
 func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collectionID uuid.UUID, request dto.SendResultRequest) ([]models.Result, error) {
+	const op = "core.service.ResultService.ProcessUserResults"
+	logger := rs.logger.With(
+		slog.String("op", op),
+	)
+
 	matrix, err := buildComparisonMatrix(request.Results)
 	if err != nil {
+		logger.Error("Failed to build comparison matrix", "err", err.Error())
 		return nil, err
 	}
 
@@ -38,9 +46,11 @@ func (rs *ResultService) ProcessUserResults(ctx context.Context, userID, collect
 	ranks := rankSongsByBadCounts(badCounts)
 
 	if err := rs.saveUserRanks(ctx, userID, collectionID, ranks); err != nil {
+		logger.Error("Failed to save user ranks", "err", err.Error())
 		return nil, err
 	}
 
+	logger.Info("User results proceeded", "userID", userID.String())
 	return rs.buildUserResultsDTO(ctx, userID, collectionID)
 }
 
