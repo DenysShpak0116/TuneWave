@@ -194,10 +194,16 @@ func (rs *ResultService) buildUserResultsDTO(ctx context.Context, userID, collec
 }
 
 func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionID uuid.UUID) ([]models.Result, error) {
+	const op = "core.service.ResultService.GetUserResults"
+	logger := rs.logger.With(
+		slog.String("op", op),
+	)
+
 	collectionSongs, err := rs.CollectionSongRepository.NewQuery(ctx).Where(&models.CollectionSong{
 		CollectionID: collectionID,
 	}).Find()
 	if err != nil {
+		logger.Error("Failed to get collection songs", "err", err.Error())
 		return nil, err
 	}
 
@@ -208,6 +214,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 			UserID:           userID,
 		}).Preload("CollectionSong", "CollectionSong.Song", "User").Find()
 		if err != nil {
+			logger.Error("Failed to get user results", "err", err.Error())
 			return nil, err
 		}
 		if len(results) == 0 {
@@ -239,6 +246,7 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 		})
 	}
 
+	logger.Info("User results successfully retrieved", "userID", userID.String())
 	return userResults, nil
 }
 
