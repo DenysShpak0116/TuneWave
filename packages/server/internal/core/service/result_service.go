@@ -250,10 +250,16 @@ func (rs *ResultService) GetUserResults(ctx context.Context, userID, collectionI
 	return userResults, nil
 }
 
-func (rs *ResultService) GetCollectiveResults(ctx context.Context, collectionID uuid.UUID) (map[string]interface{}, error) {
+func (rs *ResultService) GetCollectiveResults(ctx context.Context, collectionID uuid.UUID) (map[string]any, error) {
+	const op = "core.service.ResultService.GetCollectiveResults"
+	logger := rs.logger.With(
+		slog.String("op", op),
+	)
+
 	collectionSongs, err := rs.fetchCollectionSongsWithResults(ctx, collectionID)
 	if err != nil || len(collectionSongs) == 0 {
-		return map[string]interface{}{}, err
+		logger.Error("Error get collection songs with results", "collectionID", collectionID.String(), "err", err.Error())
+		return map[string]any{}, err
 	}
 
 	songIDToName, profiles := rs.buildUserProfiles(collectionSongs)
@@ -262,7 +268,8 @@ func (rs *ResultService) GetCollectiveResults(ctx context.Context, collectionID 
 	collectiveRank := calculateCollectiveRanking(collectionSongs, songIDToName)
 	profileTable := buildProfileTable(groupedProfiles)
 
-	return map[string]interface{}{
+	logger.Info("Successfully got collective results", "collectionID", collectionID.String())
+	return map[string]any{
 		"profileTable":   profileTable,
 		"collectiveRank": collectiveRank,
 	}, nil
