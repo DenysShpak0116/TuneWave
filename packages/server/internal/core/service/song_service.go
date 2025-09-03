@@ -50,6 +50,11 @@ func NewSongService(
 }
 
 func (ss *SongService) GetSongs(ctx context.Context, params services.SearchSongsParams, preloads ...string) ([]models.Song, error) {
+	const op = "core.service.SongService.GetSongs"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	query := ss.repository.NewQuery(ctx).
 		Join("LEFT JOIN song_authors ON song_authors.song_id = songs.id").
 		Join("LEFT JOIN authors ON authors.id = song_authors.author_id").
@@ -63,12 +68,14 @@ func (ss *SongService) GetSongs(ctx context.Context, params services.SearchSongs
 
 	songs, err := query.Find()
 	if err != nil {
+		logger.Error("Failed to find songs", "err", err.Error())
 		return nil, err
 	}
 	if len(songs) == 0 {
 		return []models.Song{}, nil
 	}
 
+	logger.Info("Songs successfully retrieved")
 	return songs, nil
 }
 
