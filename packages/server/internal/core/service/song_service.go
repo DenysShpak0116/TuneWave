@@ -88,12 +88,20 @@ func (r *readSeekCloser) Close() error {
 }
 
 func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error) {
+	const op = "core.service.SongService.ReactionsCount"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	reactionAmount, err := ss.ReactionsRepository.NewQuery(ctx).
 		Where("song_id = ? AND type = ?", id, reactionType).
 		Count()
 	if err != nil {
+		logger.Error("Failed to get reaction count", "songID", id.String(), "err", err.Error())
 		return 0, err
 	}
+
+	logger.Info("Successfully got reaction count", "songID", id.String())
 	return reactionAmount, nil
 }
 
