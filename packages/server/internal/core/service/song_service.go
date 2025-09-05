@@ -398,6 +398,11 @@ func (ss *SongService) GetGenres(ctx context.Context) []string {
 }
 
 func (ss *SongService) GetGenresMostPopularSong(ctx context.Context, genre string) (*models.Song, error) {
+	const op = "core.service.SongService.GetGenresMostPopularSong"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	songs, err := ss.repository.NewQuery(ctx).
 		Join("JOIN user_reactions r ON r.song_id = songs.id").
 		Where("genre = ? AND r.type = ?", genre, "like").
@@ -406,13 +411,16 @@ func (ss *SongService) GetGenresMostPopularSong(ctx context.Context, genre strin
 		Take(1).
 		Find()
 	if err != nil {
+		logger.Error("Failed to retrieve most songs for the genre", "genre", genre, "err", err.Error())
 		return nil, err
 	}
 
 	if len(songs) == 0 {
+		logger.Info("Songs successfully retrieved", "genre", genre)
 		return nil, nil
 	}
 
+	logger.Info("Songs successfully retrieved", "genre", genre)
 	return &songs[0], nil
 }
 
