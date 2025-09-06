@@ -106,10 +106,16 @@ func (ss *SongService) ReactionsCount(ctx context.Context, id uuid.UUID, reactio
 }
 
 func (ss *SongService) UpdateSong(ctx context.Context, songParams services.UpdateSongParams) error {
+	const op = "core.service.SongSongService.UpdateSong"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	songs, err := ss.repository.NewQuery(ctx).
 		Where("id = ?", songParams.SongID).
 		Find()
 	if err != nil {
+		logger.Error("Failed to find song to update", "id", songParams.SongID.String())
 		return fmt.Errorf("failed to find song: %w", err)
 	}
 	if len(songs) == 0 {
@@ -127,22 +133,26 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 	if songParams.Song != nil && songParams.SongHeader != nil {
 		oldSongKey := helpers.ExtractS3Key(song.SongURL)
 		if err := ss.FileStorage.Remove(ctx, oldSongKey); err != nil {
+			logger.Error("Failed to remove old song file", "key", oldSongKey, "err", err.Error())
 			return fmt.Errorf("failed to remove old song file: %w", err)
 		}
 
 		key := fmt.Sprintf("music/%s/%d-%s", song.UserID, time.Now().Unix(), songParams.SongHeader.Filename)
 		var buf bytes.Buffer
 		if _, err := io.Copy(&buf, songParams.Song); err != nil {
+			logger.Error("Failed to create new song file", "id", song.ID.String(), "err", err.Error())
 			return err
 		}
 
 		url, err := ss.FileStorage.Save(ctx, key, buf)
 		if err != nil {
+			logger.Error("Failed to save new song file", "id", song.ID.String(), "err", err.Error())
 			return err
 		}
 
 		duration, err := helpers.GetAudioDuration(&readSeekCloser{bytes.NewReader(buf.Bytes())})
 		if err != nil {
+			logger.Error("Failed to get song duration", "id", song.ID.String(), "err", err.Error())
 			return fmt.Errorf("failed to get audio duration: %w", err)
 		}
 
@@ -153,17 +163,20 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 	if songParams.Cover != nil && songParams.CoverHeader != nil {
 		oldCoverKey := helpers.ExtractS3Key(song.SongURL)
 		if err := ss.FileStorage.Remove(ctx, oldCoverKey); err != nil {
+			logger.Error("Failed to removeold Cover", "key", oldCoverKey, "err", err.Error())
 			return fmt.Errorf("failed to remove old cover file: %w", err)
 		}
 
 		key := fmt.Sprintf("covers/%s/%d-%s", song.UserID, time.Now().Unix(), songParams.CoverHeader.Filename)
 		var buf bytes.Buffer
 		if _, err := io.Copy(&buf, songParams.Cover); err != nil {
+			logger.Error("Failed to create new cover file", "key", oldCoverKey, "err", err.Error())
 			return err
 		}
 
 		url, err := ss.FileStorage.Save(ctx, key, buf)
 		if err != nil {
+			logger.Error("Failed to save new cover file", "key", key, "err", err.Error())
 			return err
 		}
 
@@ -171,6 +184,7 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 	}
 
 	if err := ss.repository.Update(ctx, song); err != nil {
+		logger.Error("Failed to update song", "id", song.ID.String(), "err", err.Error())
 		return err
 	}
 
