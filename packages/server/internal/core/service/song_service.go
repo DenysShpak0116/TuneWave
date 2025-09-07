@@ -193,6 +193,7 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 			Where("song_id = ?", song.ID).
 			Delete()
 		if err != nil {
+			logger.Error("Failed to update Artists", "err", err.Error())
 			return fmt.Errorf("failed to delete old song authors: %w", err)
 		}
 
