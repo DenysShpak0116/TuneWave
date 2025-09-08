@@ -189,43 +189,52 @@ func (ss *SongService) UpdateSong(ctx context.Context, songParams services.Updat
 	}
 
 	if songParams.Artists != nil {
-		err := ss.SongAuthorRepository.NewQuery(ctx).
+		if err := ss.SongAuthorRepository.NewQuery(ctx).
 			Where("song_id = ?", song.ID).
-			Delete()
-		if err != nil {
-			logger.Error("Failed to update Artists", "err", err.Error())
+			Delete(); err != nil {
+			logger.Error("Failed to delete old song Artists", "id", song.ID.String(), "err", err.Error())
 			return fmt.Errorf("failed to delete old song authors: %w", err)
 		}
 
 		if err := ss.associateAuthors(ctx, song, songParams.Artists); err != nil {
+			logger.Error("Failed to associate authors with song", "id", song.ID.String(), "err", err.Error())
 			return err
 		}
 	}
 
 	if songParams.Tags != nil {
-		err := ss.SongTagsRepository.NewQuery(ctx).
+		if err := ss.SongTagsRepository.NewQuery(ctx).
 			Where("song_id = ?", song.ID).
-			Delete()
-		if err != nil {
+			Delete(); err != nil {
+			logger.Error("Failed to delete old song tags", "id", song.ID.String(), "err", err.Error())
 			return fmt.Errorf("failed to delete old song tags: %w", err)
 		}
 
 		if err := ss.associateTags(ctx, song, songParams.Tags); err != nil {
+			logger.Error("Failed to associate tags with song", "id", song.ID.String(), "err", err.Error())
 			return err
 		}
 	}
 
+	logger.Info("Song updated successfully", "id", song.ID.String())
 	return nil
 }
 
 func (ss *SongService) SaveSong(ctx context.Context, songParams services.SaveSongParams) (*models.Song, error) {
+	const op = "core.service.SongService.SaveSong"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	songURL, duration, err := ss.saveSongFile(ctx, songParams)
 	if err != nil {
+		logger.Error("Failed to save song file", "err", err.Error())
 		return nil, err
 	}
 
 	coverURL, err := ss.saveCoverFile(ctx, songParams)
 	if err != nil {
+		logger.Error("Failed to save cover file", "err", err.Error())
 		return nil, err
 	}
 
@@ -240,17 +249,21 @@ func (ss *SongService) SaveSong(ctx context.Context, songParams services.SaveSon
 	}
 
 	if err := ss.repository.Add(ctx, song); err != nil {
+		logger.Error("Failed to save song", "err", err.Error())
 		return nil, err
 	}
 
 	if err := ss.associateAuthors(ctx, song, songParams.Artists); err != nil {
+		logger.Error("Failed to associate song authors", "err", err.Error())
 		return nil, err
 	}
 
 	if err := ss.associateTags(ctx, song, songParams.Tags); err != nil {
+		logger.Error("Failed to associate song tags", "err", err.Error())
 		return nil, err
 	}
 
+	logger.Info("Song saved successfully")
 	return song, nil
 }
 
