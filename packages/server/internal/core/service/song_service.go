@@ -13,6 +13,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
+	"gorm.io/gorm/logger"
 )
 
 type SongService struct {
@@ -268,6 +269,7 @@ func (ss *SongService) SaveSong(ctx context.Context, songParams services.SaveSon
 }
 
 func (ss *SongService) saveSongFile(ctx context.Context, songParams services.SaveSongParams) (string, time.Duration, error) {
+
 	key := fmt.Sprintf("music/%s/%d-%s", songParams.UserID, time.Now().Unix(), songParams.SongHeader.Filename)
 
 	var buf bytes.Buffer
@@ -364,10 +366,16 @@ func (ss *SongService) associateTags(ctx context.Context, song *models.Song, tag
 }
 
 func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error) {
+	const op = "core.service.SongService.SetReaction"
+	logger := ss.logger.With(
+		slog.String("op", op),
+	)
+
 	reactions, err := ss.ReactionsRepository.NewQuery(ctx).
 		Where("song_id = ? AND user_id = ?", songID, userID).
 		Find()
 	if err != nil {
+		logger.Error("Failed to get song reactions", "id", songID.String(), "err", err.Error())
 		return 0, 0, err
 	}
 
@@ -378,17 +386,20 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 			Type:   reactionType,
 		}
 		if err := ss.ReactionsRepository.Add(ctx, &reaction); err != nil {
+			logger.Error("Failed to add reaction", "id", songID.String(), "err", err.Error())
 			return 0, 0, err
 		}
 	} else {
 		existingReaction := reactions[0]
 		if existingReaction.Type == reactionType {
 			if err := ss.ReactionsRepository.Delete(ctx, existingReaction.ID); err != nil {
+				logger.Error("Failed to delete reaction", "id", songID.String(), "err", err.Error())
 				return 0, 0, err
 			}
 		} else {
 			existingReaction.Type = reactionType
 			if err := ss.ReactionsRepository.Update(ctx, &existingReaction); err != nil {
+				logger.Error("Failed to update song reaction", "id", songID.String(), "err", err.Error())
 				return 0, 0, err
 			}
 		}
@@ -396,13 +407,16 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 
 	dislikes, err := ss.ReactionsCount(ctx, songID, "dislike")
 	if err != nil {
+		logger.Error("Failed to get song dislikes", "id", songID.String(), "err", err.Error())
 		return 0, 0, err
 	}
 	likes, err := ss.ReactionsCount(ctx, songID, "like")
 	if err != nil {
+		logger.Error("Failed to get song likes", "id", songID.String(), "err", err.Error())
 		return 0, 0, err
 	}
 
+	logger.Info("Song reaction successfully proceeded", "id", songID.String())
 	return likes, dislikes, nil
 }
 
