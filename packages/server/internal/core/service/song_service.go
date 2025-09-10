@@ -13,7 +13,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
-	"gorm.io/gorm/logger"
 )
 
 type SongService struct {

@@ -21,13 +21,21 @@ func NewUserReactionService(repo port.Repository[models.UserReaction], logger *s
 }
 
 func (svc *UserReactionService) GetSongLikes(ctx context.Context, songID uuid.UUID) int64 {
+	const op = "core.service.UserReactionService.GetSongLikes"
+	logger := svc.logger.With(
+		slog.String("op", op),
+	)
+
 	likes, err := svc.CountWhere(ctx, &models.UserReaction{
 		Type:   "like",
 		SongID: songID,
 	})
 	if err != nil {
+		logger.Error("Failed to get song likes", "id", songID.String(), "err", err.Error())
 		likes = 0
 	}
+
+	logger.Info("Song likes successfully retrieved", "id", songID.String(), "err", err.Error())
 	return likes
 }
 
