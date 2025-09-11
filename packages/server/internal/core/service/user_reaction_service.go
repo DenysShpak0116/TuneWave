@@ -40,12 +40,20 @@ func (svc *UserReactionService) GetSongLikes(ctx context.Context, songID uuid.UU
 }
 
 func (svc *UserReactionService) GetSongDislikes(ctx context.Context, songID uuid.UUID) int64 {
+	const op = "core.service.UserReactionService.GetSongDislikes"
+	logger := svc.logger.With(
+		slog.String("op", op),
+	)
+
 	dislikes, err := svc.CountWhere(ctx, &models.UserReaction{
 		Type:   "dislike",
 		SongID: songID,
 	})
 	if err != nil {
+		logger.Error("Failed to get song dislikes", "id", songID.String(), "err", err.Error())
 		dislikes = 0
 	}
+
+	logger.Info("Song dislikes successfully retrieved", "id", songID.String(), "err", err.Error())
 	return dislikes
 }
