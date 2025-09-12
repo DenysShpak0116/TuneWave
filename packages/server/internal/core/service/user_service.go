@@ -44,11 +44,18 @@ func (us *UserService) GetUsers(
 	page int,
 	limit int,
 ) ([]models.User, error) {
+	const op = "core.service.UserService.GetUsers"
+	logger := us.logger.With(
+		slog.String("op", op),
+	)
+
 	users, err := us.repository.NewQuery(ctx).Take(limit).Skip((page - 1) * limit).Preload("Followers").Find()
 	if err != nil {
+		logger.Error("Failed to get users", "err", err.Error())
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
 
+	logger.Info("Users successfully retrieved")
 	return users, nil
 }
 
