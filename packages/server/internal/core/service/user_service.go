@@ -60,8 +60,14 @@ func (us *UserService) GetUsers(
 }
 
 func (us *UserService) UpdateUserPassword(email string, hashedPassword string) error {
+	const op = "core.service.UserService.UpdateUserPassword"
+	logger := us.logger.With(
+		slog.String("op", op),
+	)
+
 	users, err := us.repository.NewQuery(context.Background()).Where("email = ?", email).Find()
 	if err != nil {
+		logger.Error("Failed to get user by email", "email", email, "err", err.Error())
 		return err
 	}
 	if len(users) == 0 {
@@ -72,8 +78,11 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 	user.PasswordHash = hashedPassword
 
 	if err := us.Update(context.TODO(), user); err != nil {
+		logger.Error("Failed to update user password", "email", email, "err", err.Error())
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
+
+	logger.Info("User password successfully updated", "email", email)
 	return nil
 }
 
