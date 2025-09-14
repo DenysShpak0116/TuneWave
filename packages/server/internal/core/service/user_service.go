@@ -87,8 +87,14 @@ func (us *UserService) UpdateUserPassword(email string, hashedPassword string) e
 }
 
 func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.UpdatePfpParams) error {
+	const op = "core.service.UserService.UpdateUserPfp"
+	logger := us.logger.With(
+		slog.String("op", op),
+	)
+
 	user, err := us.repository.NewQuery(ctx).First(pfpParams.UserID)
 	if err != nil {
+		logger.Error("Failed to find user", "id", pfpParams.UserID, "err", err.Error())
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrNotFound
 		}
@@ -99,17 +105,20 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 	if pfpParams.Pfp != nil && pfpParams.PfpHeader != nil {
 		oldUserPfpKey := helpers.ExtractS3Key(user.ProfilePicture)
 		if err := us.FileStorage.Remove(ctx, oldUserPfpKey); err != nil {
+			logger.Error("Failed to remove old user pfp", "id", pfpParams.UserID, "err", err.Error())
 			return fmt.Errorf("failed to remove old user file: %w", err)
 		}
 
 		key := fmt.Sprintf("pfp/%s/%d-%s", user.ID, time.Now().Unix(), pfpParams.PfpHeader.Filename)
 		var buf bytes.Buffer
 		if _, err := io.Copy(&buf, pfpParams.Pfp); err != nil {
+			logger.Error("Failed to create user pfp file", "id", pfpParams.UserID, "err", err.Error())
 			return err
 		}
 
 		url, err := us.FileStorage.Save(ctx, key, buf)
 		if err != nil {
+			logger.Error("Failed to save new user pfp", "id", pfpParams.UserID, "err", err.Error())
 			return err
 		}
 
@@ -117,9 +126,11 @@ func (us *UserService) UpdateUserPfp(ctx context.Context, pfpParams services.Upd
 	}
 
 	if err := us.repository.Update(ctx, &user); err != nil {
+		logger.Error("Failed to update user pfp", "id", pfpParams.UserID, "err", err.Error())
 		return err
 	}
 
+	logger.Info("User pfp updated successfully", "id", pfpParams.UserID)
 	return nil
 }
 
