@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
@@ -19,6 +20,7 @@ type AuthHandler struct {
 	googleClientID     string
 	googleClientSecret string
 	jwtSecret          string
+	logger             *slog.Logger
 }
 
 func NewAuthHandler(
@@ -26,6 +28,7 @@ func NewAuthHandler(
 	userService services.UserService,
 	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
+	logger *slog.Logger,
 ) *AuthHandler {
 	goth.UseProviders(
 		google.New(
@@ -44,6 +47,7 @@ func NewAuthHandler(
 		googleClientID:     cfg.Google.ClientID,
 		googleClientSecret: cfg.Google.ClientSecret,
 		jwtSecret:          cfg.JwtSecret,
+		logger:             logger,
 	}
 }
 
@@ -58,6 +62,12 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
+	const op = "core.service.AuthHandler.GenerateTokens"
+	logger := ah.logger.With(
+		"op", op,
+		"userID", userID,
+	)
+
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": userID,
 		"exp":    time.Now().Add(5 * time.Hour).Unix(),
@@ -65,6 +75,7 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 
 	accessTokenStr, err := accessToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
+		logger.Error("Failed to create access token", "err", err.Error())
 		return "", "", err
 	}
 
@@ -75,8 +86,10 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 
 	refreshTokenStr, err := refreshToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
+		logger.Error("Failed to create refresh token", "err", err.Error())
 		return "", "", err
 	}
 
+	logger.Info("Access and refresh tokens successfully generated")
 	return accessTokenStr, refreshTokenStr, nil
 }

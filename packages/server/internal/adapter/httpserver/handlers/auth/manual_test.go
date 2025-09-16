@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
@@ -28,6 +31,14 @@ func TestRegister(t *testing.T) {
 	mockUserService := mocks.NewMockUserService(ctrl)
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	logger := slog.New(opts.NewPrettyHandler(os.Stdout))
+
 	cfg := &config.Config{
 		JwtSecret: "test-secret",
 		Google: config.GoogleConfig{
@@ -36,7 +47,7 @@ func TestRegister(t *testing.T) {
 		},
 	}
 
-	handler := NewAuthHandler(mockAuthService, mockUserService, dtoBuilder, cfg)
+	handler := NewAuthHandler(mockAuthService, mockUserService, dtoBuilder, cfg, logger)
 
 	tests := []struct {
 		name           string
@@ -144,6 +155,14 @@ func TestLogin(t *testing.T) {
 	mockUserService := mocks.NewMockUserService(ctrl)
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	logger := slog.New(opts.NewPrettyHandler(os.Stdout))
+
 	cfg := &config.Config{
 		JwtSecret: "test-secret",
 		Google: config.GoogleConfig{
@@ -152,7 +171,7 @@ func TestLogin(t *testing.T) {
 		},
 	}
 
-	handler := NewAuthHandler(mockAuthService, mockUserService, dtoBuilder, cfg)
+	handler := NewAuthHandler(mockAuthService, mockUserService, dtoBuilder, cfg, logger)
 
 	tests := []struct {
 		name           string
