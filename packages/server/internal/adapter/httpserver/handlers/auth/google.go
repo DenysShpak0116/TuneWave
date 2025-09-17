@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -40,9 +41,15 @@ type UserWithNickname struct {
 // @Param code query string true "Google OAuth code"
 // @Router /auth/google/callback [get]
 func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.GoogleCallback"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
+		logger.Error("Failed to complete user auth", "err", err.Error())
 		return helpers.BadRequest("failed to get user data")
 	}
 
@@ -51,6 +58,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	if errors.Is(err, service.ErrNotFound) {
 		nickname, err := fetchGoogleNickname(user.AccessToken)
 		if err != nil {
+			logger.Error("Failed to create user", "err", err.Error())
 			return helpers.InternalServerError("failed to fetch nickname")
 		}
 		if nickname == "" {
@@ -67,6 +75,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 			ProfilePicture:  user.AvatarURL,
 		}
 		if err := ah.userService.Create(ctx, currentUser); err != nil {
+			logger.Error("Failed to fetch Google nickname", "err", err.Error())
 			return helpers.InternalServerError("failed to create user")
 		}
 	} else if err != nil {
@@ -77,6 +86,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 
 	accessToken, refreshToken, err := ah.GenerateTokens(currentUser.ID.String())
 	if err != nil {
+		logger.Error("Failed to generate tokens", "err", err.Error())
 		return helpers.InternalServerError("failed to generate tokens")
 	}
 
@@ -87,6 +97,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 	}
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
+		logger.Error("Failed to serialize auth data", "err", err.Error())
 		return helpers.InternalServerError("failed to encode auth data")
 	}
 
@@ -101,6 +112,7 @@ func (ah *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) er
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
+	logger.Error("Google callback successfull")
 	http.Redirect(w, r, "http://localhost:5173/", http.StatusSeeOther)
 	return nil
 }

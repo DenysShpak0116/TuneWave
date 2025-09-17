@@ -62,7 +62,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
-	const op = "core.service.AuthHandler.GenerateTokens"
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.GenerateTokens"
 	logger := ah.logger.With(
 		"op", op,
 		"userID", userID,
