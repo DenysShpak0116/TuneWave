@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -31,13 +32,20 @@ type RegisterRequest struct {
 // @Param		user body dto.RegisterRequest true "User registration data"
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.Register"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Failed to decode body", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
 
 	if _, err := ah.userService.First(ctx, &models.User{Email: req.Email}); !errors.Is(err, service.ErrNotFound) {
+		logger.Error("Failed to check for user existence", "err", err.Error())
 		if err != nil {
 			return helpers.InternalServerError("failed to check existing users")
 		}
@@ -47,6 +55,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 
 	hash, err := HashPassword(req.Password)
 	if err != nil {
+		logger.Error("Failed to hash password", "err", err.Error())
 		return helpers.InternalServerError("failed to hash password")
 	}
 
@@ -60,11 +69,14 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := ah.userService.Create(ctx, user); err != nil {
+		logger.Error("Failed to create user", "err", err.Error())
 		return helpers.InternalServerError("failed to create user")
 	}
 
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, ah.dtoBuilder.BuildUserDTO(user))
+
+	logger.Error("Failed to create user")
 	return nil
 }
 
