@@ -76,7 +76,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, ah.dtoBuilder.BuildUserDTO(user))
 
-	logger.Error("Failed to create user")
+	logger.Error("User successfully created")
 	return nil
 }
 
@@ -94,14 +94,21 @@ type LoginRequest struct {
 // @Param login body dto.LoginRequest true "User login data"
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.Login"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Failed to decode body", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
 
 	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
 	if err != nil {
+		logger.Error("Failed to find user", "err", err.Error())
 		return helpers.BadRequest("invalid credentials")
 	}
 
@@ -115,6 +122,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	accessToken, refreshToken, err := ah.GenerateTokens(user.ID.String())
 	if err != nil {
+		logger.Error("Failed to generate tokens", "err", err.Error())
 		return helpers.InternalServerError("failed to generate tokens")
 	}
 
@@ -124,6 +132,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
+		logger.Error("failed to encode auth data", "err", err.Error())
 		return helpers.InternalServerError("failed to encode auth data")
 	}
 
@@ -143,6 +152,8 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		"accessToken": accessToken,
 		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
+
+	logger.Info("Log in successfull", "email", req.Email)
 	return nil
 }
 
