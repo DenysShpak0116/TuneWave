@@ -166,6 +166,11 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 // @Security BearerAuth
 // @Router /auth/logout [post]
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.Logout"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 
 	authHeader := r.Header.Get("Authorization")
@@ -176,19 +181,23 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 
 	userID, err := helpers.ParseToken(ah.jwtSecret, tokenStr)
 	if err != nil {
+		logger.Error("Failed to parse token", "err", err.Error())
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid or expired token")
 	}
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
+		logger.Error("Failed to parse uuid", "err", err.Error())
 		return helpers.BadRequest("invalid user ID format")
 	}
 	user, err := ah.userService.First(ctx, &models.User{BaseModel: models.BaseModel{ID: userUUID}})
 	if err != nil {
+		logger.Error("Failed to retrieve user", "err", err.Error())
 		return helpers.NewAPIError(http.StatusUnauthorized, "user not found")
 	}
 
 	if user.IsGoogleAccount {
 		if err := gothic.Logout(w, r); err != nil {
+			logger.Error("Failed to logout", "err", err.Error())
 			return helpers.InternalServerError("failed to logout Google user")
 		}
 	}
@@ -207,5 +216,6 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	render.JSON(w, r, map[string]string{
 		"message": "Successfully logged out",
 	})
+	logger.Info("Logouted successfully")
 	return nil
 }
