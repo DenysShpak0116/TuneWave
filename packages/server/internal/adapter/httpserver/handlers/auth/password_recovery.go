@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
@@ -21,18 +22,26 @@ type ForgotPasswordRequest struct {
 // @Param        request body dto.ForgotPasswordRequest true "Email address for password reset"
 // @Router       /auth/forgot-password [post]
 func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.AuthHandler.ForgotPassword"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	var req ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("Invalid request", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
-
+	
 	token, err := ah.authService.HandleForgotPassword(req.Email)
 	if err != nil {
+		logger.Error("failed to send email", err.Error())
 		return helpers.InternalServerError("failed to send email")
 	}
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"token": token})
+	logger.Info("")
 	return nil
 }
 
