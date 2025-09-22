@@ -41,7 +41,7 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"token": token})
-	logger.Info("")
+	logger.Info("Token sent")
 	return nil
 }
 
@@ -59,17 +59,25 @@ type ResetPasswordRequest struct {
 // @Param        request body dto.ResetPasswordRequest true "New password and token"
 // @Router       /auth/reset-password [post]
 func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.handlers.httpserver.AuthHandler.ResetPassword"
+	logger := ah.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 	var req ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("invalid request", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
-
+	
 	if err := ah.authService.HandleResetPassword(ctx, req.Token, req.NewPassword); err != nil {
+		logger.Error("failed to reset password", "err", err.Error())
 		return helpers.InternalServerError("failed to reset password")
 	}
-
+	
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Password reset successfully"})
+	logger.Info("failed to reset password")
 	return nil
 }
