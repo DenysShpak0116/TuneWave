@@ -24,6 +24,7 @@ func (svc *UserReactionService) GetSongLikes(ctx context.Context, songID uuid.UU
 	const op = "core.service.UserReactionService.GetSongLikes"
 	logger := svc.logger.With(
 		slog.String("op", op),
+		slog.String("id", songID.String()),
 	)
 
 	likes, err := svc.CountWhere(ctx, &models.UserReaction{
@@ -31,11 +32,11 @@ func (svc *UserReactionService) GetSongLikes(ctx context.Context, songID uuid.UU
 		SongID: songID,
 	})
 	if err != nil {
-		logger.Error("Failed to get song likes", "id", songID.String(), "err", err.Error())
+		logger.Error("Failed to get song likes", "err", err.Error())
 		likes = 0
 	}
 
-	logger.Info("Song likes successfully retrieved", "id", songID.String(), "err", err.Error())
+	logger.Info("Song likes successfully retrieved")
 	return likes
 }
 
@@ -43,6 +44,7 @@ func (svc *UserReactionService) GetSongDislikes(ctx context.Context, songID uuid
 	const op = "core.service.UserReactionService.GetSongDislikes"
 	logger := svc.logger.With(
 		slog.String("op", op),
+		slog.String("id", songID.String()),
 	)
 
 	dislikes, err := svc.CountWhere(ctx, &models.UserReaction{
@@ -50,10 +52,10 @@ func (svc *UserReactionService) GetSongDislikes(ctx context.Context, songID uuid
 		SongID: songID,
 	})
 	if err != nil {
-		logger.Error("Failed to get song dislikes", "id", songID.String(), "err", err.Error())
+		logger.Error("Failed to get song dislikes", "err", err.Error())
 		dislikes = 0
 	}
 
-	logger.Info("Song dislikes successfully retrieved", "id", songID.String(), "err", err.Error())
+	logger.Info("Song dislikes successfully retrieved")
 	return dislikes
 }

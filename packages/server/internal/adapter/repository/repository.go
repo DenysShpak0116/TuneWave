@@ -27,59 +27,51 @@ func NewRepository[T any](db *gorm.DB, redis *redis.Client, logger *slog.Logger)
 
 func (r *GenericRepository[T]) Add(ctx context.Context, entities ...*T) error {
 	const op = "adapter.repository.Add"
-	logger := r.logger.With(slog.String("op", op))
+	logger := r.logger.With(
+		slog.String("op", op),
+		slog.String("object", reflect.TypeOf(entities).Name()),
+	)
 
 	if err := r.db.WithContext(ctx).Create(entities).Error; err != nil {
-		logger.Error(
-			"error while creating",
-			"object",
-			reflect.TypeOf(entities).Name(),
-			"error",
-			err.Error(),
-		)
+		logger.Error("error while creating", "err", err.Error())
 		return err
 	}
 
-	logger.Info("successfully created", "object", reflect.TypeOf(entities).Name())
+	logger.Info("successfully created")
 	return nil
 }
 
 func (r *GenericRepository[T]) Update(ctx context.Context, entity *T) error {
 	const op = "adapter.repository.Update"
-	logger := r.logger.With(slog.String("op", op))
+	logger := r.logger.With(
+		slog.String("op", op),
+		slog.String("object", reflect.TypeOf(entity).Name()),
+	)
 
 	if err := r.db.WithContext(ctx).Model(entity).Updates(entity).Error; err != nil {
-		logger.Error(
-			"error while updating",
-			"object",
-			reflect.TypeOf(entity).Name(),
-			"error",
-			err.Error(),
-		)
+		logger.Error("error while updating", "err", err.Error())
 		return err
 	}
 
-	logger.Info("successfully updated", "object", reflect.TypeOf(entity).Name())
+	logger.Info("successfully updated")
 	return nil
 }
 
 func (r *GenericRepository[T]) Delete(ctx context.Context, id ...uuid.UUID) error {
 	const op = "adapter.repository.Delete"
-	logger := r.logger.With(slog.String("op", op))
 
 	var entity T
+	logger := r.logger.With(
+		slog.String("op", op),
+		slog.String("object", reflect.TypeOf(entity).Name()),
+	)
+
 	if err := r.db.WithContext(ctx).Delete(&entity, id).Error; err != nil {
-		logger.Error(
-			"error while deleting",
-			"object",
-			reflect.TypeOf(entity).Name(),
-			"error",
-			err.Error(),
-		)
+		logger.Error("error while deleting", "err", err.Error())
 		return err
 	}
 
-	logger.Info("successfully deleted", "object", reflect.TypeOf(entity).Name())
+	logger.Info("successfully deleted")
 	return nil
 }
 

@@ -29,13 +29,13 @@ func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) er
 
 	var req ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("Invalid request", err.Error())
+		logger.Error("Invalid request", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
-	
+
 	token, err := ah.authService.HandleForgotPassword(req.Email)
 	if err != nil {
-		logger.Error("failed to send email", err.Error())
+		logger.Error("failed to send email", "err", err.Error())
 		return helpers.InternalServerError("failed to send email")
 	}
 
@@ -70,14 +70,14 @@ func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) err
 		logger.Error("invalid request", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
-	
+
 	if err := ah.authService.HandleResetPassword(ctx, req.Token, req.NewPassword); err != nil {
 		logger.Error("failed to reset password", "err", err.Error())
 		return helpers.InternalServerError("failed to reset password")
 	}
-	
+
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Password reset successfully"})
-	logger.Info("failed to reset password")
+	logger.Info("password reset successfully")
 	return nil
 }
