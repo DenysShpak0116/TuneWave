@@ -58,6 +58,6 @@ func (b *DTOBuilder) BuildFullUserDTO(user *models.User) FullUserDTO {
 		Role:           user.Role,
 		ProfileInfo:    user.ProfileInfo,
 		Email:          user.Email,
-		ProfilePicture: user.ProfileInfo,
+		ProfilePicture: user.ProfilePicture,
 	}
 }
