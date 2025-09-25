@@ -24,7 +24,7 @@ type ChatHandler struct {
 	chatService    services.ChatService
 	messageService services.MessageService
 	dtoBuilder     *dto.DTOBuilder
-	jwtSecret      string
+	cfg            *config.Config
 }
 
 func NewChatHandler(
@@ -39,7 +39,7 @@ func NewChatHandler(
 		chatService:    chatService,
 		messageService: messageService,
 		dtoBuilder:     dtoBuilder,
-		jwtSecret:      cfg.JwtSecret,
+		cfg:            cfg,
 	}
 }
 
@@ -59,7 +59,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	token := r.URL.Query().Get("authToken")
-	userIDRaw, err := helpers.ParseToken(ch.jwtSecret, token)
+	userIDRaw, err := helpers.ParseToken(ch.cfg.JwtSecret, token)
 	if err != nil {
 		return helpers.BadRequest("invalid auth token")
 	}

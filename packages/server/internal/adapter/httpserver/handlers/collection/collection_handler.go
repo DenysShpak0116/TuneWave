@@ -445,6 +445,6 @@ func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.R
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, collectionSongs)
+	render.JSON(w, r, songDTOs)
 	return nil
 }

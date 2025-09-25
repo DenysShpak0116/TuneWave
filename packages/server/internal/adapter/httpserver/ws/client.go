@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"log"
 
@@ -19,6 +20,7 @@ type Client struct {
 	MessageService services.MessageService
 	UserID         uuid.UUID
 	ChatID         uuid.UUID
+	PublicKey      *rsa.PublicKey
 }
 
 func NewClient(conn *websocket.Conn, hub *Hub, userID, chatID uuid.UUID, messageService services.MessageService) *Client {
