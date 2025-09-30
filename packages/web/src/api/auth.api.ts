@@ -1,8 +1,13 @@
 import { $api } from "./base.api";
 
-export const login = async (email: string, password: string) => {
-    return await $api.post("/auth/login", { email, password });
+export const login = async (email: string, password: string, publicKey: string) => {
+    return await $api.post("/auth/login", { email, password, publicKey });
 };
+
+export const getPublicKey = async () => {
+    const { data } = await $api.get("/auth/public-key")
+    return data;
+}
 
 export const register = async (data: {
     username: string;
