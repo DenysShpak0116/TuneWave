@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"strings"
 )
 
 func GenerateKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
@@ -41,4 +42,25 @@ func ParseRSAPublicKeyFromPEM(pubKeyStr string) (*rsa.PublicKey, error) {
 	}
 
 	return rsaPub, nil
+}
+
+func NormalizePublicKey(pubKey string) string {
+	pubKey = strings.ReplaceAll(pubKey, "-----BEGIN PUBLIC KEY-----", "")
+	pubKey = strings.ReplaceAll(pubKey, "-----END PUBLIC KEY-----", "")
+	pubKey = strings.ReplaceAll(pubKey, "\n", "")
+	pubKey = strings.TrimSpace(pubKey)
+
+	var buf strings.Builder
+	buf.WriteString("-----BEGIN PUBLIC KEY-----\n")
+	for len(pubKey) > 64 {
+		buf.WriteString(pubKey[:64])
+		buf.WriteString("\n")
+		pubKey = pubKey[64:]
+	}
+	if len(pubKey) > 0 {
+		buf.WriteString(pubKey)
+		buf.WriteString("\n")
+	}
+	buf.WriteString("-----END PUBLIC KEY-----\n")
+	return buf.String()
 }

@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -103,23 +101,27 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	)
 	ctx := r.Context()
 
-	bodyBytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		logger.Error("Failed to read request body", "err", err.Error())
-		return helpers.BadRequest("invalid request body")
-	}
-
-	decodedBody, err := helpers.Decrypt(ah.privateKey, bodyBytes)
-	if err != nil {
-		logger.Error("Failed to decrypt request body", "err", err.Error())
-		return helpers.BadRequest("invalid encrypted request")
-	}
-
 	var req LoginRequest
-	if err := json.NewDecoder(bytes.NewReader(decodedBody)).Decode(&req); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error("Failed to decode body", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
+
+	logger.Info("Received login request", "email", req.Email, "password_encrypted_base64", req.Password)
+
+	decodedCiphertext, err := base64.StdEncoding.DecodeString(req.Password)
+	if err != nil {
+		logger.Error("Failed to base64 decode password", "err", err.Error())
+		return helpers.BadRequest("invalid credentials")
+	}
+
+	decodedPasswordBytes, err := helpers.Decrypt(ah.privateKey, decodedCiphertext)
+	if err != nil {
+		logger.Error("Failed to decrypt password", "err", err.Error())
+		return helpers.BadRequest("invalid credentials")
+	}
+	decodedPassword := string(decodedPasswordBytes)
+	logger.Info("Password decrypted", "password_decrypted", decodedPassword)
 
 	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
 	if err != nil {
@@ -131,15 +133,18 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusForbidden, "This email is associated with a Google account. Please log in with Google.")
 	}
 
-	if !CheckPasswordHash(req.Password, user.PasswordHash) {
+	if !CheckPasswordHash(decodedPassword, user.PasswordHash) {
+		logger.Warn("Password hash mismatch", "email", req.Email)
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid credentials")
 	}
+	logger.Info("Password hash matched", "email", req.Email)
 
 	accessToken, refreshToken, err := ah.GenerateTokens(user.ID.String())
 	if err != nil {
 		logger.Error("Failed to generate tokens", "err", err.Error())
 		return helpers.InternalServerError("failed to generate tokens")
 	}
+	logger.Info("Tokens generated", "accessToken", accessToken, "refreshToken", refreshToken)
 
 	authData := map[string]any{
 		"refreshToken": refreshToken,
@@ -147,11 +152,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		logger.Error("failed to encode auth data", "err", err.Error())
+		logger.Error("Failed to encode auth data", "err", err.Error())
 		return helpers.InternalServerError("failed to encode auth data")
 	}
+	logger.Info("Auth data JSON", "authJSON", string(authJSON))
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
+	logger.Info("Auth data Base64 encoded", "authBase64", authBase64)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "authData",
@@ -163,32 +170,28 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	answer := map[string]any{
-		"accessToken": accessToken,
-		"user":        ah.dtoBuilder.BuildUserDTO(user),
-	}
-
-	bytesAnswer, err := json.Marshal(answer)
-	if err != nil {
-		logger.Error("Failed to encode response", "err", err.Error())
-		return helpers.InternalServerError("failed to encode response")
-	}
-
-	rsaPubKey, err := helpers.ParseRSAPublicKeyFromPEM(req.ClientPublicKey)
+	normalizedKey := helpers.NormalizePublicKey(req.ClientPublicKey)
+	rsaPubKey, err := helpers.ParseRSAPublicKeyFromPEM(normalizedKey)
 	if err != nil {
 		logger.Error("Failed to parse client public key", "err", err.Error())
 		return helpers.BadRequest("invalid client public key")
 	}
+	logger.Info("Client public key parsed")
 
-	encodedAnswer, err := helpers.Encrypt(rsaPubKey, bytesAnswer)
+	encodedAccessToken, err := helpers.Encrypt(rsaPubKey, []byte(accessToken))
 	if err != nil {
-		logger.Error("Failed to encrypt response", "err", err.Error())
-		return helpers.InternalServerError("failed to encrypt response")
+		logger.Error("Failed to encrypt accessToken", "err", err.Error())
+		return helpers.InternalServerError("failed to encrypt accessToken")
 	}
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, encodedAnswer)
+	logger.Info("Access token encrypted", "encodedAccessToken", encodedAccessToken)
 
-	logger.Info("Log in successfull", "email", req.Email)
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]any{
+		"accessToken": encodedAccessToken,
+		"user":        ah.dtoBuilder.BuildUserDTO(user),
+	})
+
+	logger.Info("Log in successful", "email", req.Email)
 	return nil
 }
 
