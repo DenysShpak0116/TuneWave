@@ -12,7 +12,6 @@ import {
     SongCard,
     SongImage,
     SongTitle,
-    SongArtist,
     SongsText,
     ImageWrapper,
     PlayIcon,
@@ -74,7 +73,6 @@ export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, follo
                 />
             </ImageWrapper>
             <SongTitle>{song.title}</SongTitle>
-            <SongArtist>{song.user.username}</SongArtist>
         </SongCard>
     );
 
