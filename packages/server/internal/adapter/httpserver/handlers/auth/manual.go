@@ -31,7 +31,7 @@ type RegisterRequest struct {
 // @Tags		auth
 // @Accept		json
 // @Produce		json
-// @Param		user body dto.RegisterRequest true "User registration data"
+// @Param		user body RegisterRequest true "User registration data"
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Register"
@@ -94,7 +94,7 @@ type LoginRequest struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param login body dto.LoginRequest true "User login data"
+// @Param login body LoginRequest true "User login data"
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Login"

@@ -36,7 +36,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ForgotPasswordRequest"
+                            "$ref": "#/definitions/auth.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -104,7 +104,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
+                            "$ref": "#/definitions/auth.LoginRequest"
                         }
                     }
                 ],
@@ -130,6 +130,35 @@ const docTemplate = `{
                 ],
                 "summary": "Logout a user",
                 "responses": {}
+            }
+        },
+        "/auth/public-key": {
+            "get": {
+                "description": "Returns the server's RSA public key in PEM format. Clients can use it to encrypt sensitive data before sending.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get server's RSA public key",
+                "responses": {
+                    "200": {
+                        "description": "Public key in PEM format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/auth/refresh": {
@@ -173,7 +202,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterRequest"
+                            "$ref": "#/definitions/auth.RegisterRequest"
                         }
                     }
                 ],
@@ -200,7 +229,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                            "$ref": "#/definitions/auth.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -1780,6 +1809,53 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.ForgotPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.ResetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "newPassword": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "comment.CreateCommentRequest": {
             "type": "object",
             "properties": {
@@ -1806,50 +1882,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ForgotPasswordRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ResetPasswordRequest": {
-            "type": "object",
-            "properties": {
-                "newPassword": {
-                    "type": "string"
-                },
-                "token": {
                     "type": "string"
                 }
             }

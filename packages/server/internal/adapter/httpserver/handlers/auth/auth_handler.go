@@ -68,6 +68,14 @@ func NewAuthHandler(
 	}
 }
 
+// GetPublicKey godoc
+// @Summary Get server's RSA public key
+// @Description Returns the server's RSA public key in PEM format. Clients can use it to encrypt sensitive data before sending.
+// @Tags auth
+// @Produce json
+// @Success 200 {object} map[string]string "Public key in PEM format"
+// @Failure 500 {string} string "Internal server error"
+// @Router /auth/public-key [get]
 func (ah *AuthHandler) GetPublicKey(w http.ResponseWriter, r *http.Request) error {
 	pubASN1, err := x509.MarshalPKIXPublicKey(ah.publicKey)
 	if err != nil {
