@@ -58,6 +58,7 @@ func NewRouter(
 	))
 
 	router.Route("/auth", func(r chi.Router) {
+		r.Get("/get-key", handlers.MakeHandler(authHandler.GetPublicKey))
 		r.Post("/login", handlers.MakeHandler(authHandler.Login))
 		r.Post("/register", handlers.MakeHandler(authHandler.Register))
 		r.Post("/logout", handlers.MakeHandler(authHandler.Logout))

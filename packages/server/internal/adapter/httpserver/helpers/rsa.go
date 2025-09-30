@@ -3,6 +3,9 @@ package helpers
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 )
 
 func GenerateKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
@@ -19,4 +22,23 @@ func Encrypt(publicKey *rsa.PublicKey, msg []byte) ([]byte, error) {
 
 func Decrypt(privateKey *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
 	return rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
+}
+
+func ParseRSAPublicKeyFromPEM(pubKeyStr string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pubKeyStr))
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	rsaPub, ok := pub.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("not a valid RSA public key")
+	}
+
+	return rsaPub, nil
 }

@@ -1,12 +1,18 @@
 package auth
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
@@ -21,6 +27,9 @@ type AuthHandler struct {
 	googleClientSecret string
 	jwtSecret          string
 	logger             *slog.Logger
+
+	publicKey  *rsa.PublicKey
+	privateKey *rsa.PrivateKey
 }
 
 func NewAuthHandler(
@@ -30,6 +39,12 @@ func NewAuthHandler(
 	cfg *config.Config,
 	logger *slog.Logger,
 ) *AuthHandler {
+	privateKey, publicKey, err := helpers.GenerateKeys()
+	if err != nil {
+		logger.Error("Failed to generate RSA keys", "err", err.Error())
+		panic("cannot start AuthHandler without RSA keys")
+	}
+
 	goth.UseProviders(
 		google.New(
 			cfg.Google.ClientID,
@@ -48,7 +63,31 @@ func NewAuthHandler(
 		googleClientSecret: cfg.Google.ClientSecret,
 		jwtSecret:          cfg.JwtSecret,
 		logger:             logger,
+		privateKey:         privateKey,
+		publicKey:          publicKey,
 	}
+}
+
+func (ah *AuthHandler) GetPublicKey(w http.ResponseWriter, r *http.Request) error {
+	pubASN1, err := x509.MarshalPKIXPublicKey(ah.publicKey)
+	if err != nil {
+		ah.logger.Error("Failed to marshal public key", "err", err.Error())
+		http.Error(w, "failed to marshal public key", http.StatusInternalServerError)
+		return err
+	}
+
+	pemBlock := pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubASN1,
+	}
+
+	stringKey := string(pem.EncodeToMemory(&pemBlock))
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, map[string]string{
+		"publicKey": stringKey,
+	})
+	return nil
 }
 
 func HashPassword(password string) (string, error) {

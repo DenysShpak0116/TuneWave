@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -81,8 +83,9 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	ClientPublicKey string `json:"publicKey"`
 }
 
 // Login godoc
@@ -98,10 +101,22 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	logger := ah.logger.With(
 		slog.String("op", op),
 	)
-
 	ctx := r.Context()
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		logger.Error("Failed to read request body", "err", err.Error())
+		return helpers.BadRequest("invalid request body")
+	}
+
+	decodedBody, err := helpers.Decrypt(ah.privateKey, bodyBytes)
+	if err != nil {
+		logger.Error("Failed to decrypt request body", "err", err.Error())
+		return helpers.BadRequest("invalid encrypted request")
+	}
+
 	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(decodedBody)).Decode(&req); err != nil {
 		logger.Error("Failed to decode body", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
@@ -147,11 +162,31 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]any{
+
+	answer := map[string]any{
 		"accessToken": accessToken,
 		"user":        ah.dtoBuilder.BuildUserDTO(user),
-	})
+	}
+
+	bytesAnswer, err := json.Marshal(answer)
+	if err != nil {
+		logger.Error("Failed to encode response", "err", err.Error())
+		return helpers.InternalServerError("failed to encode response")
+	}
+
+	rsaPubKey, err := helpers.ParseRSAPublicKeyFromPEM(req.ClientPublicKey)
+	if err != nil {
+		logger.Error("Failed to parse client public key", "err", err.Error())
+		return helpers.BadRequest("invalid client public key")
+	}
+
+	encodedAnswer, err := helpers.Encrypt(rsaPubKey, bytesAnswer)
+	if err != nil {
+		logger.Error("Failed to encrypt response", "err", err.Error())
+		return helpers.InternalServerError("failed to encrypt response")
+	}
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, encodedAnswer)
 
 	logger.Info("Log in successfull", "email", req.Email)
 	return nil
