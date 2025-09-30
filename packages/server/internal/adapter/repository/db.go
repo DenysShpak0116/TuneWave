@@ -47,5 +47,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Result{},
 		&models.UserCollection{},
 		&models.UserFollower{},
+		&models.Event{},
 	)
 }

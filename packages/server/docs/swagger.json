@@ -9,6 +9,102 @@
     "host": "localhost:8081",
     "basePath": "/",
     "paths": {
+        "/analytics/avg-listens": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get average listens per user",
+                "responses": {}
+            }
+        },
+        "/analytics/common-combos": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get most common track combinations",
+                "responses": {}
+            }
+        },
+        "/analytics/listens-by-day": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get number of listens grouped by day",
+                "responses": {}
+            }
+        },
+        "/analytics/median-listens": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get median listens per user",
+                "responses": {}
+            }
+        },
+        "/analytics/most-popular-track": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get most popular track",
+                "responses": {}
+            }
+        },
+        "/analytics/peak-silent": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get peak and silent day of listens",
+                "responses": {}
+            }
+        },
+        "/analytics/rare-combos": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get rarest track combinations",
+                "responses": {}
+            }
+        },
+        "/analytics/tracks-with-popular": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get tracks most often listened together with the most popular track",
+                "responses": {}
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Sends a password reset link to the user's email",

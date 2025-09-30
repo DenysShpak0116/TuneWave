@@ -12,6 +12,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -25,9 +26,10 @@ func TestCommentHandler_CreateComment(t *testing.T) {
 
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 
-	handler := NewCommentHandler(mockCommentService, dtoBuilder)
+	handler := NewCommentHandler(mockCommentService, mockEventService, dtoBuilder)
 	httpHandler := handlers.MakeHandler(handler.CreateComment)
 
 	validSongID := uuid.New()
@@ -164,8 +166,9 @@ func TestCommentHandler_DeleteComment(t *testing.T) {
 
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	dtoBuilder := dto.NewDTOBuilder(nil, nil)
+	mockEventService := &service.EventService{}
 
-	handler := NewCommentHandler(mockCommentService, dtoBuilder)
+	handler := NewCommentHandler(mockCommentService, mockEventService, dtoBuilder)
 	httpHandler := handlers.MakeHandler(handler.DeleteComment)
 
 	validCommentID := uuid.New()

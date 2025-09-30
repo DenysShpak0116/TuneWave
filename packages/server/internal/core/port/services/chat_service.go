@@ -1,4 +1,4 @@
-//go:generate mockgen -source=chat_service.go -destination=../../service/mocks/chat_service_mock.go -package=mocks -typed
+//go:generate mockgen -source=chat_service.go -destination=../../service/mocks/chat_service_mock.go -package=mocks  -typed
 
 package services
 

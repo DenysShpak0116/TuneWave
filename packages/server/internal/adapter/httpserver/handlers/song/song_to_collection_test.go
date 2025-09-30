@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -30,15 +31,19 @@ func TestSongHandler_AddToCollection(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.AddToCollection)
@@ -189,15 +194,19 @@ func TestSongHandler_RemoveFromCollection(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.RemoveFromCollection)

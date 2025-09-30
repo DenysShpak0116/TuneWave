@@ -7,6 +7,7 @@ import (
 	_ "github.com/DenysShpak0116/TuneWave/packages/server/docs"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/analytics"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
@@ -36,6 +37,7 @@ func NewRouter(
 	criterionHandler *criterion.CriterionHandler,
 	vectorHandler *vector.VectorHandler,
 	resultHandler *result.ResultHandler,
+	analyticsHandler *analytics.AnalyticsHandler,
 ) *chi.Mux {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -149,6 +151,17 @@ func NewRouter(
 		r.Get("/", handlers.MakeHandler(criterionHandler.GetCriterions))
 		r.Put("/{id}", handlers.MakeHandler(criterionHandler.UpdateCriterion))
 		r.Delete("/{id}", handlers.MakeHandler(criterionHandler.DeleteCriterion))
+	})
+
+	router.Route("/analytics", func(r chi.Router) {
+		r.Get("/listens-by-day", handlers.MakeHandler(analyticsHandler.ListensByDay))
+		r.Get("/peak-silent", handlers.MakeHandler(analyticsHandler.PeakAndSilentDays))
+		r.Get("/avg-listens", handlers.MakeHandler(analyticsHandler.AvgListensPerUser))
+		r.Get("/median-listens", handlers.MakeHandler(analyticsHandler.MedianListensPerUser))
+		r.Get("/most-popular-track", handlers.MakeHandler(analyticsHandler.MostPopularTrack))
+		r.Get("/tracks-with-popular", handlers.MakeHandler(analyticsHandler.TracksWithPopular))
+		r.Get("/common-combos", handlers.MakeHandler(analyticsHandler.CommonTrackCombos))
+		r.Get("/rare-combos", handlers.MakeHandler(analyticsHandler.RareTrackCombos))
 	})
 
 	router.Get("/ws/chat", handlers.MakeHandler(chatHandler.ServeWs))

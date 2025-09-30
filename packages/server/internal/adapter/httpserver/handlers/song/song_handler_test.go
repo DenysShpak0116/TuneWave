@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -32,6 +34,8 @@ func TestSongHandler_GetSongs(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
+	var logger *slog.Logger
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
 
@@ -40,7 +44,9 @@ func TestSongHandler_GetSongs(t *testing.T) {
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 	httpHandler := handlers.MakeHandler(handler.GetSongs)
 
@@ -144,15 +150,19 @@ func TestSongHandler_GetByID(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 	httpHandler := handlers.MakeHandler(handler.GetByID)
 
@@ -232,15 +242,20 @@ func TestSongHandler_Create(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 	httpHandler := handlers.MakeHandler(handler.Create)
 
@@ -388,15 +403,18 @@ func TestSongHandler_Update(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
-
+	var logger *slog.Logger
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 	httpHandler := handlers.MakeHandler(handler.Update)
 
@@ -541,15 +559,20 @@ func TestSongHandler_Delete(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.Delete)
@@ -616,15 +639,18 @@ func TestSongHandler_GetGenres(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
-
+	var logger *slog.Logger
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.GetGenres)
@@ -716,15 +742,19 @@ func TestSongHandler_GetSongComments(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.GetSongComments)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -30,15 +32,19 @@ func TestSongHandler_SetReaction(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
 
 	httpHandler := handlers.MakeHandler(handler.SetReaction)
@@ -64,7 +70,7 @@ func TestSongHandler_SetReaction(t *testing.T) {
 			setupMocks: func() {
 				mockSongService.EXPECT().
 					SetReaction(gomock.Any(), validSongID, validUserID, "like").
-					Return(10, 2, nil)
+					Return(10, 2, "", nil)
 			},
 		},
 		{
@@ -102,7 +108,7 @@ func TestSongHandler_SetReaction(t *testing.T) {
 			setupMocks: func() {
 				mockSongService.EXPECT().
 					SetReaction(gomock.Any(), validSongID, validUserID, "dislike").
-					Return(0, 0, errors.New("some error"))
+					Return(0, 0, "", errors.New("some error"))
 			},
 		},
 	}
@@ -143,17 +149,20 @@ func TestSongHandler_CheckReaction(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
-
 	httpHandler := handlers.MakeHandler(handler.CheckReaction)
 
 	validSongID := uuid.New()
@@ -258,17 +267,20 @@ func TestSongHandler_ListenSong(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockCommentService := mocks.NewMockCommentService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockUserReactionService)
+	var logger *slog.Logger
 
 	handler := NewSongHandler(
 		mockSongService,
 		mockCollectionSongService,
 		mockUserReactionService,
 		mockCommentService,
+		mockEventService,
 		dtoBuilder,
+		logger,
 	)
-
 	httpHandler := handlers.MakeHandler(handler.ListenSong)
 
 	validSongID := uuid.New()

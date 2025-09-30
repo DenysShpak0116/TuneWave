@@ -2,6 +2,7 @@ package comment
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
@@ -11,16 +12,23 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type CommentHandler struct {
 	commentService services.CommentService
+	eventService   services.EventService
 	dtoBuilder     *dto.DTOBuilder
 }
 
-func NewCommentHandler(commentService services.CommentService, dtoBuilder *dto.DTOBuilder) *CommentHandler {
+func NewCommentHandler(
+	commentService services.CommentService,
+	eventService services.EventService,
+	dtoBuilder *dto.DTOBuilder,
+) *CommentHandler {
 	return &CommentHandler{
 		commentService: commentService,
+		eventService:   eventService,
 		dtoBuilder:     dtoBuilder,
 	}
 }
@@ -63,6 +71,19 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := ch.commentService.Create(ctx, comment); err != nil {
 		return helpers.InternalServerError("failed to create comment")
+	}
+
+	event := &models.Event{
+		UserID:    userUUID,
+		EventType: models.CommentEvent,
+		TrackID:   &songUUID,
+		CommentID: &comment.ID,
+		Metadata: datatypes.JSONMap{
+			"content": req.Content,
+		},
+	}
+	if err := ch.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create comment event", "err", err.Error())
 	}
 
 	preloads := []string{"User"}
