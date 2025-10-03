@@ -11,5 +11,5 @@ import (
 
 type ChatService interface {
 	Service[models.Chat]
-	GetOrCreatePrivateChat(ctx context.Context, user1, user2 uuid.UUID) (*models.Chat, error)
+	GetOrCreateGroupChat(ctx context.Context, userIDs []uuid.UUID, name string) (*models.Chat, error)
 }

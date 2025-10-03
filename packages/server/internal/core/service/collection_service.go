@@ -19,7 +19,6 @@ import (
 type CollectionService struct {
 	*GenericService[models.Collection]
 	CollectionSongRepository port.Repository[models.CollectionSong]
-	ReactionRepository       port.Repository[models.UserReaction]
 	FileStorage              port.FileStorage
 }
 
@@ -27,14 +26,12 @@ func NewCollectionService(
 	repo port.Repository[models.Collection],
 	fileStorage port.FileStorage,
 	collectionSongRepository port.Repository[models.CollectionSong],
-	reactionRepository port.Repository[models.UserReaction],
 	logger *slog.Logger,
 ) services.CollectionService {
 	return &CollectionService{
 		GenericService:           NewGenericService(repo, logger),
 		FileStorage:              fileStorage,
 		CollectionSongRepository: collectionSongRepository,
-		ReactionRepository:       reactionRepository,
 	}
 }
 

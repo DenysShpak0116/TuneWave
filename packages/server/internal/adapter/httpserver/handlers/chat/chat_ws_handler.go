@@ -3,7 +3,9 @@ package chat
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
@@ -53,10 +55,7 @@ func NewChatHandler(
 // @Router       /ws/chat [get]
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	targetUUID, err := uuid.Parse(r.URL.Query().Get("targetUserId"))
-	if err != nil {
-		return helpers.BadRequest("invalid target user ID")
-	}
+	fmt.Println("Started")
 
 	token := r.URL.Query().Get("authToken")
 	userIDRaw, err := helpers.ParseToken(ch.cfg.JwtSecret, token)
@@ -68,19 +67,47 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 		return helpers.BadRequest("invalid user ID")
 	}
 
-	chat, err := ch.chatService.GetOrCreatePrivateChat(ctx, userUUID, targetUUID)
+	userIDsParam := r.URL.Query().Get("userIds")
+	if userIDsParam == "" {
+		return helpers.BadRequest("userIds is required")
+	}
+
+	idStrs := strings.Split(userIDsParam, ",")
+	var userIDs []uuid.UUID
+	for _, idStr := range idStrs {
+		id, err := uuid.Parse(strings.TrimSpace(idStr))
+		if err != nil {
+			return helpers.BadRequest("invalid user ID in userIds list")
+		}
+		userIDs = append(userIDs, id)
+	}
+
+	userIDs = append(userIDs, userUUID)
+
+	chatName := r.URL.Query().Get("name")
+
+	fmt.Println("Params got")
+
+	chat, err := ch.chatService.GetOrCreateGroupChat(ctx, userIDs, chatName)
 	if err != nil {
 		return helpers.InternalServerError("failed to get or create chat")
 	}
+
+	fmt.Println("Chat created")
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return helpers.InternalServerError("failed to upgrade connection")
 	}
 
+	fmt.Println("Upgraded")
+
 	hub := ch.manager.GetHub(chat.ID.String())
 	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService)
 	hub.Register <- client
+
+	fmt.Println("client registered")
+
 	go client.WritePump()
 	go client.ReadPump()
 
@@ -92,6 +119,8 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 			client.Send <- b
 		}
 	}
+
+	fmt.Println("Messages searched")
 
 	return nil
 }
