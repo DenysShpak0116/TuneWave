@@ -58,10 +58,8 @@ export const LoginForm: FC = () => {
         }
 
         try {
-            console.log(serverKey.publicKey);
-            
-            const encryptedPassword = await encryptPassword(serverKey.publicKey, password);
-            console.log(encryptPassword);
+
+            const encryptedPassword = encryptPassword(serverKey.publicKey, password);
 
             loginMutation.mutate({ email, password: encryptedPassword, publicKey: clientKeys!.publicKey });
         } catch (err) {
