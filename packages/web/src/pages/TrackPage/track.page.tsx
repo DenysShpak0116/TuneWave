@@ -2,15 +2,16 @@ import { TrackInformation } from "@modules/TrackInformation";
 import { MainLayout } from "@ui/layout/main-layout";
 import { FC } from "react";
 import { useParams } from "react-router-dom";
-import { useGetTrack } from "./hooks/useGetTrack";
+import { useGetTrack, useGetTrackComments } from "./hooks/useGetTrack";
 import { Loader } from "@ui/Loader/loader.component";
 
 
 export const TrackPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const { data: track, isLoading } = useGetTrack(id!);
+    const { data: comments, isLoading: isCommentsLoading } = useGetTrackComments(id!)
 
-    if (isLoading || !track) {
+    if (isLoading || isCommentsLoading || !track) {
         return (
             <MainLayout>
                 <Loader />
@@ -20,7 +21,7 @@ export const TrackPage: FC = () => {
 
     return (
         <MainLayout>
-            <TrackInformation song={track} />
+            <TrackInformation song={track} songComments={comments!}/>
         </MainLayout>
     );
 }
