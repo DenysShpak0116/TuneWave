@@ -50,8 +50,9 @@ func NewChatHandler(
 // @Description  Setting WebSocket connection between authorised user and target user by `targetUserId`.
 // @Tags         chat
 // @Produce      json
-// @Param        targetUserId query string true "UUID of target user"
 // @Param        authToken query string true "Bearer auth token"
+// @Param        userIds query string true "userIds separated by coma"
+// @Param        name query string true "chan name"
 // @Router       /ws/chat [get]
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()

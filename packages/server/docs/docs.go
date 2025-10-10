@@ -1887,15 +1887,22 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "UUID of target user",
-                        "name": "targetUserId",
+                        "description": "Bearer auth token",
+                        "name": "authToken",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Bearer auth token",
-                        "name": "authToken",
+                        "description": "userIds separated by coma",
+                        "name": "userIds",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "chan name",
+                        "name": "name",
                         "in": "query",
                         "required": true
                     }
