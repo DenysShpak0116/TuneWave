@@ -205,7 +205,7 @@ export const Player: FC = () => {
                     />
                     <TextBlock>
                         <TrackName>{trackName}</TrackName>
-                        <TrackArtist>{trackArtist}</TrackArtist>
+                        <TrackArtist>{trackArtist.map(author => author.name).join(", ")}</TrackArtist>
                     </TextBlock>
                 </TrackInfoWrapper>
 

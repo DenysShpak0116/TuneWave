@@ -1,3 +1,4 @@
+import { IAuthor } from "types/song/author.type";
 import { create } from "zustand";
 
 export interface PlaylistItem {
@@ -13,7 +14,7 @@ interface PlayerState {
     trackUrl: string;
     trackName: string;
     trackLogo: string;
-    trackArtist: string;
+    trackArtist: IAuthor[];
     shouldAutoPlay: boolean;
     isPlaying: boolean;
     playlist: PlaylistItem[];
@@ -30,7 +31,7 @@ const defaultTrack = {
     trackUrl: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/music/20b7985c-16b1-444c-a30b-3cdae7d67616/1748548464-dd.mp3",
     trackName: "Intro",
     trackLogo: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/covers/20b7985c-16b1-444c-a30b-3cdae7d67616/1748548403-408c9ff55313b4d2bc89c6bea5b9224a.jpg",
-    trackArtist: "TuneWave",
+    trackArtist: [{ id: "1", name: "TuneWave", role: "primary" }],
 };
 
 export const usePlayerStore = create<PlayerState>((set) => {
