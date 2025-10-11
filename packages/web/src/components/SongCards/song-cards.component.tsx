@@ -19,6 +19,8 @@ import {
     FollowTitle,
 } from "./song-cards.style";
 import { FollowType } from "types/user/follow.type";
+import { IAuthor } from "types/song/author.type";
+import { TrackArtist } from "@modules/Player/player.style";
 
 interface ISongCardsProps {
     songs?: ISong[];
@@ -32,13 +34,13 @@ export interface TrackData {
     trackUrl: string;
     trackLogo: string;
     trackName: string;
-    trackArtist: string;
+    trackArtist: IAuthor[];
 }
 
 export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, followings }) => {
     const navigate = useNavigate();
     const setTrack = usePlayerStore((state) => state.setTrack);
-    const setPlaylist = usePlayerStore((state) =>  state.setPlaylist)
+    const setPlaylist = usePlayerStore((state) => state.setPlaylist)
 
     const handlePlay = (trackData: TrackData) => {
         setTrack(trackData);
@@ -67,12 +69,13 @@ export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, follo
                             trackUrl: encodeURI(song.songUrl),
                             trackLogo: song.coverUrl,
                             trackName: song.title,
-                            trackArtist: song.user.username,
+                            trackArtist: song.authors
                         });
                     }}
                 />
             </ImageWrapper>
             <SongTitle>{song.title}</SongTitle>
+            <TrackArtist>{song.authors.map(author => author.name).join(", ")}</TrackArtist>
         </SongCard>
     );
 
@@ -97,7 +100,7 @@ export const SongCards: FC<ISongCardsProps> = ({ songs, collections, text, follo
                 <FollowsImage src={user.profilePictureUrl} alt={user.username} />
             </ImageWrapper>
             <FollowTitle>{user.username}</FollowTitle>
-            <p style={{fontSize: "10px", textAlign:"center"}}>{user.followers} підписників</p>
+            <p style={{ fontSize: "10px", textAlign: "center" }}>{user.followers} підписників</p>
         </SongCard>
     )
 
