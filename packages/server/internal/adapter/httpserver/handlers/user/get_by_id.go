@@ -38,12 +38,12 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-type ChatPreview struct {
-	ID           uuid.UUID `json:"id"`
-	TargetUserID uuid.UUID `json:"targetUserId"`
-	UserAvatar   string    `json:"userAvatar"`
-	Username     string    `json:"username"`
-	LastMessage  string    `json:"lastMessage"`
+type chatPreview struct {
+	ID          uuid.UUID   `json:"id"`
+	UserIDs     []uuid.UUID `json:"userIds"`
+	UserAvatar  string      `json:"userAvatar"`
+	LastMessage string      `json:"lastMessage"`
+	ChatName    string      `json:"chatName"`
 }
 
 // GetChats godoc
@@ -72,7 +72,7 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NotFound("user not found")
 	}
 
-	chats := make([]ChatPreview, 0, len(user.ChatUsers))
+	chats := make([]chatPreview, 0, len(user.ChatUsers))
 	chats = appendChatsForUser(ctx, chats, userUUID, user.ChatUsers, uh)
 
 	render.JSON(w, r, chats)
@@ -81,11 +81,11 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 
 func appendChatsForUser(
 	ctx context.Context,
-	chats []ChatPreview,
+	chats []chatPreview,
 	userUUID uuid.UUID,
 	userChats []models.ChatUser,
 	uh *UserHandler,
-) []ChatPreview {
+) []chatPreview {
 	for _, userChat := range userChats {
 		chat := userChat.Chat
 
@@ -101,6 +101,12 @@ func appendChatsForUser(
 			}
 		}
 
+		userIDs := make([]uuid.UUID, 0, len(otherUsers)+1)
+		userIDs = append(userIDs, userUUID)
+		for _, user := range otherUsers {
+			userIDs = append(userIDs, user.ID)
+		}
+
 		chatName := chat.Name
 		var avatar string
 		if len(otherUsers) > 0 {
@@ -110,11 +116,12 @@ func appendChatsForUser(
 			avatar = otherUsers[0].ProfilePicture
 		}
 
-		chatPreview := ChatPreview{
+		chatPreview := chatPreview{
 			ID:          chat.ID,
+			UserIDs:     userIDs,
 			UserAvatar:  avatar,
-			Username:    chatName,
 			LastMessage: lastMessage.Content,
+			ChatName:    chatName,
 		}
 
 		chats = append(chats, chatPreview)
