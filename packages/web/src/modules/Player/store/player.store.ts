@@ -4,7 +4,7 @@ import { create } from "zustand";
 export interface PlaylistItem {
     title: string;
     file: string;
-    artist?: string;
+    artist: IAuthor[];
     logo?: string;
     id?: string;
 }
@@ -14,7 +14,7 @@ interface PlayerState {
     trackUrl: string;
     trackName: string;
     trackLogo: string;
-    trackArtist: IAuthor[];
+    trackArtist: string;
     shouldAutoPlay: boolean;
     isPlaying: boolean;
     playlist: PlaylistItem[];

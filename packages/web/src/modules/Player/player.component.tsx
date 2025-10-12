@@ -83,7 +83,7 @@ export const Player: FC = () => {
                         setTrack({
                             trackUrl: nextTrack.file,
                             trackName: nextTrack.title,
-                            trackArtist: nextTrack.artist || "",
+                            trackArtist: nextTrack.artist.map(artist => artist.name).join(",") || "",
                             trackId: nextTrack.id,
                             trackLogo: nextTrack.logo || "",
                         });
@@ -97,7 +97,7 @@ export const Player: FC = () => {
                         setTrack({
                             trackUrl: currentTrack.file,
                             trackName: currentTrack.title,
-                            trackArtist: currentTrack.artist || "",
+                            trackArtist: currentTrack.artist.map(artist => artist.name).join(",") || "",
                             trackId: currentTrack.id,
                             trackLogo: currentTrack.logo || "",
                         });
@@ -179,7 +179,7 @@ export const Player: FC = () => {
                 setTrack({
                     trackUrl: currentTrack.file,
                     trackName: currentTrack.title,
-                    trackArtist: currentTrack.artist || "",
+                    trackArtist: currentTrack.artist.map(artist => artist.name).join(",") || "",
                     trackId: currentTrack.id,
                     trackLogo: currentTrack.logo || "",
                 });
@@ -205,7 +205,7 @@ export const Player: FC = () => {
                     />
                     <TextBlock>
                         <TrackName>{trackName}</TrackName>
-                        <TrackArtist>{trackArtist.map(author => author.name).join(", ")}</TrackArtist>
+                        <TrackArtist>{trackArtist}</TrackArtist>
                     </TextBlock>
                 </TrackInfoWrapper>
 
