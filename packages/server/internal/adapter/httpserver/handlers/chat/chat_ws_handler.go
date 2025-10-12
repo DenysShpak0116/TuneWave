@@ -12,6 +12,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -25,6 +26,7 @@ type ChatHandler struct {
 	manager        *ws.HubManager
 	chatService    services.ChatService
 	messageService services.MessageService
+	userService    services.UserService
 	dtoBuilder     *dto.DTOBuilder
 	cfg            *config.Config
 }
@@ -33,6 +35,7 @@ func NewChatHandler(
 	manager *ws.HubManager,
 	chatService services.ChatService,
 	messageService services.MessageService,
+	userService services.UserService,
 	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
 ) *ChatHandler {
@@ -40,6 +43,7 @@ func NewChatHandler(
 		manager:        manager,
 		chatService:    chatService,
 		messageService: messageService,
+		userService:    userService,
 		dtoBuilder:     dtoBuilder,
 		cfg:            cfg,
 	}
@@ -104,7 +108,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	fmt.Println("Upgraded")
 
 	hub := ch.manager.GetHub(chat.ID.String())
-	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService)
+	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService, ch.userService)
 	hub.Register <- client
 
 	fmt.Println("client registered")
@@ -112,7 +116,7 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	go client.WritePump()
 	go client.ReadPump()
 
-	messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID})
+	messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID}, query.WithPreloads("Sender"))
 	if err == nil {
 		for _, msg := range messages {
 			msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)

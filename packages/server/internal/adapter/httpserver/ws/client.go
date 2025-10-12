@@ -17,16 +17,24 @@ type Client struct {
 	Send           chan []byte
 	Hub            *Hub
 	MessageService services.MessageService
+	UserService    services.UserService
 	UserID         uuid.UUID
 	ChatID         uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, hub *Hub, userID, chatID uuid.UUID, messageService services.MessageService) *Client {
+func NewClient(
+	conn *websocket.Conn,
+	hub *Hub,
+	userID, chatID uuid.UUID,
+	messageService services.MessageService,
+	userService services.UserService,
+) *Client {
 	return &Client{
 		Conn:           conn,
 		Send:           make(chan []byte),
 		Hub:            hub,
 		MessageService: messageService,
+		UserService:    userService,
 		UserID:         userID,
 		ChatID:         chatID,
 	}
@@ -42,7 +50,7 @@ func (c *Client) ReadPump() {
 		log.Println("[ReadPump] client disconnected")
 	}()
 
-	dtoBuilder := dto.NewDTOBuilder(nil, nil)
+	dtoBuilder := dto.NewDTOBuilder(c.UserService, nil)
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
@@ -61,6 +69,13 @@ func (c *Client) ReadPump() {
 		}
 		log.Printf("[ReadPump] Parsed content: %s", payload.Content)
 
+		user, err := c.UserService.GetByID(context.TODO(), c.UserID)
+		if err != nil {
+			log.Println("Failed to get user by id:", c.UserID)
+			return
+		}
+
+		log.Printf("[ReadPump] User retrieved: %v", user)
 		message := &models.Message{
 			Content:  payload.Content,
 			ChatID:   c.ChatID,
@@ -70,8 +85,12 @@ func (c *Client) ReadPump() {
 		if err := c.MessageService.Create(context.Background(), message); err != nil {
 			continue
 		}
+		log.Printf("[ReadPump] Message created")
+
+		message.Sender = *user
 
 		messageDTO := dtoBuilder.BuildMessageDTO(message)
+		log.Printf("[ReadPump] Message dto built")
 		outgoing, _ := json.Marshal(messageDTO)
 		c.Hub.Broadcast <- outgoing
 	}
