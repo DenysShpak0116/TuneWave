@@ -1,7 +1,7 @@
 import { MainLayout } from "@ui/layout/main-layout";
 import { FC, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useGetCollection, useHasCollectionHaveAllVectors } from "./hooks/useGetCollection";
+import { useGetCollection} from "./hooks/useGetCollection";
 import { Loader } from "@ui/Loader/loader.component";
 import { TrackInformationLayout } from "@ui/layout/TrackInformation/track-information-layout";
 import { CollectionLogo } from "@components/CollectionLogo/collection-logo.component";
@@ -18,14 +18,14 @@ export const CollectionPage: FC = () => {
     const [params, setParams] = useState({ search: "", sortBy: "createdAt", order: "desc" });
 
     const { data: collection, isLoading } = useGetCollection(id!);
-    const { data: collectionSongs } = useGetCollectionSongs(id!, params);
-    const { data: hasAllVectors = false, isLoading: IsVectorLoading } = useHasCollectionHaveAllVectors(id!)
+    const { data: collectionSongs, isLoading: isCollectionSongsLoading } = useGetCollectionSongs(id!, params);
+    //const { data: hasAllVectors = false, isLoading: IsVectorLoading } = useHasCollectionHaveAllVectors(id!)
 
     const updateSearchSortParams = (updatedParams: { search: string; sortBy: string; order: string }) => {
         setParams(updatedParams);
     };
 
-    if (IsVectorLoading || isLoading || !collection)
+    if (isLoading || !collection || isCollectionSongsLoading)
         return (
             <MainLayout>
                 <Loader />
@@ -33,16 +33,16 @@ export const CollectionPage: FC = () => {
         );
 
     const isMainUserCollection = userId === collection.user.id;
-    const total = getTotalDuration(collection.collectionSongs);
+    const total = getTotalDuration(collectionSongs!);
 
     return (
         <MainLayout>
             <TrackInformationLayout>
                 <CollectionLogo
                     isMainUserCollection={isMainUserCollection}
-                    hasAllVectors={hasAllVectors}
+                    //hasAllVectors={hasAllVectors}
                     logo={collection.coverUrl}
-                    collectionSongs={collection.collectionSongs}
+                    collectionSongs={collectionSongs!}
                     collectionId={collection.id}
                 />
                 <TrackDetails
@@ -56,8 +56,8 @@ export const CollectionPage: FC = () => {
                     collectionName={collection.title}
                     collectionDescription={collection.description}
                 />
-                {collection.collectionSongs.length > 0 && (
-                    <TrackPagePlayer song={collection.collectionSongs[0]} />
+                {collectionSongs!.length > 0 && (
+                    <TrackPagePlayer song={collectionSongs![0]} />
                 )}
                 <CollectionSongs
                     refetchFn={updateSearchSortParams}

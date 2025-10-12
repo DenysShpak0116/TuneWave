@@ -3,7 +3,6 @@ import { IconButton, InteractionContainer, InteractionIcon, Logo, LogoContainer 
 import { AddCriterionModal } from "@modules/AddCriterionToSongModal";
 import addCriterionsIcon from "@assets/images/ic_add_criterion.png"
 import { ISong } from "types/song/song.type";
-import stepsIcon from "@assets/images/ic_steps.png"
 import { RateSongsModal } from "@modules/RateSongsModal/rate-songs-modal.component";
 import crossIcon from "@assets/images/ic_cross.png"
 import { ConfirmDeleteModal } from "@components/ConfirmDeleteModal/confirmDelete.modal";
@@ -18,11 +17,11 @@ interface ICollectionLogoProps {
     logo: string | undefined;
     collectionId: string;
     collectionSongs: ISong[];
-    hasAllVectors: boolean;
+    hasAllVectors?: boolean;
     isMainUserCollection: boolean
 }
 
-export const CollectionLogo: FC<ICollectionLogoProps> = ({ logo, collectionSongs, collectionId, hasAllVectors, isMainUserCollection }) => {
+export const CollectionLogo: FC<ICollectionLogoProps> = ({ logo, collectionSongs, collectionId,isMainUserCollection }) => {
     const navigate = useNavigate()
     const [isAddCriterionModalOpen, setIsAddCriterionModalOpen] = useState<boolean>(false);
     const [isRateModalOpen, setIsRateModalOpen] = useState<boolean>(false)
@@ -47,11 +46,11 @@ export const CollectionLogo: FC<ICollectionLogoProps> = ({ logo, collectionSongs
                     <IconButton onClick={() => setIsAddCriterionModalOpen(true)}>
                         <InteractionIcon src={addCriterionsIcon} />
                     </IconButton>
-                    {hasAllVectors && (
+                    {/* {hasAllVectors && (
                         <IconButton onClick={() => setIsRateModalOpen(true)}>
                             <InteractionIcon src={stepsIcon} />
                         </IconButton>
-                    )}
+                    )} */}
                     {isMainUserCollection && (
                         <IconButton onClick={() => setIsDeleteConfirmationModalOpen(true)}>
                             <InteractionIcon src={crossIcon} />

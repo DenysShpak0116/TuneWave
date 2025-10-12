@@ -47,14 +47,14 @@ export const CollectionSongRow: FC<Props> = ({ song, index, refetchFn, collectio
                 trackUrl: encodeURI(song.songUrl),
                 trackLogo: song.coverUrl,
                 trackName: song.title,
-                trackArtist: song.user.username,
+                trackArtist: song.authors
             };
             const playlist = collectionSongs.map(s => ({
                 id: s.id,
                 file: encodeURI(s.songUrl),
                 logo: s.coverUrl,
                 title: s.title,
-                artist: s.user.username,
+                authors: s.authors
             }));
             setPlaylist(playlist);
             setTrack(trackData);
@@ -104,7 +104,7 @@ export const CollectionSongRow: FC<Props> = ({ song, index, refetchFn, collectio
                 </SongTextInfo>
             </CoverAndInfo>
             <DateAdded>{parseDate(song.createdAt)}</DateAdded>
-            <Duration>{parseTime(song.duration)}</Duration>
+            <Duration>{song.duration}</Duration>
             <Options onClick={(e) => {
                 e.stopPropagation();
                 setShowOptions(!showOptions);
