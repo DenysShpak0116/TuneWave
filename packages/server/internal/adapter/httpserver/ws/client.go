@@ -60,11 +60,17 @@ func (c *Client) ReadPump() {
 		}
 
 		var payload struct {
-			Content string `json:"content"`
+			Receiver string `json:"receiver"`
+			Content  string `json:"content"`
 		}
 		if err := json.Unmarshal(msg, &payload); err != nil {
 			log.Println("[ReadPump] invalid format:", err)
 			continue
+		}
+
+		var recieverID uuid.UUID
+		if payload.Receiver != "" {
+			recieverID, _ = uuid.Parse(payload.Receiver)
 		}
 
 		user, err := c.UserService.GetByID(context.TODO(), c.UserID)
@@ -87,7 +93,18 @@ func (c *Client) ReadPump() {
 
 		messageDTO := dtoBuilder.BuildMessageDTO(message)
 		outgoing, _ := json.Marshal(messageDTO)
-		c.Hub.Broadcast <- outgoing
+		if len(recieverID) == 0 {
+			c.Hub.Broadcast <- outgoing
+		} else {
+			for cl := range c.Hub.Clients {
+				if cl.UserID == recieverID {
+					if !c.Hub.Clients[cl] {
+						break
+					}
+					cl.Send <- []byte(payload.Content)
+				}
+			}
+		}
 	}
 }
 
