@@ -228,35 +228,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/auth/public-key": {
-            "get": {
-                "description": "Returns the server's RSA public key in PEM format. Clients can use it to encrypt sensitive data before sending.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Get server's RSA public key",
-                "responses": {
-                    "200": {
-                        "description": "Public key in PEM format",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/refresh": {
             "post": {
                 "security": [
@@ -1876,7 +1847,7 @@ const docTemplate = `{
         },
         "/ws/chat": {
             "get": {
-                "description": "Setting WebSocket connection between authorised user and target user by ` + "`" + `targetUserId` + "`" + `.",
+                "description": "Setting WebSocket connection between authorised user and target users.",
                 "produces": [
                     "application/json"
                 ],
@@ -1927,9 +1898,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                },
-                "publicKey": {
                     "type": "string"
                 }
             }

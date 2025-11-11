@@ -33,9 +33,7 @@ type RegisterRequest struct {
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Register"
-	logger := ah.logger.With(
-		slog.String("op", op),
-	)
+	logger := ah.logger.With(slog.String("op", op))
 
 	ctx := r.Context()
 	var req RegisterRequest
@@ -44,7 +42,10 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return helpers.BadRequest("invalid request")
 	}
 
-	if _, err := ah.userService.First(ctx, &models.User{Email: req.Email}); !errors.Is(err, service.ErrNotFound) {
+	if _, err := ah.userService.First(
+		ctx,
+		&models.User{Email: req.Email},
+	); !errors.Is(err, service.ErrNotFound) {
 		logger.Error("Failed to check for user existence", "err", err.Error())
 		if err != nil {
 			return helpers.InternalServerError("failed to check existing users")
@@ -73,17 +74,16 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return helpers.InternalServerError("failed to create user")
 	}
 
+	logger.Error("User successfully created")
+
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, ah.dtoBuilder.BuildUserDTO(user))
-
-	logger.Error("User successfully created")
 	return nil
 }
 
 type LoginRequest struct {
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	ClientPublicKey string `json:"publicKey"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // Login godoc
@@ -96,9 +96,7 @@ type LoginRequest struct {
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Login"
-	logger := ah.logger.With(
-		slog.String("op", op),
-	)
+	logger := ah.logger.With(slog.String("op", op))
 	ctx := r.Context()
 
 	var req LoginRequest
@@ -107,21 +105,11 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		return helpers.BadRequest("invalid request")
 	}
 
-	logger.Info("Received login request", "email", req.Email, "password_encrypted_base64", req.Password)
-
-	decodedCiphertext, err := base64.StdEncoding.DecodeString(req.Password)
-	if err != nil {
-		logger.Error("Failed to base64 decode password", "err", err.Error())
-		return helpers.BadRequest("invalid credentials")
-	}
-
-	decodedPasswordBytes, err := helpers.Decrypt(ah.privateKey, decodedCiphertext)
-	if err != nil {
-		logger.Error("Failed to decrypt password", "err", err.Error())
-		return helpers.BadRequest("invalid credentials")
-	}
-	decodedPassword := string(decodedPasswordBytes)
-	logger.Info("Password decrypted", "password_decrypted", decodedPassword)
+	logger.Info(
+		"Received login request",
+		"email", req.Email,
+		"password_encrypted_base64", req.Password,
+	)
 
 	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
 	if err != nil {
@@ -133,18 +121,16 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NewAPIError(http.StatusForbidden, "This email is associated with a Google account. Please log in with Google.")
 	}
 
-	if !CheckPasswordHash(decodedPassword, user.PasswordHash) {
+	if !CheckPasswordHash(req.Password, user.PasswordHash) {
 		logger.Warn("Password hash mismatch", "email", req.Email)
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid credentials")
 	}
-	logger.Info("Password hash matched", "email", req.Email)
 
 	accessToken, refreshToken, err := ah.GenerateTokens(user.ID.String())
 	if err != nil {
 		logger.Error("Failed to generate tokens", "err", err.Error())
 		return helpers.InternalServerError("failed to generate tokens")
 	}
-	logger.Info("Tokens generated", "accessToken", accessToken, "refreshToken", refreshToken)
 
 	authData := map[string]any{
 		"refreshToken": refreshToken,
@@ -170,28 +156,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
-	normalizedKey := helpers.NormalizePublicKey(req.ClientPublicKey)
-	rsaPubKey, err := helpers.ParseRSAPublicKeyFromPEM(normalizedKey)
-	if err != nil {
-		logger.Error("Failed to parse client public key", "err", err.Error())
-		return helpers.BadRequest("invalid client public key")
-	}
-	logger.Info("Client public key parsed")
-
-	encodedAccessToken, err := helpers.Encrypt(rsaPubKey, []byte(accessToken))
-	if err != nil {
-		logger.Error("Failed to encrypt accessToken", "err", err.Error())
-		return helpers.InternalServerError("failed to encrypt accessToken")
-	}
-	logger.Info("Access token encrypted", "encodedAccessToken", encodedAccessToken)
-
+	logger.Info("Log in successful", "email", req.Email)
+	
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{
-		"accessToken": encodedAccessToken,
+		"accessToken": accessToken,
 		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
-
-	logger.Info("Log in successful", "email", req.Email)
 	return nil
 }
 

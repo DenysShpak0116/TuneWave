@@ -3,7 +3,7 @@ package chat
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -11,8 +11,6 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -29,6 +27,7 @@ type ChatHandler struct {
 	userService    services.UserService
 	dtoBuilder     *dto.DTOBuilder
 	cfg            *config.Config
+	logger         *slog.Logger
 }
 
 func NewChatHandler(
@@ -38,6 +37,7 @@ func NewChatHandler(
 	userService services.UserService,
 	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
+	logger *slog.Logger,
 ) *ChatHandler {
 	return &ChatHandler{
 		manager:        manager,
@@ -46,6 +46,7 @@ func NewChatHandler(
 		userService:    userService,
 		dtoBuilder:     dtoBuilder,
 		cfg:            cfg,
+		logger:         logger,
 	}
 }
 
@@ -60,7 +61,6 @@ func NewChatHandler(
 // @Router       /ws/chat [get]
 func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	fmt.Println("Started")
 
 	token := r.URL.Query().Get("authToken")
 	userIDRaw, err := helpers.ParseToken(ch.cfg.JwtSecret, token)
@@ -88,44 +88,38 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	userIDs = append(userIDs, userUUID)
-
 	chatName := r.URL.Query().Get("name")
-
-	fmt.Println("Params got")
-
 	chat, err := ch.chatService.GetOrCreateGroupChat(ctx, userIDs, chatName)
 	if err != nil {
 		return helpers.InternalServerError("failed to get or create chat")
 	}
-
-	fmt.Println("Chat created")
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return helpers.InternalServerError("failed to upgrade connection")
 	}
 
-	fmt.Println("Upgraded")
+	hub, err := ch.manager.GetHub(chat.ID.String())
+	if err != nil {
+		return err
+	}
 
-	hub := ch.manager.GetHub(chat.ID.String())
 	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService, ch.userService)
 	hub.Register <- client
-
-	fmt.Println("client registered")
 
 	go client.WritePump()
 	go client.ReadPump()
 
-	messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID}, query.WithPreloads("Sender"))
-	if err == nil {
-		for _, msg := range messages {
-			msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)
-			b, _ := json.Marshal(msgDTO)
-			client.Send <- b
-		}
-	}
-
-	fmt.Println("Messages searched")
+	// messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID}, query.WithPreloads("Sender"))
+	// if err == nil {
+	// 	for _, msg := range messages {
+	// 		msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)
+	// 		b, _ := json.Marshal(msgDTO)
+	// 		client.Send <- b
+	// 	}
+	// }
+	b, _ := json.Marshal(hub.DhKeys)
+	client.Send <- b
 
 	return nil
 }

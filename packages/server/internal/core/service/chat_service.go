@@ -31,9 +31,8 @@ func (cs *ChatService) GetOrCreateGroupChat(ctx context.Context, userIDs []uuid.
 	const op = "core.service.ChatService.GetOrCreateGroupChat"
 	logger := cs.logger.With(slog.String("op", op))
 
-	chats, err := cs.repository.NewQuery(ctx).
-		Preload("ChatUsers").
-		Find()
+	preloads := []string{"ChatUsers"}
+	chats, err := cs.repository.NewQuery(ctx).Preload(preloads...).Find()
 	if err != nil {
 		logger.Error("Error while retrieving chats", "err", err.Error())
 		return nil, err

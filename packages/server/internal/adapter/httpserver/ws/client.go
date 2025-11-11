@@ -51,23 +51,21 @@ func (c *Client) ReadPump() {
 	}()
 
 	dtoBuilder := dto.NewDTOBuilder(c.UserService, nil)
+
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
 			log.Println("[ReadPump] read error:", err)
 			break
 		}
-		log.Printf("[ReadPump] Received: %s", msg)
 
 		var payload struct {
 			Content string `json:"content"`
 		}
-
 		if err := json.Unmarshal(msg, &payload); err != nil {
 			log.Println("[ReadPump] invalid format:", err)
 			continue
 		}
-		log.Printf("[ReadPump] Parsed content: %s", payload.Content)
 
 		user, err := c.UserService.GetByID(context.TODO(), c.UserID)
 		if err != nil {
@@ -75,7 +73,6 @@ func (c *Client) ReadPump() {
 			return
 		}
 
-		log.Printf("[ReadPump] User retrieved: %v", user)
 		message := &models.Message{
 			Content:  payload.Content,
 			ChatID:   c.ChatID,
@@ -85,12 +82,10 @@ func (c *Client) ReadPump() {
 		if err := c.MessageService.Create(context.Background(), message); err != nil {
 			continue
 		}
-		log.Printf("[ReadPump] Message created")
 
 		message.Sender = *user
 
 		messageDTO := dtoBuilder.BuildMessageDTO(message)
-		log.Printf("[ReadPump] Message dto built")
 		outgoing, _ := json.Marshal(messageDTO)
 		c.Hub.Broadcast <- outgoing
 	}

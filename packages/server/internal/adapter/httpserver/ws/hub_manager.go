@@ -15,16 +15,20 @@ func NewHubManager() *HubManager {
 	}
 }
 
-func (m *HubManager) GetHub(chatID string) *Hub {
+func (m *HubManager) GetHub(chatID string) (*Hub, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if hub, exists := m.hubs[chatID]; exists {
-		return hub
+		return hub, nil
 	}
 
-	hub := NewHub()
+	hub, err := NewHub()
+	if err != nil {
+		return nil, err
+	}
+
 	m.hubs[chatID] = hub
 	go hub.Run()
-	return hub
+	return hub, nil
 }
