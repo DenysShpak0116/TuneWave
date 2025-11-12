@@ -118,8 +118,12 @@ func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
 	// 		client.Send <- b
 	// 	}
 	// }
-	b, _ := json.Marshal(hub.DhKeys)
-	client.Send <- b
+	b, _ := json.Marshal(map[string]any{
+		"type": "DH_INIT",
+		"p":    hub.DhKeys.Prime,
+		"q":    hub.DhKeys.Generator,
+	})
+	hub.Broadcast <- b
 
 	return nil
 }
