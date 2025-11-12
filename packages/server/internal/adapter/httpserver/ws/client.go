@@ -68,12 +68,7 @@ func (c *Client) ReadPump() {
 			continue
 		}
 
-		var recieverID uuid.UUID
-		if payload.Receiver != "" {
-			recieverID, _ = uuid.Parse(payload.Receiver)
-		}
-
-		if len(recieverID) == 0 {
+		if payload.Receiver == "" {
 			message := &models.Message{
 				Content:  payload.Content,
 				ChatID:   c.ChatID,
@@ -96,6 +91,12 @@ func (c *Client) ReadPump() {
 			outgoing, _ := json.Marshal(messageDTO)
 			c.Hub.Broadcast <- outgoing
 		} else {
+			recieverID, err := uuid.Parse(payload.Receiver)
+			if err != nil {
+				log.Printf("[ReadPump] invalid receiver UUID: %s, err: %v", payload.Receiver, err)
+				continue
+			}
+
 			for cl := range c.Hub.Clients {
 				if cl.UserID == recieverID {
 					if !c.Hub.Clients[cl] {
