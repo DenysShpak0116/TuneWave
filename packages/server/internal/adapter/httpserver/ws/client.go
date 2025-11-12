@@ -73,27 +73,27 @@ func (c *Client) ReadPump() {
 			recieverID, _ = uuid.Parse(payload.Receiver)
 		}
 
-		user, err := c.UserService.GetByID(context.TODO(), c.UserID)
-		if err != nil {
-			log.Println("Failed to get user by id:", c.UserID)
-			return
-		}
-
-		message := &models.Message{
-			Content:  payload.Content,
-			ChatID:   c.ChatID,
-			SenderID: c.UserID,
-		}
-
-		if err := c.MessageService.Create(context.Background(), message); err != nil {
-			continue
-		}
-
-		message.Sender = *user
-
-		messageDTO := dtoBuilder.BuildMessageDTO(message)
-		outgoing, _ := json.Marshal(messageDTO)
 		if len(recieverID) == 0 {
+			message := &models.Message{
+				Content:  payload.Content,
+				ChatID:   c.ChatID,
+				SenderID: c.UserID,
+			}
+
+			if err := c.MessageService.Create(context.Background(), message); err != nil {
+				continue
+			}
+
+			user, err := c.UserService.GetByID(context.TODO(), c.UserID)
+			if err != nil {
+				log.Println("Failed to get user by id:", c.UserID)
+				return
+			}
+
+			message.Sender = *user
+
+			messageDTO := dtoBuilder.BuildMessageDTO(message)
+			outgoing, _ := json.Marshal(messageDTO)
 			c.Hub.Broadcast <- outgoing
 		} else {
 			for cl := range c.Hub.Clients {
