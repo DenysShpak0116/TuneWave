@@ -106,7 +106,7 @@ export const ChatPage: FC = () => {
                     messages={messages}
                     currentUserId={currentUserId}
                     users={sortedUserIds}
-                    chatPhoto={currentChatPreview?.userAvatar}
+                    chatPhoto={"https://cdn-icons-png.flaticon.com/512/681/681494.png"}
                     onSendMessage={handleSendMessage}
                     chatId={currentChatPreview?.id}
                 />

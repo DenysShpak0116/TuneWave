@@ -14,7 +14,7 @@ export const ChatPreviewCard: FC<Props> = ({ chat, isSelected = false, onClick }
             <Avatar src={chat.userAvatar} alt="avatar" />
             <Content>
                 <Username>{chat.chatName ?? chat.username}</Username>
-                <Message>{chat.lastMessage}</Message>
+                {/* <Message>{chat.lastMessage}</Message> */}
             </Content>
         </CardContainer>
     );
