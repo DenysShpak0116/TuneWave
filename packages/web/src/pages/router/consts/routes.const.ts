@@ -19,4 +19,5 @@ export enum ROUTES {
     GENRE_SONGS = "/songs/:genre",
     UPDATE_COLLECTION = "/update-collection/:id",
     USER_LIST = "/user-list/:id",
+    STATISTIC_PAGE = "/statistic"
 }
