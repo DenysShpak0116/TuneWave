@@ -6,18 +6,30 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 )
 
 type AnalyticsHandler struct {
 	eventService services.EventService
+	songService  services.SongService
+	dtoBuilder   *dto.DTOBuilder
 }
 
-func NewAnalyticsHandler(eventService services.EventService) *AnalyticsHandler {
-	return &AnalyticsHandler{eventService: eventService}
+func NewAnalyticsHandler(
+	eventService services.EventService,
+	songService services.SongService,
+	dtoBuilder *dto.DTOBuilder,
+) *AnalyticsHandler {
+	return &AnalyticsHandler{
+		eventService: eventService,
+		songService:  songService,
+		dtoBuilder:   dtoBuilder,
+	}
 }
 
 // ListensByDay godoc
@@ -39,6 +51,7 @@ func (ah *AnalyticsHandler) ListensByDay(w http.ResponseWriter, r *http.Request)
 		stats[day]++
 	}
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, stats)
 	return nil
 }
@@ -76,6 +89,7 @@ func (ah *AnalyticsHandler) PeakAndSilentDays(w http.ResponseWriter, r *http.Req
 		}
 	}
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{
 		"peak_day":     peakDay,
 		"peak_count":   maxCount,
@@ -110,6 +124,7 @@ func (ah *AnalyticsHandler) AvgListensPerUser(w http.ResponseWriter, r *http.Req
 	}
 	avg := float64(total) / float64(users)
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{"avg": avg})
 	return nil
 }
@@ -146,6 +161,7 @@ func (ah *AnalyticsHandler) MedianListensPerUser(w http.ResponseWriter, r *http.
 		median = float64(values[n/2])
 	}
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{"median": median})
 	return nil
 }
@@ -163,19 +179,19 @@ func (ah *AnalyticsHandler) TopPopularTracks(w http.ResponseWriter, r *http.Requ
 		return helpers.InternalServerError("failed to fetch listen events")
 	}
 
-	trackCounts := make(map[string]int64)
+	trackCounts := make(map[uuid.UUID]int64)
 	for _, ev := range events {
-		trackCounts[ev.TrackID.String()]++
+		trackCounts[*ev.TrackID]++
 	}
 
 	type trackCount struct {
-		Id    string `json:"track_id"`
-		Count int64  `json:"count"`
+		Song  dto.SongPreviewDTO `json:"song"`
+		Count int64              `json:"count"`
 	}
 	var trackCountsList []trackCount
 	for id, count := range trackCounts {
 		trackCountsList = append(trackCountsList, trackCount{
-			Id:    id,
+			Song:  dto.SongPreviewDTO{ID: id},
 			Count: count,
 		})
 	}
@@ -190,8 +206,29 @@ func (ah *AnalyticsHandler) TopPopularTracks(w http.ResponseWriter, r *http.Requ
 	}
 
 	if len(trackCountsList) > 5 {
+		for i := 0; i < len(trackCountsList[:5]); i++ {
+			song, err := ah.songService.GetByID(r.Context(), trackCountsList[i].Song.ID)
+			if err != nil {
+				return helpers.InternalServerError("unable to get song")
+			}
+
+			trackCountsList[i].Song = *ah.dtoBuilder.BuildSongPreviewDTO(song)
+		}
+
+		render.Status(r, http.StatusOK)
 		render.JSON(w, r, trackCountsList[:5])
 	} else {
+		for i := 0; i < len(trackCountsList); i++ {
+			preloads := []string{"Authors"}
+			song, err := ah.songService.GetByID(r.Context(), trackCountsList[i].Song.ID, preloads...)
+			if err != nil {
+				return helpers.InternalServerError("unable to get song")
+			}
+
+			trackCountsList[i].Song = *ah.dtoBuilder.BuildSongPreviewDTO(song)
+		}
+
+		render.Status(r, http.StatusOK)
 		render.JSON(w, r, trackCountsList)
 	}
 
@@ -226,12 +263,14 @@ func (ah *AnalyticsHandler) TracksWithPopular(w http.ResponseWriter, r *http.Req
 
 	coCounts := make(map[string]int64)
 	userTracks := make(map[string]map[string]struct{})
+
 	for _, ev := range events {
 		if userTracks[ev.UserID.String()] == nil {
 			userTracks[ev.UserID.String()] = make(map[string]struct{})
 		}
 		userTracks[ev.UserID.String()][ev.TrackID.String()] = struct{}{}
 	}
+
 	for _, tracks := range userTracks {
 		if _, ok := tracks[popularTrack]; ok {
 			for t := range tracks {
@@ -242,7 +281,41 @@ func (ah *AnalyticsHandler) TracksWithPopular(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	render.JSON(w, r, coCounts)
+	type trackCount struct {
+		Song  dto.SongPreviewDTO `json:"song"`
+		Count int64              `json:"count"`
+	}
+	var result []trackCount
+
+	for idStr, count := range coCounts {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			continue
+		}
+
+		result = append(result, trackCount{
+			Song:  dto.SongPreviewDTO{ID: id},
+			Count: count,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Count > result[j].Count
+	})
+
+	for i := range result {
+		preloads := []string{"Authors"}
+		song, err := ah.songService.GetByID(ctx, result[i].Song.ID, preloads...)
+		if err != nil {
+			return helpers.InternalServerError("unable to get song")
+		}
+
+		result[i].Song = *ah.dtoBuilder.BuildSongPreviewDTO(song)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, result)
+
 	return nil
 }
 
@@ -281,6 +354,7 @@ func (ah *AnalyticsHandler) CommonTrackCombos(w http.ResponseWriter, r *http.Req
 	}
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Value > sorted[j].Value })
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, sorted)
 	return nil
 }
@@ -320,6 +394,7 @@ func (ah *AnalyticsHandler) RareTrackCombos(w http.ResponseWriter, r *http.Reque
 	}
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Value < sorted[j].Value })
 
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, sorted)
 	return nil
 }
