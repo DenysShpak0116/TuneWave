@@ -154,8 +154,8 @@ func (ah *AnalyticsHandler) MedianListensPerUser(w http.ResponseWriter, r *http.
 // @Summary Get most popular track
 // @Tags analytics
 // @Produce json
-// @Router /analytics/most-popular-track [get]
-func (ah *AnalyticsHandler) MostPopularTrack(w http.ResponseWriter, r *http.Request) error {
+// @Router /analytics/top-popular-tracks [get]
+func (ah *AnalyticsHandler) TopPopularTracks(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	events, err := ah.eventService.Where(ctx, &models.Event{EventType: models.PlayEvent})
@@ -168,19 +168,33 @@ func (ah *AnalyticsHandler) MostPopularTrack(w http.ResponseWriter, r *http.Requ
 		trackCounts[ev.TrackID.String()]++
 	}
 
-	var popularTrack string
-	var maxCount int64
-	for trackID, count := range trackCounts {
-		if count > maxCount {
-			maxCount = count
-			popularTrack = trackID
+	type trackCount struct {
+		Id    string `json:"track_id"`
+		Count int64  `json:"count"`
+	}
+	var trackCountsList []trackCount
+	for id, count := range trackCounts {
+		trackCountsList = append(trackCountsList, trackCount{
+			Id:    id,
+			Count: count,
+		})
+	}
+
+	for i := 0; i < len(trackCountsList); i++ {
+		for j := i + 1; j < len(trackCountsList); j++ {
+			if trackCountsList[i].Count < trackCountsList[j].Count {
+				trackCountsList[i], trackCountsList[j] =
+					trackCountsList[j], trackCountsList[i]
+			}
 		}
 	}
 
-	render.JSON(w, r, map[string]any{
-		"track_id": popularTrack,
-		"count":    maxCount,
-	})
+	if len(trackCountsList) > 5 {
+		render.JSON(w, r, trackCountsList[:5])
+	} else {
+		render.JSON(w, r, trackCountsList)
+	}
+
 	return nil
 }
 

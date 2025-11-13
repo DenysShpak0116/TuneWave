@@ -157,7 +157,7 @@ func NewRouter(
 		r.Get("/peak-silent", handlers.MakeHandler(analyticsHandler.PeakAndSilentDays))
 		r.Get("/avg-listens", handlers.MakeHandler(analyticsHandler.AvgListensPerUser))
 		r.Get("/median-listens", handlers.MakeHandler(analyticsHandler.MedianListensPerUser))
-		r.Get("/most-popular-track", handlers.MakeHandler(analyticsHandler.MostPopularTrack))
+		r.Get("/top-popular-tracks", handlers.MakeHandler(analyticsHandler.TopPopularTracks))
 		r.Get("/tracks-with-popular", handlers.MakeHandler(analyticsHandler.TracksWithPopular))
 		r.Get("/common-combos", handlers.MakeHandler(analyticsHandler.CommonTrackCombos))
 		r.Get("/rare-combos", handlers.MakeHandler(analyticsHandler.RareTrackCombos))

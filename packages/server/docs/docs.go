@@ -64,18 +64,6 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/analytics/most-popular-track": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "analytics"
-                ],
-                "summary": "Get most popular track",
-                "responses": {}
-            }
-        },
         "/analytics/peak-silent": {
             "get": {
                 "produces": [
@@ -97,6 +85,18 @@ const docTemplate = `{
                     "analytics"
                 ],
                 "summary": "Get rarest track combinations",
+                "responses": {}
+            }
+        },
+        "/analytics/top-popular-tracks": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get most popular track",
                 "responses": {}
             }
         },
