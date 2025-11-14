@@ -103,8 +103,6 @@ export const MainChat: FC<MainChatProps> = ({
                                     >
                                         {msg.sender.username}
                                     </UsernameChat>
-
-                                    {/* показываем уже расшифрованный контент */}
                                     <Content>{decryptedText}</Content>
 
                                     <Timestamp>{msg.createdAt.slice(11, 16)}</Timestamp>

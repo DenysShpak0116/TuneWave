@@ -17,7 +17,7 @@ export const Container = styled.div`
   padding: 24px;
   background: ${COLORS.dark_main};
   border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
 `;
 
 export const Title = styled.h2`
