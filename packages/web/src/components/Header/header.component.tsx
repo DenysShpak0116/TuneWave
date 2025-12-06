@@ -56,22 +56,24 @@ export const Header: FC = () => {
                         <NavItem key={index} title={element.title} path={element.path} icon={element.icon} />
                     ))}
                     <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
-                    <DropdownMenu>
-                        {isAuth() && (
+                    {isAuth() && (
+                        <DropdownMenu>
+
                             <>
                                 <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
                                 <NavItem title="Підписки" path={ROUTES.USER_LIST.replace(":id", user!.id)} icon={friendsIcon} />
                                 <NavItem title="Статистика сервісу" path={ROUTES.STATISTIC_PAGE} icon={statisticIcon} />
                             </>
-                        )}
-                        {isAuth() && user?.role === "admin" && (
-                            <NavItem
-                                path={ROUTES.ADD_CRITERION_PAGE}
-                                title="Додати крітерії"
-                                icon={plusIcon}
-                            />
-                        )}
-                    </DropdownMenu>
+
+                            {isAuth() && user?.role === "admin" && (
+                                <NavItem
+                                    path={ROUTES.ADD_CRITERION_PAGE}
+                                    title="Додати крітерії"
+                                    icon={plusIcon}
+                                />
+                            )}
+                        </DropdownMenu>
+                    )}
                 </NavList>
 
                 {isAuth() && user?.id ? (
