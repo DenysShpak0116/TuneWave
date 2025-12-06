@@ -14,17 +14,19 @@ interface AuthInputProps {
 
 
 export const AuthInput: FC<AuthInputProps> = ({ placeholder, type, style, value, handleInput }) => {
+    const isPassword = type === 'password';
+    const minLength = isPassword ? 6 : undefined;
+
     return (
-        <>
-            <AuthInputContainer>
-                <Input
-                    placeholder={placeholder}
-                    onChange={handleInput}
-                    style={{ ...style }}
-                    type={type || 'text'}
-                    value={value}
-                />
-            </AuthInputContainer>
-        </>
-    )
+        <AuthInputContainer>
+            <Input
+                placeholder={placeholder}
+                onChange={handleInput}
+                style={{ ...style }}
+                type={type || 'text'}
+                value={value}
+                minLength={minLength}
+            />
+        </AuthInputContainer>
+    );
 }

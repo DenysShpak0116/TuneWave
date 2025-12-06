@@ -1,121 +1,150 @@
 package song
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type SongCollectionRequest struct {
 	CollectionID string `json:"collectionId"`
 }
 
+// TODO: Handle only collection creator can add songs to it
 // AddToCollection godoc
-// @Summary      Add song to collection
-// @Description  Add song to collection
-// @Tags         songs
-// @Security    BearerAuth
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string  true  "Song ID"
-// @Param        body body      SongCollectionRequest true "Collection ID"
-// @Router       /songs/{id}/add-to-collection [post]
-func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) {
-	songID := chi.URLParam(r, "id")
-	if songID == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song ID is required", nil)
-		return
-	}
+// @Summary        Add song to collection
+// @Description    Add song to collection
+// @Tags           songs
+// @Security       BearerAuth
+// @Accept         json
+// @Produce        json
+// @Param          id   path      string  true  "Song ID"
+// @Param          body body      SongCollectionRequest true "Collection ID"
+// @Router         /songs/{id}/add-to-collection [post]
+func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.SongHandler.AddToCollection"
+	logger := sh.logger.With(
+		slog.String("op", op),
+	)
 
-	songUUID, err := uuid.Parse(songID)
+	ctx := r.Context()
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request body", err)
-		return
+		return helpers.BadRequest("invalid request body")
 	}
-
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
 	}
-
-	err = sh.SongService.AddToCollection(r.Context(), songUUID, collectionUUID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to add song to collection", err)
-		return
+		return helpers.BadRequest("invalid song ID")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "Song added to collection successfully"})
+	collectionSong := &models.CollectionSong{
+		SongID:       songUUID,
+		CollectionID: collectionUUID,
+	}
+	if _, err := sh.collectionSongService.First(ctx, collectionSong); !errors.Is(err, service.ErrNotFound) {
+		if err != nil {
+			return helpers.InternalServerError("could not add song to collection")
+		}
+
+		return helpers.NewAPIError(http.StatusConflict, "this song is already in collection")
+	}
+
+	if err := sh.songService.AddToCollection(ctx, songUUID, collectionUUID); err != nil {
+		return helpers.InternalServerError("failed to add song to collection")
+	}
+
+	event := &models.Event{
+		BaseModel:  models.BaseModel{},
+		UserID:     userUUID,
+		EventType:  models.AddToPlaylistEvent,
+		TrackID:    &songUUID,
+		PlaylistID: &collectionUUID,
+		Metadata: datatypes.JSONMap{
+			"source": "add_to_collection_endpoint",
+		},
+	}
+	if err := sh.eventService.Create(ctx, event); err != nil {
+		logger.Error("failed to create add_to_playlist event", "err", err.Error())
+	}
+
+	render.JSON(w, r, map[string]string{"message": "Song added to collection"})
+	return nil
 }
 
 // RemoveFromCollection godoc
 // @Summary      Remove song from collection
 // @Description  Remove song from collection
 // @Tags         songs
-// @Security    BearerAuth
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "Song ID"
-// @Param        body body      SongCollectionRequest true "Collection ID"
+// @Param        id   path string  true  "Song ID"
+// @Param        body body SongCollectionRequest true "Collection ID"
 // @Router       /songs/{id}/remove-from-collection [delete]
-func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Request) {
-	songID := chi.URLParam(r, "id")
-	if songID == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song ID is required", nil)
-		return
-	}
-	songUUID, err := uuid.Parse(songID)
+func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request body", err)
-		return
+		return helpers.BadRequest("invalid request body")
 	}
 	collectionUUID, err := uuid.Parse(request.CollectionID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
+	}
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("invalid song ID")
 	}
 
-	collectionSongs, err := sh.CollectionSongService.Where(context.Background(), &models.CollectionSong{
+	collectionSong, err := sh.collectionSongService.First(ctx, &models.CollectionSong{
 		CollectionID: collectionUUID,
 		SongID:       songUUID,
 	})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to find song in collection", err)
-		return
+		return helpers.InternalServerError("failed to find song in collection")
 	}
 
-	if len(collectionSongs) == 0 {
-		handlers.RespondWithError(w, r, http.StatusNotFound, "Song not found in collection", nil)
-		return
+	if err = sh.collectionSongService.Delete(ctx, collectionSong.ID); err != nil {
+		return helpers.InternalServerError("failed to remove song from collection")
 	}
 
-	collectionSong := collectionSongs[0]
-
-	err = sh.CollectionSongService.Delete(context.Background(), collectionSong.ID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to remove song from collection", err)
-		return
+	event := &models.Event{
+		BaseModel:  models.BaseModel{},
+		UserID:     userUUID,
+		EventType:  models.RemoveFromPlaylistEvent,
+		TrackID:    &songUUID,
+		PlaylistID: &collectionUUID,
+		Metadata: datatypes.JSONMap{
+			"source": "remove_from_collection_endpoint",
+		},
 	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]string{"message": "Song removed from collection successfully"})
+	if err := sh.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create remove_from_playlist event", "err", err.Error())
+	}
+	render.JSON(w, r, map[string]string{"message": "Song removed from collection"})
+	return nil
 }

@@ -5,7 +5,8 @@ import "github.com/google/uuid"
 type UserReaction struct {
 	BaseModel
 
-	Type   string    `json:"type"`
+	Type string `json:"type"`
+
 	UserID uuid.UUID `json:"userId"`
 	User   User
 

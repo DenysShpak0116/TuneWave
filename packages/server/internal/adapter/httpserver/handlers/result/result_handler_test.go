@@ -1,0 +1,421 @@
+package result
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+)
+
+func TestResultHandler_SendResult(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.SendResult)
+
+	userID := uuid.New()
+	collectionID := uuid.New()
+
+	validRequest := dto.SendResultRequest{
+		Results: []dto.ResultRequest{
+			{
+				Song1ID: uuid.NewString(),
+				ComparedTo: []struct {
+					Song2ID string `json:"song2Id"`
+					Result  int    `json:"result"`
+				}{
+					{Song2ID: uuid.NewString(), Result: 1},
+					{Song2ID: uuid.NewString(), Result: -1},
+				},
+			},
+		},
+	}
+
+	expectedResults := []models.Result{
+		{
+			BaseModel:        models.BaseModel{ID: uuid.New()},
+			SongRank:         1,
+			UserID:           userID,
+			CollectionSongID: uuid.New(),
+		},
+		{
+			BaseModel:        models.BaseModel{ID: uuid.New()},
+			SongRank:         2,
+			UserID:           userID,
+			CollectionSongID: uuid.New(),
+		},
+	}
+
+	tests := []struct {
+		name           string
+		userCtx        bool
+		collectionID   string
+		requestBody    interface{}
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name:         "success",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			requestBody:  validRequest,
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					ProcessUserResults(gomock.Any(), userID, collectionID, validRequest).
+					Return(expectedResults, nil)
+			},
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:           "invalid user id",
+			userCtx:        false,
+			collectionID:   collectionID.String(),
+			requestBody:    validRequest,
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "invalid collection id",
+			userCtx:        true,
+			collectionID:   "not-a-uuid",
+			requestBody:    validRequest,
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "invalid request body",
+			userCtx:        true,
+			collectionID:   collectionID.String(),
+			requestBody:    "invalid-json",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "service error",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			requestBody:  validRequest,
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					ProcessUserResults(gomock.Any(), userID, collectionID, validRequest).
+					Return(nil, errors.New("service failed"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			var body []byte
+			switch v := tt.requestBody.(type) {
+			case string:
+				body = []byte(v)
+			default:
+				b, _ := json.Marshal(v)
+				body = b
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/collections/"+tt.collectionID+"/results", bytes.NewReader(body))
+			if tt.userCtx {
+				req = req.WithContext(context.WithValue(req.Context(), "userID", userID.String()))
+			}
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.collectionID)
+			req = req.WithContext(contextWithChi(req.Context(), rctx))
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestResultHandler_DeleteUserResults(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.DeleteUserResults)
+
+	userID := uuid.New()
+	collectionID := uuid.New()
+
+	userResults := []models.Result{
+		{BaseModel: models.BaseModel{ID: uuid.New()}, UserID: userID, CollectionSongID: collectionID},
+		{BaseModel: models.BaseModel{ID: uuid.New()}, UserID: userID, CollectionSongID: collectionID},
+	}
+
+	tests := []struct {
+		name           string
+		userCtx        bool
+		collectionID   string
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name:         "success",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					Where(gomock.Any(), &models.Result{UserID: userID, CollectionSongID: collectionID}).
+					Return(userResults, nil)
+				mockResultService.EXPECT().
+					Delete(gomock.Any(), userResults[0].ID, userResults[1].ID).
+					Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid user id",
+			userCtx:        false,
+			collectionID:   collectionID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "invalid collection id",
+			userCtx:        true,
+			collectionID:   "not-a-uuid",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "service error on Where",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					Where(gomock.Any(), &models.Result{UserID: userID, CollectionSongID: collectionID}).
+					Return(nil, errors.New("db error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			name:         "no results found",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					Where(gomock.Any(), &models.Result{UserID: userID, CollectionSongID: collectionID}).
+					Return([]models.Result{}, nil)
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:         "service error on Delete",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					Where(gomock.Any(), &models.Result{UserID: userID, CollectionSongID: collectionID}).
+					Return(userResults, nil)
+				mockResultService.EXPECT().
+					Delete(gomock.Any(), userResults[0].ID, userResults[1].ID).
+					Return(errors.New("delete failed"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			req := httptest.NewRequest(http.MethodDelete, "/collections/"+tt.collectionID+"/results", nil)
+			if tt.userCtx {
+				req = req.WithContext(context.WithValue(req.Context(), "userID", userID.String()))
+			}
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.collectionID)
+			req = req.WithContext(contextWithChi(req.Context(), rctx))
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestResultHandler_GetUserResults(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.GetUserResults)
+
+	userID := uuid.New()
+	collectionID := uuid.New()
+
+	results := []models.Result{
+		{BaseModel: models.BaseModel{ID: uuid.New()}, UserID: userID, CollectionSongID: collectionID, SongRank: 1},
+		{BaseModel: models.BaseModel{ID: uuid.New()}, UserID: userID, CollectionSongID: collectionID, SongRank: 2},
+	}
+
+	tests := []struct {
+		name           string
+		userCtx        bool
+		collectionID   string
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name:         "success",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetUserResults(gomock.Any(), userID, collectionID).
+					Return(results, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid user id",
+			userCtx:        false,
+			collectionID:   collectionID.String(),
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "invalid collection id",
+			userCtx:        true,
+			collectionID:   "not-a-uuid",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "service error",
+			userCtx:      true,
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetUserResults(gomock.Any(), userID, collectionID).
+					Return(nil, errors.New("db error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			req := httptest.NewRequest(http.MethodGet, "/collections/"+tt.collectionID+"/results", nil)
+			if tt.userCtx {
+				req = req.WithContext(context.WithValue(req.Context(), "userID", userID.String()))
+			}
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.collectionID)
+			req = req.WithContext(contextWithChi(req.Context(), rctx))
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func TestResultHandler_GetCollectiveResults(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockResultService := mocks.NewMockResultService(ctrl)
+	mockCollectionSongService := mocks.NewMockCollectionSongService(ctrl)
+
+	handler := NewResultHandler(mockResultService, mockCollectionSongService)
+	httpHandler := handlers.MakeHandler(handler.GetCollectiveResults)
+
+	collectionID := uuid.New()
+	collectiveResults := map[string]any{
+		"results": []map[string]any{
+			{"songId": uuid.New().String(), "rank": 1},
+			{"songId": uuid.New().String(), "rank": 2},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		collectionID   string
+		mockSetup      func()
+		expectedStatus int
+	}{
+		{
+			name:         "success",
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetCollectiveResults(gomock.Any(), collectionID).
+					Return(collectiveResults, nil)
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid collection id",
+			collectionID:   "not-a-uuid",
+			mockSetup:      func() {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:         "service error",
+			collectionID: collectionID.String(),
+			mockSetup: func() {
+				mockResultService.EXPECT().
+					GetCollectiveResults(gomock.Any(), collectionID).
+					Return(nil, errors.New("db error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockSetup()
+
+			req := httptest.NewRequest(http.MethodGet, "/collections/"+tt.collectionID+"/collective-results", nil)
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", tt.collectionID)
+			req = req.WithContext(contextWithChi(req.Context(), rctx))
+
+			rr := httptest.NewRecorder()
+			httpHandler.ServeHTTP(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+		})
+	}
+}
+
+func contextWithChi(ctx context.Context, rctx *chi.Context) context.Context {
+	return context.WithValue(ctx, chi.RouteCtxKey, rctx)
+}

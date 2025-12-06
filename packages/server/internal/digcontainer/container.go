@@ -5,11 +5,13 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/analytics"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/comment"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/criterion"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/result"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/song"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/user"
@@ -18,8 +20,9 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/logger/slogpretty"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/repository"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/songservice"
+	"github.com/redis/go-redis/v9"
 
 	"log/slog"
 
@@ -29,12 +32,21 @@ import (
 func BuildContainer() *dig.Container {
 	container := dig.New()
 
-	httpserver.InitGothicSessionStore()
-
 	container.Provide(config.MustLoad)
+
+	container.Invoke(func(cfg *config.Config) {
+		httpserver.InitGothicSessionStore(cfg.Google.GothicSessionKey, cfg.Google.MaxSessionAge, cfg.Env == "prod")
+	})
+
 	container.Provide(setupPrettySlog)
 	container.Provide(repository.NewGORMDB)
-
+	container.Provide(func(cfg *config.Config) *redis.Client {
+		return redis.NewClient(&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       0,
+		})
+	})
 	// repository
 	container.Provide(repository.NewFileStorage)
 	container.Provide(repository.NewRepository[models.User])
@@ -55,10 +67,11 @@ func BuildContainer() *dig.Container {
 	container.Provide(repository.NewRepository[models.Result])
 	container.Provide(repository.NewRepository[models.UserCollection])
 	container.Provide(repository.NewRepository[models.UserFollower])
+	container.Provide(repository.NewRepository[models.Event])
 
 	// service
 	container.Provide(service.NewMailService)
-	container.Provide(songservice.NewSongService)
+	container.Provide(service.NewSongService)
 	container.Provide(service.NewUserService)
 	container.Provide(service.NewAuthService)
 	container.Provide(service.NewCommentService)
@@ -71,9 +84,15 @@ func BuildContainer() *dig.Container {
 	container.Provide(service.NewResultService)
 	container.Provide(service.NewUserCollectionService)
 	container.Provide(service.NewUserFollowerService)
+	container.Provide(service.NewUserReactionService)
+	container.Provide(service.NewEventService)
 	container.Provide(ws.NewHubManager)
 
 	// handlers
+	container.Provide(func(userService services.UserService, userReactionService services.UserReactionService) *dto.DTOBuilder {
+		return dto.NewDTOBuilder(userService, userReactionService)
+	})
+
 	container.Provide(chat.NewChatHandler)
 	container.Provide(auth.NewAuthHandler)
 	container.Provide(user.NewUserHandler)
@@ -83,6 +102,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(criterion.NewCriterionHandler)
 	container.Provide(vector.NewVectorHandler)
 	container.Provide(result.NewResultHandler)
+	container.Provide(analytics.NewAnalyticsHandler)
 
 	container.Provide(httpserver.NewRouter)
 

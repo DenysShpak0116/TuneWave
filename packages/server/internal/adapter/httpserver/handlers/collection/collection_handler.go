@@ -1,33 +1,46 @@
 package collection
 
 import (
-	"context"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strconv"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type CollectionHandler struct {
-	CollectionService     services.CollectionService
-	UserCollectionService services.UserCollectionService
+	collectionService     services.CollectionService
+	userCollectionService services.UserCollectionService
+	userReactionService   services.UserReactionService
+	userService           services.UserService
+	eventService          services.EventService
+	dtoBuilder            *dto.DTOBuilder
 }
 
 func NewCollectionHandler(
 	collectionService services.CollectionService,
 	userCollectionService services.UserCollectionService,
+	userReactionService services.UserReactionService,
+	userService services.UserService,
+	eventService services.EventService,
+	dtoBuilder *dto.DTOBuilder,
 ) *CollectionHandler {
 	return &CollectionHandler{
-		CollectionService:     collectionService,
-		UserCollectionService: userCollectionService,
+		collectionService:     collectionService,
+		userCollectionService: userCollectionService,
+		userReactionService:   userReactionService,
+		userService:           userService,
+		eventService:          eventService,
+		dtoBuilder:            dtoBuilder,
 	}
 }
 
@@ -35,39 +48,33 @@ func NewCollectionHandler(
 // @Summary Create a new collection
 // @Description Creates a new collection. Returns the created collection object.
 // @Tags collections
-// @Security     BearerAuth
-// @Accept  multipart/form-data
-// @Produce  json
-// @Param userId formData string true "User ID"
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
 // @Param title formData string true "Collection title"
 // @Param description formData string true "Collection description"
 // @Param cover formData file true "Collection cover image"
 // @Router /collections [post]
-func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
-		return
+func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return helpers.BadRequest("error parsing form")
 	}
 
-	userID := r.FormValue("userId")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	title := r.FormValue("title")
 	description := r.FormValue("description")
-
 	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error getting cover file", err)
-		return
+		return helpers.BadRequest("error getting cover file")
 	}
 
-	collection, err := ch.CollectionService.SaveCollection(
-		context.Background(), services.SaveCollectionParams{
+	collection, err := ch.collectionService.SaveCollection(
+		ctx, services.SaveCollectionParams{
 			Title:       title,
 			Description: description,
 			CoverHeader: coverHeader,
@@ -76,28 +83,38 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 		},
 	)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error saving collection", err)
-		return
+		return helpers.InternalServerError("error saving collection")
 	}
 
 	userCollection := &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collection.ID,
 	}
-
-	if err := ch.UserCollectionService.Create(context.Background(), userCollection); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error creating user collection", err)
-		return
+	if err := ch.userCollectionService.Create(ctx, userCollection); err != nil {
+		return helpers.InternalServerError("error creating user collection")
 	}
 
-	collectionDTO, err := ch.CollectionService.GetFullDTOByID(context.Background(), collection.ID)
+	event := &models.Event{
+		UserID:     userUUID,
+		EventType:  models.CreatePlaylistEvent,
+		PlaylistID: &collection.ID,
+		Metadata: datatypes.JSONMap{
+			"title": title,
+		},
+	}
+	if err := ch.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create create_playlist event", "err", err.Error())
+	}
+
+	preloads := []string{"User"}
+	newCollection, err := ch.collectionService.GetByID(ctx, collection.ID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
-		return
+		return helpers.InternalServerError("error getting collection")
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, collectionDTO)
+	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(newCollection))
+	return nil
 }
 
 // GetCollectionByID godoc
@@ -108,21 +125,22 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 // @Produce  json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [get]
-func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID. Err: %s", err.Error())
 	}
 
-	collectionDTO, err := ch.CollectionService.GetFullDTOByID(r.Context(), collectionUUID)
+	preloads := []string{"User"}
+	collection, err := ch.collectionService.GetByID(ctx, collectionUUID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
-		return
+		return helpers.InternalServerError("error getting collection")
 	}
 
-	render.JSON(w, r, collectionDTO)
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(collection))
+	return nil
 }
 
 // DeleteCollection godoc
@@ -132,48 +150,42 @@ func (ch *CollectionHandler) GetCollectionByID(w http.ResponseWriter, r *http.Re
 // @Security     BearerAuth
 // @Param id path string true "Collection ID"
 // @Router /collections/{id} [delete]
-func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request) error {
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
 	}
 
-	err = ch.CollectionService.Delete(r.Context(), collectionUUID)
+	err = ch.collectionService.Delete(r.Context(), collectionUUID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error deleting collection", err)
-		return
+		return helpers.InternalServerError("error deleting collection")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+	return nil
 }
 
 // UpdateCollection godoc
 // @Summary Update a collection
 // @Description Updates a collection by its ID. Returns the updated collection object.
 // @Tags collections
-// @Security     BearerAuth
-// @Accept  multipart/form-data
-// @Produce  json
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
 // @Param id path string true "Collection ID"
 // @Param title formData string true "Collection title"
 // @Param description formData string true "Collection description"
 // @Param cover formData file true "Collection cover image"
 // @Router /collections/{id} [put]
-func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
 	}
 
-	err = r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
-		return
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return helpers.BadRequest("error parsing form")
 	}
 
 	title := r.FormValue("title")
@@ -185,37 +197,36 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 	if r.MultipartForm != nil && len(r.MultipartForm.File["cover"]) > 0 {
 		coverFile, coverHeader, err = r.FormFile("cover")
 		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusBadRequest, "Error getting cover file", err)
-			return
+			return helpers.BadRequest("error getting cover file")
 		}
 	}
-	prevCollection, err := ch.CollectionService.GetFullDTOByID(r.Context(), collectionUUID)
+
+	preloads := []string{"User"}
+	prevCollection, err := ch.collectionService.GetByID(ctx, collectionUUID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
-		return
+		return helpers.InternalServerError("error getting collection")
 	}
 
-	_, err = ch.CollectionService.UpdateCollection(
-		r.Context(), collectionUUID, services.UpdateCollectionParams{
+	if _, err = ch.collectionService.UpdateCollection(
+		ctx, collectionUUID, services.UpdateCollectionParams{
 			UserID:      prevCollection.User.ID,
 			Title:       title,
 			Description: description,
 			CoverHeader: coverHeader,
 			Cover:       coverFile,
 		},
-	)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error updating collection", err)
-		return
+	); err != nil {
+		return helpers.InternalServerError("error updating collection")
 	}
 
-	newCollection, err := ch.CollectionService.GetFullDTOByID(r.Context(), prevCollection.ID)
+	newCollection, err := ch.collectionService.GetByID(ctx, prevCollection.ID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collection", err)
-		return
+		return helpers.InternalServerError("error getting collection")
 	}
+
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, newCollection)
+	render.JSON(w, r, ch.dtoBuilder.BuildCollectionDTO(newCollection))
+	return nil
 }
 
 // GetUsersCollections godoc
@@ -225,139 +236,83 @@ func (ch *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Req
 // @Security     BearerAuth
 // @Produce      json
 // @Router       /collections/users-collections [get]
-func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) {
-	userID, err := helpers.GetUserID(r.Context())
+func (ch *CollectionHandler) GetUsersCollections(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID format")
 	}
 
-	userUUID, err := uuid.Parse(userID)
+	preloads := []string{"Collection"}
+	userCollections, err := ch.userCollectionService.Where(
+		ctx,
+		&models.UserCollection{UserID: userUUID},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID format", err)
-		return
-	}
-
-	userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
-		UserID: userUUID,
-	}, "Collection")
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting user collections", err)
-		return
+		return helpers.InternalServerError("error getting user collections")
 	}
 
 	if len(userCollections) == 0 {
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dtos.UsersCollectionDTO{})
-		return
+		render.JSON(w, r, []dto.UserCollectionDTO{})
+		return nil
 	}
 
-	collections := make([]models.Collection, len(userCollections))
-	for i, userCollection := range userCollections {
-		collections[i] = userCollection.Collection
-	}
-
-	usersCollectionsDTOs := make([]dtos.UsersCollectionDTO, 0)
-	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
-			ID:          collection.ID,
-			CreatedAt:   collection.CreatedAt,
-			Title:       collection.Title,
-			Description: collection.Description,
-			CoverURL:    collection.CoverURL,
-		})
+	usersCollectionsDTOs := make([]dto.UserCollectionDTO, 0, len(userCollections))
+	for _, userCollection := range userCollections {
+		usersCollectionsDTOs = append(
+			usersCollectionsDTOs,
+			ch.dtoBuilder.BuildUserCollectionDTO(&userCollection.Collection),
+		)
 	}
 
 	render.JSON(w, r, usersCollectionsDTOs)
+	return nil
 }
 
 // GetCollections godoc
 // @Summary Get all collections
 // @Description Get all collections. Returns a list of collections.
 // @Tags collections
-// @Security     BearerAuth
-// @Produce  json
+// @Security BearerAuth
+// @Produce json
 // @Param limit query int false "Limit"
 // @Param page query int false "Page"
-// @Param sort query string false "Sort by (title, created_at)"
-// @Param order query string false "Order (asc, desc)"
+// @Param orderBy query string false "Order by (title, created_at)"
+// @Param sort query string false "sort order (asc, desc)"
 // @Router /collections [get]
-func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Request) {
-	limitParam := r.URL.Query().Get("limit")
-	pageParam := r.URL.Query().Get("page")
+func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	orderBy := r.URL.Query().Get("orderBy")
 	sort := r.URL.Query().Get("sort")
-	order := r.URL.Query().Get("order")
-
-	if sort != "title" && sort != "created_at" {
-		sort = "created_at"
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 20
 	}
-
-	if order != "asc" && order != "desc" {
-		order = "asc"
-	}
-
-	var limit int
-	if limitParam == "" {
-		limit = 10
-	} else {
-		var err error
-		limit, err = strconv.Atoi(limitParam)
-		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid limit", err)
-			return
-		}
-	}
-	if limit <= 0 {
-		limit = 10
-	}
-
-	var page int
-	if pageParam == "" {
-		page = 1
-	} else {
-		var err error
-		page, err = strconv.Atoi(pageParam)
-		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid page", err)
-			return
-		}
-	}
-	if page <= 0 {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
 		page = 1
 	}
 
-	collections, err := ch.CollectionService.GetMany(
-		context.Background(),
-		limit,
-		page,
-		sort,
-		order,
-		"User",
-		"User.Followers",
+	allowedSortFields := []string{"title", "created_at"}
+	defaultField := "created_at"
+	preloads := []string{"User"}
+	collections, err := ch.collectionService.Where(
+		ctx, &models.Collection{},
+		query.WithPagination(page, limit),
+		query.WithSort(orderBy, sort, allowedSortFields, defaultField),
+		query.WithPreloads(preloads...),
 	)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting collections", err)
-		return
+		return helpers.InternalServerError("error getting collections")
 	}
 
-	collectionsDTOs := make([]dtos.CollectionDTO, 0)
+	collectionsDTOs := make([]dto.CollectionDTO, 0, len(collections))
 	for _, collection := range collections {
-		collectionsDTOs = append(collectionsDTOs, dtos.CollectionDTO{
-			ID:       collection.ID,
-			Title:    collection.Title,
-			CoverURL: collection.CoverURL,
-			User: dtos.UserDTO{
-				ID:             collection.User.ID,
-				Username:       collection.User.Username,
-				Role:           collection.User.Role,
-				ProfilePicture: collection.User.ProfilePicture,
-				ProfileInfo:    collection.User.ProfileInfo,
-				Followers:      int64(len(collection.User.Followers)),
-			},
-		})
+		collectionsDTOs = append(collectionsDTOs, *ch.dtoBuilder.BuildCollectionDTO(&collection))
 	}
-
 	render.JSON(w, r, collectionsDTOs)
+	return nil
 }
 
 // AddCollectionToUser godoc
@@ -368,76 +323,58 @@ func (ch *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reque
 // @Produce  json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/add-to-user [post]
-func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
+	}
+	userUUID, err := helpers.GetUserID(ctx)
+	if err != nil {
+		return helpers.BadRequest("invalid user ID format")
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
-	}
-
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID format", err)
-		return
-	}
-
-	if userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
+	userCollectionParams := &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
-	}); err != nil || len(userCollections) > 0 {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "could not add collection", err)
-		return
+	}
+	if _, err := ch.userCollectionService.First(ctx, userCollectionParams); err != nil {
+		return helpers.BadRequest("could not add collection")
 	}
 
-	err = ch.UserCollectionService.Create(context.Background(), &models.UserCollection{
+	if err = ch.userCollectionService.Create(ctx, &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
-	})
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error adding song to collection", err)
-		return
+	}); err != nil {
+		return helpers.BadRequest("error adding song to collection")
 	}
 
-	userCollections, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
-		UserID: userUUID,
-	}, "Collection")
+	preloads := []string{"Collection"}
+	userCollections, err := ch.userCollectionService.Where(
+		ctx, &models.UserCollection{UserID: userUUID},
+		query.WithPreloads(preloads...),
+	)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting user collections", err)
-		return
+		return helpers.InternalServerError("error getting user collections")
 	}
 
 	if len(userCollections) == 0 {
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, []dtos.UsersCollectionDTO{})
-		return
+		render.JSON(w, r, []dto.UserCollectionDTO{})
+		return nil
 	}
 
-	collections := make([]models.Collection, len(userCollections))
+	collections := make([]models.Collection, 0, len(userCollections))
 	for i, userCollection := range userCollections {
 		collections[i] = userCollection.Collection
 	}
 
-	var usersCollectionsDTOs []dtos.UsersCollectionDTO
+	var usersCollectionsDTOs []dto.UserCollectionDTO
 	for _, collection := range collections {
-		usersCollectionsDTOs = append(usersCollectionsDTOs, dtos.UsersCollectionDTO{
-			ID:          collection.ID,
-			CreatedAt:   collection.CreatedAt,
-			Title:       collection.Title,
-			Description: collection.Description,
-			CoverURL:    collection.CoverURL,
-		})
+		usersCollectionsDTOs = append(usersCollectionsDTOs, ch.dtoBuilder.BuildUserCollectionDTO(&collection))
 	}
-
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, usersCollectionsDTOs)
+	return nil
 }
 
 // RemoveCollectionFromUser godoc
@@ -448,50 +385,32 @@ func (ch *CollectionHandler) AddCollectionToUser(w http.ResponseWriter, r *http.
 // @Produce  json
 // @Param id path string true "Collection ID"
 // @Router /collections/{id}/remove-from-user [delete]
-func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid collection ID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
+	}
+	userUUID, err := helpers.GetUserID(ctx)
+	if err != nil {
+		return helpers.BadRequest("invalid user ID format")
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
-	}
-
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID format", err)
-		return
-	}
-
-	userCollection, err := ch.UserCollectionService.Where(context.Background(), &models.UserCollection{
+	userCollection, err := ch.userCollectionService.First(ctx, &models.UserCollection{
 		UserID:       userUUID,
 		CollectionID: collectionUUID,
 	})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error getting user collection", err)
-		return
-	}
-	if len(userCollection) == 0 {
-		handlers.RespondWithError(w, r, http.StatusNotFound, "User collection not found", nil)
-		return
+		return helpers.InternalServerError("error getting user collection")
 	}
 
-	userCollectionID := userCollection[0].ID
-
-	err = ch.UserCollectionService.Delete(context.Background(), userCollectionID)
+	err = ch.userCollectionService.Delete(ctx, userCollection.ID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Error removing song from collection", err)
-		return
+		return helpers.InternalServerError("error removing song from collection")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+	return nil
 }
 
 // GetCollectionSongs godoc
@@ -504,12 +423,10 @@ func (ch *CollectionHandler) RemoveCollectionFromUser(w http.ResponseWriter, r *
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Number of items per page" default(10)
 // @Router /collections/{id}/songs [get]
-func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.Request) {
-	collectionID := chi.URLParam(r, "id")
-	collectionUUID, err := uuid.Parse(collectionID)
+func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.Request) error {
+	collectionUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Wrong collectionID", err)
-		return
+		return helpers.BadRequest("invalid collection ID")
 	}
 
 	search := r.URL.Query().Get("search")
@@ -533,20 +450,18 @@ func (ch *CollectionHandler) GetCollectionSongs(w http.ResponseWriter, r *http.R
 		order = "desc"
 	}
 
-	collectionSongs, err := ch.CollectionService.GetCollectionSongs(
-		context.Background(),
-		collectionUUID,
-		search,
-		sortBy,
-		order,
-		page,
-		limit,
+	collectionSongs, err := ch.collectionService.GetCollectionSongs(
+		r.Context(), collectionUUID, search, sortBy, order, page, limit,
 	)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Coult not retrieve collection songs", err)
-		return
+		return helpers.InternalServerError("could not retrieve collection songs")
+	}
+	songDTOs := make([]dto.SongPreviewDTO, 0, len(collectionSongs))
+	for _, song := range collectionSongs {
+		songDTOs = append(songDTOs, *ch.dtoBuilder.BuildSongPreviewDTO(&song))
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, collectionSongs)
+	render.JSON(w, r, songDTOs)
+	return nil
 }

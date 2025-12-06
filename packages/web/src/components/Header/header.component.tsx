@@ -20,6 +20,7 @@ import search from "@assets/images/ic_search.png"
 import { SearchModal } from "@modules/SearchModal"
 import plusIcon from "@assets/images/ic_plus.png"
 import chatIcon from "@assets/images/ic chat.png"
+import statisticIcon from "@assets/images/ic_statistic.png"
 import { useLogout } from "./hooks/useLogout"
 import { DropdownMenu } from "@ui/DropDownMenu/drop-down-menu"
 import friendsIcon from "@assets/images/ic_friends.png"
@@ -54,26 +55,25 @@ export const Header: FC = () => {
                     {HeaderItems.map((element, index) => (
                         <NavItem key={index} title={element.title} path={element.path} icon={element.icon} />
                     ))}
-                    <DropdownMenu>
-                        {isAuth() && (
+                    <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
+                    {isAuth() && (
+                        <DropdownMenu>
+
                             <>
                                 <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
-                                <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
-                                <NavItem
-                                    path={ROUTES.USER_LIST.replace(":id", user!.id)}
-                                    title="Підписки"
-                                    icon={friendsIcon}
-                                />
+                                <NavItem title="Підписки" path={ROUTES.USER_LIST.replace(":id", user!.id)} icon={friendsIcon} />
+                                <NavItem title="Статистика сервісу" path={ROUTES.STATISTIC_PAGE} icon={statisticIcon} />
                             </>
-                        )}
-                        {isAuth() && user?.role === "admin" && (
-                            <NavItem
-                                path={ROUTES.ADD_CRITERION_PAGE}
-                                title="Додати крітерії"
-                                icon={plusIcon}
-                            />
-                        )}
-                    </DropdownMenu>
+
+                            {isAuth() && user?.role === "admin" && (
+                                <NavItem
+                                    path={ROUTES.ADD_CRITERION_PAGE}
+                                    title="Додати крітерії"
+                                    icon={plusIcon}
+                                />
+                            )}
+                        </DropdownMenu>
+                    )}
                 </NavList>
 
                 {isAuth() && user?.id ? (
@@ -103,11 +103,8 @@ export const Header: FC = () => {
                         <>
                             <NavItem title="Завантажити" path={ROUTES.CREATE_TRACK} icon={uploadIcon} />
                             <NavItem title="Чати" path={ROUTES.CHAT_PAGE} icon={chatIcon} />
-                            <NavItem
-                                path={ROUTES.USER_LIST.replace(":id", user!.id)}
-                                title="Підписки"
-                                icon={friendsIcon}
-                            />
+                            <NavItem path={ROUTES.USER_LIST.replace(":id", user!.id)} title="Підписки" icon={friendsIcon}/>
+                            <NavItem title="Статистика сервісу" path={ROUTES.STATISTIC_PAGE} icon={statisticIcon} />
                         </>
                     )}
                     {isAuth() && user?.role === "admin" && (

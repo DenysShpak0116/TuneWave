@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -13,18 +13,25 @@ type MailService struct {
 	SMTPPort     int
 	FromMail     string
 	FromPassword string
+	logger  *slog.Logger
 }
 
-func NewMailService(cfg *config.Config) services.MailService {
+func NewMailService(cfg *config.Config, logger *slog.Logger) services.MailService {
 	return &MailService{
 		SMTPServer:   cfg.Mail.StmpServer,
 		SMTPPort:     cfg.Mail.SmtpPort,
 		FromMail:     cfg.Mail.FromMail,
 		FromPassword: cfg.Mail.FromPassword,
+		logger: logger,
 	}
 }
 
 func (ms *MailService) SendEmail(to string, subject string, body string) error {
+	const op = "core.service.MailService.SendEmail"
+	logger := ms.logger.With(
+		slog.String("op", op),
+	)
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", ms.FromMail)
 	m.SetHeader("To", to)
@@ -34,8 +41,10 @@ func (ms *MailService) SendEmail(to string, subject string, body string) error {
 	d := gomail.NewDialer(ms.SMTPServer, ms.SMTPPort, ms.FromMail, ms.FromPassword)
 	d.SSL = true
 	if err := d.DialAndSend(m); err != nil {
-		fmt.Printf("Failed to send email: %v\n", err)
+		logger.Error("Failed to send mail", "err", err.Error())
 		return err
 	}
+
+	logger.Info("Message sent")
 	return nil
 }

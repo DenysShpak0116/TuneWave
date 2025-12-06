@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -18,67 +18,77 @@ type AuthService struct {
 	MailService     services.MailService
 	TokenRepository port.Repository[models.Token]
 	UserService     services.UserService
+	logger          *slog.Logger
 }
 
 func NewAuthService(
 	mailService services.MailService,
 	tokenRepository port.Repository[models.Token],
 	userService services.UserService,
+	logger *slog.Logger,
 ) services.AuthService {
 	return &AuthService{
 		MailService:     mailService,
 		TokenRepository: tokenRepository,
 		UserService:     userService,
+		logger:          logger,
 	}
 }
 
-func (as *AuthService) HandleForgotPassword(req dto.ForgotPasswordRequest) (string, error) {
+func (as *AuthService) HandleForgotPassword(email string) (string, error) {
+	const op = "core.service.AuthSerivce.HandleForgotPassword"
+	logger := as.logger.With(
+		slog.String("op", op),
+	)
+
 	token := uuid.New().String()
 	expiresAt := time.Now().Add(1 * time.Hour)
 
-	err := as.TokenRepository.Add(context.Background(), &models.Token{
+	newToken := &models.Token{
 		Token:     token,
-		Email:     req.Email,
+		Email:     email,
 		ExpiresAt: expiresAt,
-	})
-	if err != nil {
+	}
+	if err := as.TokenRepository.Add(context.Background(), newToken); err != nil {
+		logger.Error("Failed to add token", "err", err.Error())
 		return "", err
 	}
 
-	as.MailService.SendEmail(
-		req.Email,
-		"Password Reset",
-		fmt.Sprintf("Token for password: %s", token),
-	)
+	as.MailService.SendEmail(email, "Password Reset", fmt.Sprintf("Token for password: %s", token))
+	logger.Info("Token sent succesfully", "email", email)
 	return token, nil
 }
 
-func (as *AuthService) HandleResetPassword(req dto.ResetPasswordRequest) error {
-	tokens, err := as.TokenRepository.NewQuery(context.Background()).
-		Where("token = ?", req.Token).
-		Take(1).
-		Find()
+func (as *AuthService) HandleResetPassword(ctx context.Context, token, newPassword string) error {
+	const op = "core.service.AuthSerivce.HandleResetPassworde"
+	logger := as.logger.With(
+		slog.String("op", op),
+	)
+
+	foundToken, err := as.TokenRepository.NewQuery(context.Background()).
+		First("token = ?", token)
 	if err != nil {
+		logger.Error("Error while trying to find token", "err", err.Error())
 		return errors.New("invalid token")
 	}
-	token := tokens[0]
 
-	print("token:%s\n", token.Token)
-
-	if time.Now().After(token.ExpiresAt) {
+	if time.Now().After(foundToken.ExpiresAt) {
 		return errors.New("token expired")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
+		logger.Error("Error while trying to save new password", "err", err.Error())
 		return err
 	}
 
-	err = as.UserService.UpdateUserPassword(token.Email, string(hash))
-	if err != nil {
+	if err = as.UserService.UpdateUserPassword(foundToken.Email, string(hash)); err != nil {
+		logger.Error("Error while trying to update users password", "err", err.Error())
 		return err
 	}
 
-	_ = as.TokenRepository.Delete(context.TODO(), token.ID)
+	_ = as.TokenRepository.Delete(ctx, foundToken.ID)
+
+	logger.Info("Password successfully updated")
 	return nil
 }

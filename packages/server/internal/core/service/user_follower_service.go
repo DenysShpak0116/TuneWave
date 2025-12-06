@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -10,10 +12,11 @@ type UserFollowerService struct {
 	GenericService[models.UserFollower]
 }
 
-func NewUserFollowerService(repo port.Repository[models.UserFollower]) services.UserFollowerService {
+func NewUserFollowerService(repo port.Repository[models.UserFollower], logger *slog.Logger) services.UserFollowerService {
 	return &UserFollowerService{
 		GenericService: GenericService[models.UserFollower]{
-			Repository: repo,
+			repository: repo,
+			logger:     logger,
 		},
 	}
 }

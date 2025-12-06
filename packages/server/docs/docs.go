@@ -16,6 +16,102 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/avg-listens": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get average listens per user",
+                "responses": {}
+            }
+        },
+        "/analytics/common-combos": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get most common track combinations",
+                "responses": {}
+            }
+        },
+        "/analytics/listens-by-day": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get number of listens grouped by day",
+                "responses": {}
+            }
+        },
+        "/analytics/median-listens": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get median listens per user",
+                "responses": {}
+            }
+        },
+        "/analytics/peak-silent": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get peak and silent day of listens",
+                "responses": {}
+            }
+        },
+        "/analytics/rare-combos": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get rarest track combinations",
+                "responses": {}
+            }
+        },
+        "/analytics/top-popular-tracks": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get most popular track",
+                "responses": {}
+            }
+        },
+        "/analytics/tracks-with-popular": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get tracks most often listened together with the most popular track",
+                "responses": {}
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Sends a password reset link to the user's email",
@@ -26,7 +122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Initiate password reset process",
                 "parameters": [
@@ -36,7 +132,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ForgotPasswordRequest"
+                            "$ref": "#/definitions/auth.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -53,7 +149,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Start Google authentication",
                 "responses": {}
@@ -69,7 +165,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Google OAuth callback",
                 "parameters": [
@@ -94,7 +190,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Login an existing user",
                 "parameters": [
@@ -104,7 +200,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
+                            "$ref": "#/definitions/auth.LoginRequest"
                         }
                     }
                 ],
@@ -126,7 +222,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Logout a user",
                 "responses": {}
@@ -147,7 +243,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Refresh access and refresh tokens",
                 "responses": {}
@@ -163,7 +259,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Register a new user",
                 "parameters": [
@@ -173,7 +269,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterRequest"
+                            "$ref": "#/definitions/auth.RegisterRequest"
                         }
                     }
                 ],
@@ -190,7 +286,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "auth"
                 ],
                 "summary": "Reset password",
                 "parameters": [
@@ -200,7 +296,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                            "$ref": "#/definitions/auth.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -258,14 +354,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Sort by (title, created_at)",
-                        "name": "sort",
+                        "description": "Order by (title, created_at)",
+                        "name": "orderBy",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc, desc)",
-                        "name": "order",
+                        "description": "sort order (asc, desc)",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],
@@ -289,13 +385,6 @@ const docTemplate = `{
                 ],
                 "summary": "Create a new collection",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userId",
-                        "in": "formData",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Collection title",
@@ -1053,7 +1142,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "created_at",
-                        "description": "Sort by field (created_at, title, artist, genre)",
+                        "description": "Sort by field (created_at, title, artist, genre, listenings)",
                         "name": "sortBy",
                         "in": "query"
                     },
@@ -1157,14 +1246,7 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.ErrorResponse"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/songs/{id}": {
@@ -1325,6 +1407,42 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/song.SongCollectionRequest"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/songs/{id}/comments": {
+            "get": {
+                "description": "Get song comments",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "songs"
+                ],
+                "summary": "Get song comments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Song ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {}
@@ -1729,7 +1847,7 @@ const docTemplate = `{
         },
         "/ws/chat": {
             "get": {
-                "description": "Setting WebSocket connection between authorised user and target user by ` + "`" + `targetUserId` + "`" + `.",
+                "description": "Setting WebSocket connection between authorised user and target users.",
                 "produces": [
                     "application/json"
                 ],
@@ -1740,15 +1858,22 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "UUID of target user",
-                        "name": "targetUserId",
+                        "description": "Bearer auth token",
+                        "name": "authToken",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Bearer auth token",
-                        "name": "authToken",
+                        "description": "userIds separated by coma",
+                        "name": "userIds",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "chan name",
+                        "name": "name",
                         "in": "query",
                         "required": true
                     }
@@ -1758,6 +1883,50 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.ForgotPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.ResetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "newPassword": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "comment.CreateCommentRequest": {
             "type": "object",
             "properties": {
@@ -1784,50 +1953,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ForgotPasswordRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RegisterRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ResetPasswordRequest": {
-            "type": "object",
-            "properties": {
-                "newPassword": {
-                    "type": "string"
-                },
-                "token": {
                     "type": "string"
                 }
             }
@@ -1873,20 +1998,6 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
-                }
-            }
-        },
-        "helpers.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         },
@@ -1971,6 +2082,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

@@ -1,5 +1,5 @@
 import { AuthForm } from "@components/AuthForm/auth-form.component";
-import { FC, FormEvent, useState, ChangeEvent } from "react";
+import { FC, FormEvent, useState, ChangeEvent} from "react";
 import { loginInputs } from "./consts/input.consts";
 import { AuthInput } from "@ui/AuthInput/auth-input.component";
 import { Button } from "@ui/Btn/btn.component";
@@ -9,14 +9,33 @@ import { GoogleButton } from "@ui/GoogleBtn/google-btn.component";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "./hooks/useLogin";
 import toast from "react-hot-toast";
+//import { encryptPassword, generateClientKeyPair } from "./utils/cryptoHelper";
+//import { useGetPublicKey } from "./hooks/useGetPublicKey";
 
 export const LoginForm: FC = () => {
     const navigate = useNavigate()
     const loginMutation = useLogin();
 
+
     const [formValues, setFormValues] = useState<string[]>(
         Array(loginInputs.length).fill("")
     );
+
+    //const [clientKeys, setClientKeys] = useState<{ publicKey: string; privateKey: string } | null>(null);
+    // const { data: serverKey } = useGetPublicKey()
+
+    // useEffect(() => {
+    //     (async () => {
+    //         try {
+    //             const keys = await generateClientKeyPair();
+    //             setClientKeys(keys);
+
+    //             localStorage.setItem("clientPrivateKey", keys.privateKey);
+    //         } catch (err) {
+    //             toast.error(`Can't reach security keys ${err}`);
+    //         }
+    //     })();
+    // }, []);
 
     const handleInput = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
         const newValues = [...formValues];
@@ -24,17 +43,27 @@ export const LoginForm: FC = () => {
         setFormValues(newValues);
     };
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
-        const [email, password] = formValues
-
-        if (email == "" || password == "") {
-            toast.error('Введіть усі поля')
-            return
+        const [email, password] = formValues;
+        if (!email || !password) {
+            toast.error("Введіть усі поля");
+            return;
         }
+        // if (!serverKey.publicKey) {
+        //     toast.error("Серверний ключ ще не завантажено");
+        //     return;
+        // }
 
-        loginMutation.mutate({ email, password });
+        try {
+            //const encryptedPassword = encryptPassword(serverKey.publicKey, password);
+
+            loginMutation.mutate({email, password});
+        } catch (err) {
+            console.error("Encryption error:", err);
+            toast.error("Помилка шифрування пароля");
+        }
     };
 
     const handleGoogleButtonClick = () => {

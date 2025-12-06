@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"log"
 	"sync"
 )
 
@@ -16,20 +15,20 @@ func NewHubManager() *HubManager {
 	}
 }
 
-func (m *HubManager) GetHub(chatID string) *Hub {
+func (m *HubManager) GetHub(chatID string) (*Hub, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	log.Printf("Getting hub for chatID: %s", chatID)
 	if hub, exists := m.hubs[chatID]; exists {
-		log.Println("Found existing hub")
-		return hub
+		return hub, nil
 	}
 
-	log.Println("Creating new hub")
+	hub, err := NewHub()
+	if err != nil {
+		return nil, err
+	}
 
-	hub := NewHub()
 	m.hubs[chatID] = hub
 	go hub.Run()
-	return hub
+	return hub, nil
 }

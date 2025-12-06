@@ -1,13 +1,14 @@
 package song
 
 import (
-	"context"
-	"fmt"
-	"mime/multipart"
+	"log/slog"
 	"net/http"
 	"strconv"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/helpers/query"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -15,14 +16,32 @@ import (
 )
 
 type SongHandler struct {
-	SongService           services.SongService
-	CollectionSongService services.CollectionSongService
+	songService           services.SongService
+	collectionSongService services.CollectionSongService
+	userReactionService   services.UserReactionService
+	commentService        services.CommentService
+	eventService          services.EventService
+	dtoBuilder            *dto.DTOBuilder
+	logger                *slog.Logger
 }
 
-func NewSongHandler(songService services.SongService, collectionSongService services.CollectionSongService) *SongHandler {
+func NewSongHandler(
+	songService services.SongService,
+	collectionSongService services.CollectionSongService,
+	userReactionService services.UserReactionService,
+	commentService services.CommentService,
+	eventService services.EventService,
+	dtoBuilder *dto.DTOBuilder,
+	logger *slog.Logger,
+) *SongHandler {
 	return &SongHandler{
-		SongService:           songService,
-		CollectionSongService: collectionSongService,
+		songService:           songService,
+		collectionSongService: collectionSongService,
+		userReactionService:   userReactionService,
+		commentService:        commentService,
+		eventService:          eventService,
+		dtoBuilder:            dtoBuilder,
+		logger:                logger,
 	}
 }
 
@@ -31,42 +50,52 @@ func NewSongHandler(songService services.SongService, collectionSongService serv
 // @Description Get all songs
 // @Tags songs
 // @Param search query string false "Search by title, artist, or genre"
-// @Param sortBy query string false "Sort by field (created_at, title, artist, genre)" default(created_at)
+// @Param sortBy query string false "Sort by field (created_at, title, artist, genre, listenings)" default(created_at)
 // @Param order query string false "Sort order (asc, desc)" default(desc)
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Number of items per page" default(10)
 // @Produce json
 // @Router /songs [get]
-func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
+func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	search := r.URL.Query().Get("search")
 	sortBy := r.URL.Query().Get("sortBy")
+	if sortBy == "" {
+		sortBy = "created_at"
+	}
 	order := r.URL.Query().Get("order")
+	if order == "" {
+		order = "desc"
+	}
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil || page < 1 {
 		page = 1
 	}
-
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit < 1 {
 		limit = 10
 	}
 
-	if sortBy == "" {
-		sortBy = "created_at"
+	params := services.SearchSongsParams{
+		Search: search,
+		SortBy: sortBy,
+		Order:  order,
+		Page:   page,
+		Limit:  limit,
 	}
-
-	if order == "" {
-		order = "desc"
-	}
-
-	songs, err := sh.SongService.GetSongs(context.Background(), search, sortBy, order, page, limit)
+	preloads := []string{"Authors", "Authors.Author"}
+	songs, err := sh.songService.GetSongs(ctx, params, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get songs", err)
-		return
+		return helpers.InternalServerError("failed to get songs")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, songs)
+	songDTOs := make([]dto.SongPreviewDTO, 0, len(songs))
+	for _, song := range songs {
+		songDTOs = append(songDTOs, *sh.dtoBuilder.BuildSongPreviewDTO(&song))
+	}
+	render.JSON(w, r, songDTOs)
+	return nil
 }
 
 // GetByID godoc
@@ -77,22 +106,24 @@ func (sh *SongHandler) GetSongs(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Song ID"
 // @Produce json
 // @Router /songs/{id} [get]
-func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid song ID")
 	}
 
-	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	preloads := []string{
+		"Authors", "Authors.Author",
+		"SongTags", "SongTags.Tag",
+		"User",
+	}
+	song, err := sh.songService.GetByID(r.Context(), songUUID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
-		return
+		return helpers.InternalServerError("failed to get song")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, songDTO)
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(song))
+	return nil
 }
 
 // Create godoc
@@ -109,20 +140,18 @@ func (sh *SongHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Param tags formData []string true "Tags" collectionFormat(multi)
 // @Param song formData file true "Song file"
 // @Param cover formData file true "Cover image"
-// @Failure 401 {object} helpers.ErrorResponse
 // @Router /songs [post]
-func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
-		return
+		return helpers.BadRequest("error parsing form")
 	}
 
-	userID := r.FormValue("userId")
-	userIDuuid, err := uuid.Parse(userID)
+	userIDuuid, err := uuid.Parse(r.FormValue("userId"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	title := r.FormValue("title")
@@ -132,19 +161,17 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	songFile, songHeader, err := r.FormFile("song")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Song file is required", err)
-		return
+		return helpers.BadRequest("song file is required")
 	}
 	defer songFile.Close()
 
 	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Cover image is required", err)
-		return
+		return helpers.BadRequest("cover image is required")
 	}
 	defer coverFile.Close()
 
-	song, err := sh.SongService.SaveSong(context.Background(), services.SaveSongParams{
+	song, err := sh.songService.SaveSong(ctx, services.SaveSongParams{
 		UserID:      userIDuuid,
 		Title:       title,
 		Genre:       genre,
@@ -156,18 +183,17 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		CoverHeader: coverHeader,
 	})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to save song", err)
-		return
+		return helpers.InternalServerError("failed to save song")
 	}
 
-	songDTO, err := sh.SongService.GetFullDTOByID(r.Context(), song.ID)
+	songToReturn, err := sh.songService.GetByID(ctx, song.ID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get song", err)
-		return
+		return helpers.InternalServerError("failed to get song")
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, songDTO)
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(songToReturn))
+	return nil
 }
 
 // Update godoc
@@ -185,18 +211,16 @@ func (sh *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param song formData file false "Updated song file"
 // @Param cover formData file false "Updated cover image"
 // @Router /songs/{id} [put]
-func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Error parsing form", err)
-		return
+func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return helpers.BadRequest("error parsing form")
 	}
 
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid song ID")
 	}
 
 	title := r.FormValue("title")
@@ -204,29 +228,23 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
 	artists := r.Form["artists"]
 	tags := r.Form["tags"]
 
-	var songFile multipart.File
-	var songHeader *multipart.FileHeader
-	songFile, songHeader, err = r.FormFile("song")
+	songFile, songHeader, err := r.FormFile("song")
 	if err != nil && err != http.ErrMissingFile {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song file", err)
-		return
+		return helpers.BadRequest("invalid song file")
 	}
 	if songFile != nil {
 		defer songFile.Close()
 	}
 
-	var coverFile multipart.File
-	var coverHeader *multipart.FileHeader
-	coverFile, coverHeader, err = r.FormFile("cover")
+	coverFile, coverHeader, err := r.FormFile("cover")
 	if err != nil && err != http.ErrMissingFile {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid cover image", err)
-		return
+		return helpers.BadRequest("invalid cover image")
 	}
 	if coverFile != nil {
 		defer coverFile.Close()
 	}
 
-	err = sh.SongService.UpdateSong(context.Background(), services.UpdateSongParams{
+	if err := sh.songService.UpdateSong(ctx, services.UpdateSongParams{
 		SongID:      songUUID,
 		Title:       title,
 		Genre:       genre,
@@ -236,20 +254,17 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
 		SongHeader:  songHeader,
 		Cover:       coverFile,
 		CoverHeader: coverHeader,
-	})
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to update song", err)
-		return
+	}); err != nil {
+		return helpers.InternalServerError("failed to update song")
 	}
 
-	updatedSong, err := sh.SongService.GetFullDTOByID(r.Context(), songUUID)
+	updatedSong, err := sh.songService.GetByID(ctx, songUUID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to retrieve updated song", err)
-		return
+		return helpers.InternalServerError("Failed to retrieve updated song")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, updatedSong)
+	render.JSON(w, r, sh.dtoBuilder.BuildSongDTO(updatedSong))
+	return nil
 }
 
 // Delete godoc
@@ -260,21 +275,18 @@ func (sh *SongHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Song ID"
 // @Produce json
 // @Router /songs/{id} [delete]
-func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	songID := chi.URLParam(r, "id")
-	songUUID, err := uuid.Parse(songID)
+func (sh *SongHandler) Delete(w http.ResponseWriter, r *http.Request) error {
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid song ID")
 	}
 
-	if err := sh.SongService.Delete(context.Background(), songUUID); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to delete song", err)
-		return
+	if err := sh.songService.Delete(r.Context(), songUUID); err != nil {
+		return helpers.InternalServerError("failed to delete song")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+	return nil
 }
 
 type genrePreview struct {
@@ -288,19 +300,17 @@ type genrePreview struct {
 // @Tags songs
 // @Produce json
 // @Router /genres [get]
-func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
-	genres := sh.SongService.GetGenres(context.Background())
+func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	genres := sh.songService.GetGenres(ctx)
 	if len(genres) == 0 {
 		render.JSON(w, r, []string{})
-		return
+		return nil
 	}
 
-	fmt.Printf("genres: %+v\n\n", genres)
-
-	genrePreviews := make([]genrePreview, 0)
+	genrePreviews := make([]genrePreview, 0, len(genres))
 	for _, genre := range genres {
-		song, err := sh.SongService.GetGenresMostPopularSong(context.Background(), genre)
-		fmt.Printf("song: %+v\n\n", song)
+		song, err := sh.songService.GetGenresMostPopularSong(ctx, genre)
 		if err != nil || song == nil {
 			genrePreviews = append(genrePreviews, genrePreview{
 				GenreName:  genre,
@@ -314,6 +324,47 @@ func (sh *SongHandler) GetGenres(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, genrePreviews)
+	return nil
+}
+
+// GetSongComments godoc
+// @Summary Get song comments
+// @Description Get song comments
+// @Tags songs
+// @Produce json
+// @Param id path string true "Song ID"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Number of items per page" default(10)
+// @Router /songs/{id}/comments [get]
+func (sh *SongHandler) GetSongComments(w http.ResponseWriter, r *http.Request) error {
+	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("invalid song ID")
+	}
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+	}
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 10
+	}
+
+	preloads := []string{"User"}
+	comments, err := sh.commentService.Where(
+		r.Context(), &models.Comment{SongID: songUUID},
+		query.WithPagination(page, limit),
+		query.WithPreloads(preloads...),
+	)
+	if err != nil {
+		return helpers.InternalServerError("could not retrieve comments")
+	}
+
+	commentDTOs := make([]dto.CommentDTO, 0, len(comments))
+	for _, comment := range comments {
+		commentDTOs = append(commentDTOs, *sh.dtoBuilder.BuildCommentDTO(&comment))
+	}
+	render.JSON(w, r, commentDTOs)
+	return nil
 }

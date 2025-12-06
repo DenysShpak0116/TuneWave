@@ -1,14 +1,12 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
@@ -26,56 +24,32 @@ import (
 // @Param        id   path      string                true  "User ID (UUID format)"
 // @Param        user body      dto.UserUpdateRequest true  "Updated user data"
 // @Router       /users/{id} [put]
-func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "User ID is required"})
-		return
+func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	userUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	var userUpdateRequest dto.UserUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&userUpdateRequest); err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "Invalid request payload"})
-		return
+		return helpers.BadRequest("invalid request payload")
 	}
 	defer r.Body.Close()
 
-	uuidID, err := uuid.Parse(id)
-	if err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "Invalid User ID format"})
-		return
-	}
-	userUpdate := &models.User{
+	updatedUser := &models.User{
 		BaseModel: models.BaseModel{
-			ID: uuidID,
+			ID: userUUID,
 		},
 		Username:    userUpdateRequest.Username,
 		ProfileInfo: userUpdateRequest.ProfileInfo,
 	}
-	updatedUser, err := uh.UserService.Update(context.TODO(), userUpdate)
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "Failed to update user"})
-		return
+	if err := uh.userService.Update(ctx, updatedUser); err != nil {
+		return helpers.InternalServerError("Failed to update user")
 	}
 
-	updatedUser, err = uh.UserService.GetByID(context.Background(), updatedUser.ID, "Followers")
-
-	userDTO := &dtos.UserDTO{
-		ID:             uuidID,
-		Username:       updatedUser.Username,
-		Role:           updatedUser.Role,
-		ProfilePicture: updatedUser.ProfilePicture,
-		ProfileInfo:    updatedUser.ProfileInfo,
-		Followers:      int64(len(updatedUser.Followers)),
-	}
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]interface{}{
-		"user": userDTO,
-	})
+	render.JSON(w, r, uh.dtoBuilder.BuildUserDTO(updatedUser))
+	return nil
 }
 
 // UpdateAvatar godoc
@@ -87,45 +61,36 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        file formData file true "Avatar file"
 // @Router 	 /users/avatar/ [put]
-func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandler) UpdateAvatar(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid form data", err)
-		return
+		return helpers.BadRequest("invalid form data")
 	}
 
 	var pfpFile multipart.File
 	var pfpHeader *multipart.FileHeader
 	pfpFile, pfpHeader, err := r.FormFile("file")
-	if err != nil && err != http.ErrMissingFile {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid cover image", err)
-		return
+	if err != nil {
+		return helpers.BadRequest("invalid cover image")
 	}
 	if pfpFile != nil {
 		defer pfpFile.Close()
 	}
 
-	userID := r.Context().Value("userID").(string)
-	if userID == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "User ID is required", nil)
-		return
-	}
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid User ID format", err)
-		return
+		return helpers.BadRequest("invalid User ID format")
 	}
 
-	err = uh.UserService.UpdateUserPfp(context.TODO(), services.UpdatePfpParams{
+	updateParams := services.UpdatePfpParams{
 		UserID:    userUUID,
 		Pfp:       pfpFile,
 		PfpHeader: pfpHeader,
-	})
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "Failed to update avatar"})
-		return
+	}
+	if err := uh.userService.UpdateUserPfp(ctx, updateParams); err != nil {
+		return helpers.InternalServerError("Failed to update avatar")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"message": "Avatar updated successfully"})
+	return nil
 }

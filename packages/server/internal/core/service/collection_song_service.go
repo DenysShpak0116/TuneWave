@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log/slog"
+
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
@@ -10,10 +12,11 @@ type CollectionSongService struct {
 	GenericService[models.CollectionSong]
 }
 
-func NewCollectionSongService(repo port.Repository[models.CollectionSong]) services.CollectionSongService {
+func NewCollectionSongService(repo port.Repository[models.CollectionSong], logger *slog.Logger) services.CollectionSongService {
 	return &CollectionSongService{
 		GenericService: GenericService[models.CollectionSong]{
-			Repository: repo,
+			repository: repo,
+			logger: logger,
 		},
 	}
 }

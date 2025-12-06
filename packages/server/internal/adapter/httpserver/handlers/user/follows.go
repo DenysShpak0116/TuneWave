@@ -1,13 +1,12 @@
 package user
 
 import (
-	"context"
+	"errors"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -21,73 +20,39 @@ import (
 // @Produce		json
 // @Param		id path string true "User to follow ID"
 // @Router		/users/{id}/follow [post]
-func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+func (uh *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid targed user id", err)
-		return
+		return helpers.BadRequest("invalid targed user id")
 	}
-
-	userID, err := helpers.GetUserID(r.Context())
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid auth user token", err)
-		return
-	}
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid targed user id", err)
-		return
-	}
-
-	userFollowers, _ := us.UserFollowerService.Where(context.Background(), &models.UserFollower{
-		UserID:     targetUUID,
-		FollowerID: userUUID,
-	})
-	if len(userFollowers) > 0 {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "you are already followed to this user", err)
-		return
+		return helpers.BadRequest("invalid targed user id")
 	}
 
 	userFollower := &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	}
-	err = us.UserFollowerService.Create(context.Background(), userFollower)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "could not follow this user", err)
-		return
+	if _, err := uh.userFollowerService.First(ctx, userFollower); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			return helpers.BadRequest("you are already followed to this user")
+		}
+
+		return helpers.InternalServerError("could not follow you to this user")
 	}
 
-	userFollowersToReturn, _ := us.UserFollowerService.Where(context.Background(), &models.UserFollower{
-		BaseModel: models.BaseModel{
-			ID: userFollower.ID,
-		},
-	}, "User", "User.Followers", "Follower", "Follower.Followers")
-	userFollowerToReturn := userFollowersToReturn[0]
-
-	userDTO := dtos.UserFollowerDTO{
-		ID: userFollowerToReturn.ID,
-		User: dtos.UserDTO{
-			ID:             userFollowerToReturn.User.ID,
-			Username:       userFollowerToReturn.User.Username,
-			Role:           userFollowerToReturn.User.Role,
-			ProfilePicture: userFollowerToReturn.User.ProfilePicture,
-			ProfileInfo:    userFollowerToReturn.User.ProfileInfo,
-			Followers:      int64(len(userFollowerToReturn.User.Followers)),
-		},
-		Follower: dtos.UserDTO{
-			ID:             userFollowerToReturn.Follower.ID,
-			Username:       userFollowerToReturn.Follower.Username,
-			Role:           userFollowerToReturn.Follower.Role,
-			ProfilePicture: userFollowerToReturn.Follower.ProfilePicture,
-			ProfileInfo:    userFollowerToReturn.Follower.ProfileInfo,
-			Followers:      int64(len(userFollowerToReturn.Follower.Followers)),
-		},
+	if err := uh.userFollowerService.Create(ctx, userFollower); err != nil {
+		return helpers.InternalServerError("could not follow this user")
 	}
+
+	preloads := []string{"User", "User.Followers", "Follower", "Follower.Followers"}
+	userFollowerWithPreloads, _ := uh.userFollowerService.First(ctx, userFollower, preloads...)
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, userDTO)
+	render.JSON(w, r, uh.dtoBuilder.BuildUserFollowerDTO(userFollowerWithPreloads))
+	return nil
 }
 
 // UnfollowUser	godoc
@@ -98,85 +63,64 @@ func (us *UserHandler) FollowUser(w http.ResponseWriter, r *http.Request) {
 // @Produce		json
 // @Param		id path string true "User to unfollow ID"
 // @Router		/users/{id}/unfollow [delete]
-func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) {
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+func (uh *UserHandler) UnfollowUser(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid targed user id", err)
-		return
+		return helpers.BadRequest("invalid targed user id")
+	}
+	userUUID, err := helpers.GetUserID(ctx)
+	if err != nil {
+		return helpers.BadRequest("invalid targed user id")
 	}
 
-	userID, err := helpers.GetUserID(r.Context())
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid auth user token", err)
-		return
-	}
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "invalid targed user id", err)
-		return
-	}
-
-	userFollowers, err := uh.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	userFollower, err := uh.userFollowerService.First(ctx, &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
 	})
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "trouble with finding out if you followed to this user", err)
-		return
-	}
-	if len(userFollowers) == 0 {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "you are not followed for this user", err)
-		return
+		return helpers.InternalServerError("trouble with finding out if you followed to this user")
 	}
 
-	userFollower := userFollowers[0]
-
-	err = uh.UserFollowerService.Delete(context.Background(), userFollower.ID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "can not unfollow this user", err)
-		return
+	if err = uh.userFollowerService.Delete(ctx, userFollower.ID); err != nil {
+		return helpers.InternalServerError("can not unfollow this user")
 	}
 
-	render.Status(r, http.StatusOK)
 	render.NoContent(w, r)
+	return nil
 }
 
 // IsFollowed godoc
-// @Tags		user
-// @Security	BearerAuth
+// @Tags	user
+// @Security BearerAuth
 // @Produce json
 // @Param id path string true "The user ID you use to check if you are followed"
 // @Router /users/{id}/is-followed [get]
-func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) {
-	userID, _ := helpers.GetUserID(r.Context())
-	userUUID, _ := uuid.Parse(userID)
+func (uh *UserHandler) IsFollowed(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 
-	targetID := chi.URLParam(r, "id")
-	targetUUID, err := uuid.Parse(targetID)
+	userUUID, err := helpers.GetUserID(ctx)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "wrong target user id", err)
-		return
+		return helpers.BadRequest("wrong user id")
+	}
+	targetUUID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		return helpers.BadRequest("wrong target user id")
 	}
 
-	if userFollower, err := uh.UserFollowerService.Where(context.Background(), &models.UserFollower{
+	userFollowersParams := &models.UserFollower{
 		UserID:     targetUUID,
 		FollowerID: userUUID,
-	}); err != nil || len(userFollower) < 1 {
-		if err != nil {
-			handlers.RespondWithError(w, r, http.StatusInternalServerError, "troubles to check if you followed", err)
-			return
+	}
+	if _, err := uh.userFollowerService.First(ctx, userFollowersParams); err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			render.JSON(w, r, map[string]bool{"isFollowed": false})
+			return nil
 		}
 
-		render.Status(r, http.StatusOK)
-		render.JSON(w, r, map[string]bool{
-			"isFollowed": false,
-		})
-		return
+		return helpers.InternalServerError("troubles to check if you followed")
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, map[string]bool{
-		"isFollowed": true,
-	})
+	render.JSON(w, r, map[string]bool{"isFollowed": true})
+	return nil
 }

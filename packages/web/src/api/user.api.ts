@@ -20,7 +20,7 @@ export const updateUserAvatar = async (formData: FormData) => {
 };
 
 export const getChatPreviews = async () => {
-    return (await $api.get("/chats")).data.chats
+    return (await $api.get("/chats")).data
 }
 
 export const updateUser = async (id: string, profileInfo: string, username: string) => {

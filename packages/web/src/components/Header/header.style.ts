@@ -15,7 +15,7 @@ export const Container = styled.div`
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
+    padding: 12px 0px;
     margin: 0 auto;
 `
 

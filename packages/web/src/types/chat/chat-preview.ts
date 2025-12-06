@@ -1,7 +1,7 @@
 export interface IChatPreviewType {
     id: string;
-    targetUserId: string
+    userIds: string[];
     userAvatar: string;
-    username: string;
     lastMessage: string;
+    chatName: string
 }

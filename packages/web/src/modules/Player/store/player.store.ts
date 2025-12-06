@@ -1,9 +1,10 @@
+import { IAuthor } from "types/song/author.type";
 import { create } from "zustand";
 
 export interface PlaylistItem {
     title: string;
     file: string;
-    artist?: string;
+    authors: IAuthor[];
     logo?: string;
     id?: string;
 }
@@ -13,7 +14,7 @@ interface PlayerState {
     trackUrl: string;
     trackName: string;
     trackLogo: string;
-    trackArtist: string;
+    trackArtist: IAuthor[];
     shouldAutoPlay: boolean;
     isPlaying: boolean;
     playlist: PlaylistItem[];
@@ -26,11 +27,11 @@ interface PlayerState {
 }
 
 const defaultTrack = {
-    trackId: "5d40a144-75e1-40b6-b3d8-49c9c6733bf7",
-    trackUrl: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/music/20b7985c-16b1-444c-a30b-3cdae7d67616/1745244177-mySuperSong.mp3",
-    trackName: "testSong",
-    trackLogo: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/covers/20b7985c-16b1-444c-a30b-3cdae7d67616/1745244177-ab67616d0000b273eceec97ba98bc527f6e5aec5.jpg",
-    trackArtist: "sqwore, rizza",
+    trackId: "2af76d59-a5de-40b2-b311-bee2930b0232",
+    trackUrl: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/music/20b7985c-16b1-444c-a30b-3cdae7d67616/1748548464-dd.mp3",
+    trackName: "Intro",
+    trackLogo: "https://tunewavebucket.s3.eu-west-3.amazonaws.com/covers/20b7985c-16b1-444c-a30b-3cdae7d67616/1748548403-408c9ff55313b4d2bc89c6bea5b9224a.jpg",
+    trackArtist: [{ id: "1", name: "TuneWave", role: "primary" }],
 };
 
 export const usePlayerStore = create<PlayerState>((set) => {
@@ -50,7 +51,7 @@ export const usePlayerStore = create<PlayerState>((set) => {
         setShouldAutoPlay: (value) => set({ shouldAutoPlay: value }),
         setIsPlaying: (value) => set({ isPlaying: value }),
         setPlaylist: (playlist: PlaylistItem[] | null) => set({ playlist: playlist || [] }),
-        pausePlayer: () => set({isPlaying: false}),
-        playPlayer: () => set({isPlaying: true}),
+        pausePlayer: () => set({ isPlaying: false }),
+        playPlayer: () => set({ isPlaying: true }),
     };
 });

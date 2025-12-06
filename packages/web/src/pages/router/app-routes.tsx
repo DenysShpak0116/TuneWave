@@ -27,6 +27,7 @@ import { CollectionsPage } from "pages/CollectionsPage/collectionsPage";
 import { GenreSongsPage } from "pages/GenreSongsPage/genre-songs.page";
 import { UpdateCollectionPage } from "pages/UpdateCollectionPage/update-collection.page";
 import { UserListPage } from "pages/UserListPage/user-list.page";
+import { PrivateRoute } from "./private-route.component";
 
 export const AppRoutes = () => {
     return (
@@ -38,21 +39,25 @@ export const AppRoutes = () => {
                 <Route path={ROUTES.SIGN_UP} element={<RegistrationPage />} />
                 <Route path={ROUTES.FORGOT_PASSWORD_PAGE} element={<ForgotPasswordPage />} />
                 <Route path={ROUTES.CREATE_TRACK} element={<CreateTrackPage />} />
-                <Route path={ROUTES.USER_PROFILE} element={<UserProfilePage />} />
                 <Route path={ROUTES.TRACK_PAGE} element={<TrackPage />} />
                 <Route path={ROUTES.COLLECTION_PAGE} element={<CollectionPage />} />
-                <Route path={ROUTES.UPDATE_USER_PAGE} element={<UpdateUserPage />} />
-                <Route path={ROUTES.UPDATE_TRACK_PAGE} element={<UpdateTrackPage />} />
-                <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
-                <Route path={ROUTES.SONGS_CRITERIONS_PAGE} element={<CollectionSongsPage />} />
                 <Route path={ROUTES.COLLECTIVE_DECISION_PAGE} element={<CollectiveDecisionPage />} />
                 <Route path={ROUTES.RESET_PASSWORD_PAGE} element={<ResetPasswordPage />} />
-                <Route path={ROUTES.CHAT_PAGE} element={<ChatPage />} />
                 <Route path={ROUTES.GENRE_PAGE} element={<GenrePage />} />
-                <Route path={ROUTES.COLLECTIONS_PAGE} element={<CollectionsPage />} />
                 <Route path={ROUTES.GENRE_SONGS} element={<GenreSongsPage />} />
-                <Route path={ROUTES.UPDATE_COLLECTION} element={<UpdateCollectionPage />} />
-                <Route path={ROUTES.USER_LIST} element={<UserListPage />} />
+
+                <Route element={<PrivateRoute />}>
+                    <Route path={ROUTES.CHAT_PAGE} element={<ChatPage />} />
+                    <Route path={ROUTES.COLLECTIONS_PAGE} element={<CollectionsPage />} />
+                    <Route path={ROUTES.UPDATE_USER_PAGE} element={<UpdateUserPage />} />
+                    <Route path={ROUTES.UPDATE_TRACK_PAGE} element={<UpdateTrackPage />} />
+                    <Route path={ROUTES.ADD_CRITERION_PAGE} element={<AddCriterionPage />} />
+                    <Route path={ROUTES.SONGS_CRITERIONS_PAGE} element={<CollectionSongsPage />} />
+                    <Route path={ROUTES.USER_PROFILE} element={<UserProfilePage />} />
+                    <Route path={ROUTES.USER_LIST} element={<UserListPage />} />
+                    <Route path={ROUTES.UPDATE_COLLECTION} element={<UpdateCollectionPage />} />
+                </Route>
+                
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
@@ -17,16 +17,24 @@ type Client struct {
 	Send           chan []byte
 	Hub            *Hub
 	MessageService services.MessageService
+	UserService    services.UserService
 	UserID         uuid.UUID
 	ChatID         uuid.UUID
 }
 
-func NewClient(conn *websocket.Conn, hub *Hub, userID, chatID uuid.UUID, messageService services.MessageService) *Client {
+func NewClient(
+	conn *websocket.Conn,
+	hub *Hub,
+	userID, chatID uuid.UUID,
+	messageService services.MessageService,
+	userService services.UserService,
+) *Client {
 	return &Client{
 		Conn:           conn,
 		Send:           make(chan []byte),
 		Hub:            hub,
 		MessageService: messageService,
+		UserService:    userService,
 		UserID:         userID,
 		ChatID:         chatID,
 	}
@@ -42,42 +50,62 @@ func (c *Client) ReadPump() {
 		log.Println("[ReadPump] client disconnected")
 	}()
 
+	dtoBuilder := dto.NewDTOBuilder(c.UserService, nil)
+
 	for {
 		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
 			log.Println("[ReadPump] read error:", err)
 			break
 		}
-		log.Printf("[ReadPump] Received: %s", msg)
 
 		var payload struct {
-			Content string `json:"content"`
+			Receiver string `json:"receiver"`
+			Content  string `json:"content"`
 		}
-
 		if err := json.Unmarshal(msg, &payload); err != nil {
 			log.Println("[ReadPump] invalid format:", err)
 			continue
 		}
-		log.Printf("[ReadPump] Parsed content: %s", payload.Content)
 
-		message := models.Message{
-			Content:  payload.Content,
-			ChatID:   c.ChatID,
-			SenderID: c.UserID,
-		}
+		if payload.Receiver == "" {
+			message := &models.Message{
+				Content:  payload.Content,
+				ChatID:   c.ChatID,
+				SenderID: c.UserID,
+			}
 
-		if err := c.MessageService.Create(context.Background(), &message); err != nil {
-			continue
-		}
+			if err := c.MessageService.Create(context.Background(), message); err != nil {
+				continue
+			}
 
-		messageDTO := &dtos.MessageDTO{
-			ID:        message.ID,
-			CreatedAt: message.CreatedAt,
-			Content:   message.Content,
-			SenderID:  message.SenderID,
+			user, err := c.UserService.GetByID(context.TODO(), c.UserID)
+			if err != nil {
+				log.Println("Failed to get user by id:", c.UserID)
+				return
+			}
+
+			message.Sender = *user
+
+			messageDTO := dtoBuilder.BuildMessageDTO(message)
+			outgoing, _ := json.Marshal(messageDTO)
+			c.Hub.Broadcast <- outgoing
+		} else {
+			recieverID, err := uuid.Parse(payload.Receiver)
+			if err != nil {
+				log.Printf("[ReadPump] invalid receiver UUID: %s, err: %v", payload.Receiver, err)
+				continue
+			}
+
+			for cl := range c.Hub.Clients {
+				if cl.UserID == recieverID {
+					if !c.Hub.Clients[cl] {
+						break
+					}
+					cl.Send <- []byte(payload.Content)
+				}
+			}
 		}
-		outgoing, _ := json.Marshal(messageDTO)
-		c.Hub.Broadcast <- outgoing
 	}
 }
 

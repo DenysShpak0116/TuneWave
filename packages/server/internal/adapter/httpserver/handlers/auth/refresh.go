@@ -4,10 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -15,78 +14,60 @@ import (
 // Refresh godoc
 // @Summary      Refresh access and refresh tokens
 // @Description  Takes a valid refresh token and returns a new pair of access and refresh tokens
-// @Tags         Auth
+// @Tags         auth
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Router       /auth/refresh [post]
-func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	authCookie, err := r.Cookie("authData")
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "authData cookie not found", err)
-		return
+		return helpers.BadRequest("authData cookie not found")
 	}
 
 	authDataBytes, err := base64.URLEncoding.DecodeString(authCookie.Value)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to decode authData", err)
-		return
+		return helpers.BadRequest("failed to decode authData")
 	}
 
-	var authData map[string]interface{}
+	var authData map[string]any
 	if err := json.Unmarshal(authDataBytes, &authData); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Failed to parse authData", err)
-		return
+		return helpers.BadRequest("failed to parse authData")
 	}
 
 	refreshToken, ok := authData["refreshToken"].(string)
 	if !ok || refreshToken == "" {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "refreshToken not found in authData", nil)
-		return
+		return helpers.BadRequest("refreshToken not found in authData")
 	}
 
-	userID, err := helpers.ParseToken(ah.JWTSecret, refreshToken)
+	userID, err := helpers.ParseToken(ah.jwtSecret, refreshToken)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusUnauthorized, "Invalid or expired refresh token", err)
-		return
+		return helpers.NewAPIError(http.StatusUnauthorized, "invalid or expired refresh token")
 	}
-
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	accessToken, newRefreshToken, err := ah.GenerateTokens(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to generate tokens", err)
-		return
+		return helpers.InternalServerError("failed to generate tokens")
 	}
 
-	user, err := ah.UserService.GetByID(r.Context(), userUUID, "Followers")
+	preloads := []string{"Followers"}
+	user, err := ah.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get user", err)
-		return
+		return helpers.InternalServerError("failed to get user")
 	}
 
-	userDTO := &dtos.UserDTO{
-		ID:             user.ID,
-		Username:       user.Username,
-		Role:           user.Role,
-		ProfilePicture: user.ProfilePicture,
-		ProfileInfo:    user.ProfileInfo,
-		Followers:      int64(len(user.Followers)),
-	}
-
-	newAuthData := map[string]interface{}{
+	newAuthData := map[string]any{
 		"refreshToken": newRefreshToken,
 	}
 	authJSON, err := json.Marshal(newAuthData)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to encode auth data", err)
-		return
+		return helpers.InternalServerError("Failed to encode auth data")
 	}
-
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
 
 	http.SetCookie(w, &http.Cookie{
@@ -96,10 +77,12 @@ func (ah *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
 
 	render.JSON(w, r, map[string]interface{}{
 		"accessToken": accessToken,
-		"user":        userDTO,
+		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
+	return nil
 }

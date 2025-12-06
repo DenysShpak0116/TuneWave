@@ -2,24 +2,34 @@ package comment
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type CommentHandler struct {
-	CommentService services.CommentService
+	commentService services.CommentService
+	eventService   services.EventService
+	dtoBuilder     *dto.DTOBuilder
 }
 
-func NewCommentHandler(commentService services.CommentService) *CommentHandler {
+func NewCommentHandler(
+	commentService services.CommentService,
+	eventService services.EventService,
+	dtoBuilder *dto.DTOBuilder,
+) *CommentHandler {
 	return &CommentHandler{
-		CommentService: commentService,
+		commentService: commentService,
+		eventService:   eventService,
+		dtoBuilder:     dtoBuilder,
 	}
 }
 
@@ -34,27 +44,24 @@ type CreateCommentRequest struct {
 // @Description Creates a new comment for a song. Returns the created comment object.
 // @Tags comments
 // @Security     BearerAuth
-// @Accept  json
-// @Produce  json
+// @Accept json
+// @Produce json
 // @Param comment body CreateCommentRequest true "Comment creation data"
 // @Router /comments [post]
-func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
+func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 	var req CreateCommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid request", err)
-		return
+		return helpers.BadRequest("invalid request")
 	}
 
 	songUUID, err := uuid.Parse(req.SongID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid song ID", err)
-		return
+		return helpers.BadRequest("invalid song ID")
 	}
-
 	userUUID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
 	comment := &models.Comment{
@@ -62,33 +69,32 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 		UserID:  userUUID,
 		Content: req.Content,
 	}
-
-	if err := ch.CommentService.Create(r.Context(), comment); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to create comment", err)
-		return
+	if err := ch.commentService.Create(ctx, comment); err != nil {
+		return helpers.InternalServerError("failed to create comment")
 	}
 
-	commentWithPreload, err := ch.CommentService.GetByID(r.Context(), comment.ID, "User", "User.Followers")
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get comment", err)
-		return
-	}
-
-	commentDTO := &dtos.CommentDTO{
-		ID: commentWithPreload.ID,
-		Author: dtos.UserDTO{
-			ID:             commentWithPreload.User.ID,
-			Username:       commentWithPreload.User.Username,
-			ProfilePicture: commentWithPreload.User.ProfilePicture,
-			ProfileInfo:    commentWithPreload.User.ProfileInfo,
-			Followers:      int64(len(commentWithPreload.User.Followers)),
+	event := &models.Event{
+		UserID:    userUUID,
+		EventType: models.CommentEvent,
+		TrackID:   &songUUID,
+		CommentID: &comment.ID,
+		Metadata: datatypes.JSONMap{
+			"content": req.Content,
 		},
-		Content:   commentWithPreload.Content,
-		CreatedAt: commentWithPreload.CreatedAt,
+	}
+	if err := ch.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create comment event", "err", err.Error())
+	}
+
+	preloads := []string{"User"}
+	newComment, err := ch.commentService.GetByID(ctx, comment.ID, preloads...)
+	if err != nil {
+		return helpers.InternalServerError("failed to get comment")
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, commentDTO)
+	render.JSON(w, r, ch.dtoBuilder.BuildCommentDTO(newComment))
+	return nil
 }
 
 // DeleteComment godoc
@@ -98,19 +104,16 @@ func (ch *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) 
 // @Security     BearerAuth
 // @Param id path string true "Comment ID"
 // @Router /comments/{id} [delete]
-func (ch *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
-	commentID := chi.URLParam(r, "id")
-	commentUUID, err := uuid.Parse(commentID)
+func (ch *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) error {
+	commentUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid comment ID", err)
-		return
+		return helpers.BadRequest("invalid comment ID")
 	}
 
-	if err := ch.CommentService.Delete(r.Context(), commentUUID); err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to delete comment", err)
-		return
+	if err := ch.commentService.Delete(r.Context(), commentUUID); err != nil {
+		return helpers.InternalServerError("failed to delete comment")
 	}
 
-	render.Status(r, http.StatusNoContent)
 	render.NoContent(w, r)
+	return nil
 }

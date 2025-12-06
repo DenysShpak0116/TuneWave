@@ -3,15 +3,14 @@ package chat
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/ws"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/dtos"
-	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -22,93 +21,109 @@ var upgrader = websocket.Upgrader{
 }
 
 type ChatHandler struct {
-	Manager        *ws.HubManager
-	ChatService    services.ChatService
-	MessageService services.MessageService
-	JWTSecret      string
+	manager        *ws.HubManager
+	chatService    services.ChatService
+	messageService services.MessageService
+	userService    services.UserService
+	dtoBuilder     *dto.DTOBuilder
+	cfg            *config.Config
+	logger         *slog.Logger
 }
 
 func NewChatHandler(
 	manager *ws.HubManager,
 	chatService services.ChatService,
 	messageService services.MessageService,
+	userService services.UserService,
+	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
+	logger *slog.Logger,
 ) *ChatHandler {
 	return &ChatHandler{
-		Manager:        manager,
-		ChatService:    chatService,
-		MessageService: messageService,
-		JWTSecret:      cfg.JwtSecret,
+		manager:        manager,
+		chatService:    chatService,
+		messageService: messageService,
+		userService:    userService,
+		dtoBuilder:     dtoBuilder,
+		cfg:            cfg,
+		logger:         logger,
 	}
 }
 
 // ServeWs handles WebSocket connections between users for private chats.
 // @Summary      WebSocket connection for privat chat
-// @Description  Setting WebSocket connection between authorised user and target user by `targetUserId`.
+// @Description  Setting WebSocket connection between authorised user and target users.
 // @Tags         chat
 // @Produce      json
-// @Param        targetUserId query string true "UUID of target user"
 // @Param        authToken query string true "Bearer auth token"
+// @Param        userIds query string true "userIds separated by coma"
+// @Param        name query string true "chan name"
 // @Router       /ws/chat [get]
-func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) {
-	targetID := r.URL.Query().Get("targetUserId")
-	targetUUID, err := uuid.Parse(targetID)
-	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid target user ID", err)
-		return
-	}
+func (ch *ChatHandler) ServeWs(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
 
 	token := r.URL.Query().Get("authToken")
-	userIDRaw, err := helpers.ParseToken(ch.JWTSecret, token)
+	userIDRaw, err := helpers.ParseToken(ch.cfg.JwtSecret, token)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid auth token", nil)
-		return
+		return helpers.BadRequest("invalid auth token")
 	}
-
 	userUUID, err := uuid.Parse(userIDRaw)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusBadRequest, "Invalid user ID", err)
-		return
+		return helpers.BadRequest("invalid user ID")
 	}
 
-	chat, err := ch.ChatService.GetOrCreatePrivateChat(r.Context(), userUUID, targetUUID)
+	userIDsParam := r.URL.Query().Get("userIds")
+	if userIDsParam == "" {
+		return helpers.BadRequest("userIds is required")
+	}
+
+	idStrs := strings.Split(userIDsParam, ",")
+	var userIDs []uuid.UUID
+	for _, idStr := range idStrs {
+		id, err := uuid.Parse(strings.TrimSpace(idStr))
+		if err != nil {
+			return helpers.BadRequest("invalid user ID in userIds list")
+		}
+		userIDs = append(userIDs, id)
+	}
+
+	userIDs = append(userIDs, userUUID)
+	chatName := r.URL.Query().Get("name")
+	chat, err := ch.chatService.GetOrCreateGroupChat(ctx, userIDs, chatName)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to get or create chat", err)
-		return
+		return helpers.InternalServerError("failed to get or create chat")
 	}
-
-	log.Printf("Chat ID: %s", chat.ID.String())
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		handlers.RespondWithError(w, r, http.StatusInternalServerError, "Failed to upgrade connection", err)
-		return
+		return helpers.InternalServerError("failed to upgrade connection")
 	}
 
-	log.Printf("Connection upgraded to WebSocket")
+	hub, err := ch.manager.GetHub(chat.ID.String())
+	if err != nil {
+		return err
+	}
 
-	chatIDStr := chat.ID.String()
-	hub := ch.Manager.GetHub(chatIDStr)
-
-	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.MessageService)
-
-	log.Printf("Client created: %s", client.UserID.String())
-
+	client := ws.NewClient(conn, hub, userUUID, chat.ID, ch.messageService, ch.userService)
 	hub.Register <- client
+
 	go client.WritePump()
 	go client.ReadPump()
 
-	messages, err := ch.MessageService.Where(r.Context(), &models.Message{ChatID: chat.ID})
-	if err == nil {
-		for _, msg := range messages {
-			msgDTO := &dtos.MessageDTO{
-				ID:        msg.ID,
-				Content:   msg.Content,
-				CreatedAt: msg.CreatedAt,
-				SenderID:  msg.SenderID,
-			}
-			b, _ := json.Marshal(msgDTO)
-			client.Send <- b
-		}
-	}
+	// messages, err := ch.messageService.Where(ctx, &models.Message{ChatID: chat.ID}, query.WithPreloads("Sender"))
+	// if err == nil {
+	// 	for _, msg := range messages {
+	// 		msgDTO := ch.dtoBuilder.BuildMessageDTO(&msg)
+	// 		b, _ := json.Marshal(msgDTO)
+	// 		client.Send <- b
+	// 	}
+	// }
+	b, _ := json.Marshal(map[string]any{
+		"type": "DH_INIT",
+		"p":    hub.DhKeys.Prime,
+		"q":    hub.DhKeys.Generator,
+	})
+	hub.Broadcast <- b
+
+	return nil
 }

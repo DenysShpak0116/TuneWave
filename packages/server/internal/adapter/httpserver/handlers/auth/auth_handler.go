@@ -1,10 +1,13 @@
 package auth
 
 import (
-	"fmt"
+	"crypto/rsa"
+	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
@@ -13,18 +16,31 @@ import (
 )
 
 type AuthHandler struct {
-	AuthService        services.AuthService
-	UserService        services.UserService
-	GoogleClientID     string
-	GoogleClientSecret string
-	JWTSecret          string
+	authService        services.AuthService
+	userService        services.UserService
+	dtoBuilder         *dto.DTOBuilder
+	googleClientID     string
+	googleClientSecret string
+	jwtSecret          string
+	logger             *slog.Logger
+
+	publicKey  *rsa.PublicKey
+	privateKey *rsa.PrivateKey
 }
 
 func NewAuthHandler(
 	authService services.AuthService,
 	userService services.UserService,
+	dtoBuilder *dto.DTOBuilder,
 	cfg *config.Config,
+	logger *slog.Logger,
 ) *AuthHandler {
+	privateKey, publicKey, err := helpers.GenerateKeys()
+	if err != nil {
+		logger.Error("Failed to generate RSA keys", "err", err.Error())
+		panic("cannot start AuthHandler without RSA keys")
+	}
+
 	goth.UseProviders(
 		google.New(
 			cfg.Google.ClientID,
@@ -36,11 +52,15 @@ func NewAuthHandler(
 	)
 
 	return &AuthHandler{
-		AuthService:        authService,
-		UserService:        userService,
-		GoogleClientID:     cfg.Google.ClientID,
-		GoogleClientSecret: cfg.Google.ClientSecret,
-		JWTSecret:          cfg.JwtSecret,
+		authService:        authService,
+		userService:        userService,
+		dtoBuilder:         dtoBuilder,
+		googleClientID:     cfg.Google.ClientID,
+		googleClientSecret: cfg.Google.ClientSecret,
+		jwtSecret:          cfg.JwtSecret,
+		logger:             logger,
+		privateKey:         privateKey,
+		publicKey:          publicKey,
 	}
 }
 
@@ -51,18 +71,24 @@ func HashPassword(password string) (string, error) {
 
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	fmt.Println(err == nil)
 	return err == nil
 }
 
 func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
+	const op = "adapter.httpserver.handlers.auth.AuthHandler.GenerateTokens"
+	logger := ah.logger.With(
+		"op", op,
+		"userID", userID,
+	)
+
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": userID,
 		"exp":    time.Now().Add(5 * time.Hour).Unix(),
 	})
 
-	accessTokenStr, err := accessToken.SignedString([]byte(ah.JWTSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
+		logger.Error("Failed to create access token", "err", err.Error())
 		return "", "", err
 	}
 
@@ -71,10 +97,12 @@ func (ah *AuthHandler) GenerateTokens(userID string) (string, string, error) {
 		"exp":    time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
 
-	refreshTokenStr, err := refreshToken.SignedString([]byte(ah.JWTSecret))
+	refreshTokenStr, err := refreshToken.SignedString([]byte(ah.jwtSecret))
 	if err != nil {
+		logger.Error("Failed to create refresh token", "err", err.Error())
 		return "", "", err
 	}
 
+	logger.Info("Access and refresh tokens successfully generated")
 	return accessTokenStr, refreshTokenStr, nil
 }
