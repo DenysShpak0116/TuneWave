@@ -11,9 +11,8 @@ type User struct {
 	Role            string `json:"role"`
 	IsGoogleAccount bool   `json:"isGoogleAccount"`
 
+	ChatUsers       []ChatUser       `gorm:"constraint:OnDelete:CASCADE"`
 	Follows         []UserFollower   `gorm:"foreignKey:FollowerID;constraint:OnDelete:CASCADE" json:"follows"`
-   Chats2          []Chat           `gorm:"foreignKey:UserID2;constraint:OnDelete:CASCADE" json:"chats2"`
-	Chats1          []Chat           `gorm:"foreignKey:UserID1;constraint:OnDelete:CASCADE" json:"chats1"`
 	Followers       []UserFollower   `gorm:"constraint:OnDelete:CASCADE" json:"followers"`
 	UserCollections []UserCollection `gorm:"constraint:OnDelete:CASCADE"`
 	Reactions       []UserReaction   `gorm:"constraint:OnDelete:CASCADE"`

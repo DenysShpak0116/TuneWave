@@ -5,6 +5,7 @@ import (
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/analytics"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/auth"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/chat"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/collection"
@@ -66,6 +67,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(repository.NewRepository[models.Result])
 	container.Provide(repository.NewRepository[models.UserCollection])
 	container.Provide(repository.NewRepository[models.UserFollower])
+	container.Provide(repository.NewRepository[models.Event])
 
 	// service
 	container.Provide(service.NewMailService)
@@ -83,6 +85,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(service.NewUserCollectionService)
 	container.Provide(service.NewUserFollowerService)
 	container.Provide(service.NewUserReactionService)
+	container.Provide(service.NewEventService)
 	container.Provide(ws.NewHubManager)
 
 	// handlers
@@ -99,6 +102,7 @@ func BuildContainer() *dig.Container {
 	container.Provide(criterion.NewCriterionHandler)
 	container.Provide(vector.NewVectorHandler)
 	container.Provide(result.NewResultHandler)
+	container.Provide(analytics.NewAnalyticsHandler)
 
 	container.Provide(httpserver.NewRouter)
 

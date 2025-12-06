@@ -1,4 +1,4 @@
-//go:generate mockgen -source=chat_service.go -destination=../../service/mocks/chat_service_mock.go -package=mocks -typed
+//go:generate mockgen -source=chat_service.go -destination=../../service/mocks/chat_service_mock.go -package=mocks  -typed
 
 package services
 
@@ -11,5 +11,5 @@ import (
 
 type ChatService interface {
 	Service[models.Chat]
-	GetOrCreatePrivateChat(ctx context.Context, user1, user2 uuid.UUID) (*models.Chat, error)
+	GetOrCreateGroupChat(ctx context.Context, userIDs []uuid.UUID, name string) (*models.Chat, error)
 }

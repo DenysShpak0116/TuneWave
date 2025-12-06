@@ -2,6 +2,7 @@ package song
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type songReactionRequest struct {
@@ -42,9 +44,22 @@ func (sh *SongHandler) SetReaction(w http.ResponseWriter, r *http.Request) error
 		return helpers.BadRequest("something wrong with userID")
 	}
 
-	likes, dislikes, err := sh.songService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
+	likes, dislikes, reactionAction, err := sh.songService.SetReaction(r.Context(), songUUID, userUUID, request.ReactionType)
 	if err != nil {
 		return helpers.InternalServerError("failed to set reaction")
+	}
+
+	event := &models.Event{
+		BaseModel: models.BaseModel{},
+		UserID:    userUUID,
+		EventType: models.LikeEvent,
+		TrackID:   &songUUID,
+		Metadata: datatypes.JSONMap{
+			"action": reactionAction,
+		},
+	}
+	if err := sh.eventService.Create(r.Context(), event); err != nil {
+		sh.logger.Error("failed to create reaction event", "error", err)
 	}
 
 	render.Status(r, http.StatusOK)
@@ -105,12 +120,22 @@ func (sh *SongHandler) CheckReaction(w http.ResponseWriter, r *http.Request) err
 // @Param userId path string true "User ID"
 // @Router /songs/{id}/listen/{userId} [post]
 func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.SongHandler.ListenSong"
+	logger := sh.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
 	userID := chi.URLParam(r, "userId")
 	if userID == "undefined" {
 		render.NoContent(w, r)
 		return nil
 	}
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return helpers.BadRequest("user id is wrong")
+	}
+
 	songUUID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		return helpers.BadRequest("song id is wrong")
@@ -127,6 +152,19 @@ func (sh *SongHandler) ListenSong(w http.ResponseWriter, r *http.Request) error 
 	}
 	if err := sh.songService.Update(ctx, updateSongParams); err != nil {
 		return helpers.InternalServerError("v")
+	}
+
+	event := &models.Event{
+		UserID:    userUUID,
+		EventType: models.PlayEvent,
+		TrackID:   &song.ID,
+		Metadata: datatypes.JSONMap{
+			"source": "direct_play",
+		},
+	}
+
+	if err := sh.eventService.Create(ctx, event); err != nil {
+		logger.Error("failed to create play event", "err", err.Error())
 	}
 
 	render.NoContent(w, r)

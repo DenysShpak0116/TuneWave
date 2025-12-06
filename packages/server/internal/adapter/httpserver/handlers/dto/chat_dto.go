@@ -6,27 +6,48 @@ import (
 )
 
 type ChatDTO struct {
-	ID uuid.UUID `json:"id"`
-
-	User1 UserDTO `json:"user1"`
-	User2 UserDTO `json:"user2"`
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Users []UserDTO `json:"users"`
 }
 
 func (b *DTOBuilder) BuildChatDTO(chat *models.Chat) *ChatDTO {
+	var users []UserDTO
+	for _, cu := range chat.ChatUsers {
+		users = append(users, *b.BuildUserDTO(&cu.User))
+	}
+
 	return &ChatDTO{
 		ID:    chat.ID,
-		User1: *b.BuildUserDTO(&chat.User1),
-		User2: UserDTO{},
+		Name:  chat.Name,
+		Users: users,
 	}
 }
 
 type ChatExtendedDTO struct {
-	ID uuid.UUID `json:"id"`
+	ID        uuid.UUID    `json:"id"`
+	Name      string       `json:"name"`
+	CreatedAt string       `json:"createdAt"`
+	Users     []UserDTO    `json:"users"`
+	Messages  []MessageDTO `json:"messages"`
+}
 
-	CreatedAt string `json:"createdAt"`
+func (b *DTOBuilder) BuildChatExtendedDTO(chat *models.Chat, messages []models.Message) *ChatExtendedDTO {
+	var users []UserDTO
+	for _, cu := range chat.ChatUsers {
+		users = append(users, *b.BuildUserDTO(&cu.User))
+	}
 
-	User1 UserDTO `json:"user1"`
-	User2 UserDTO `json:"user2"`
+	var msgs []MessageDTO
+	for _, m := range messages {
+		msgs = append(msgs, *b.BuildMessageDTO(&m))
+	}
 
-	Messages []MessageDTO `json:"messages"`
+	return &ChatExtendedDTO{
+		ID:        chat.ID,
+		Name:      chat.Name,
+		CreatedAt: chat.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		Users:     users,
+		Messages:  msgs,
+	}
 }

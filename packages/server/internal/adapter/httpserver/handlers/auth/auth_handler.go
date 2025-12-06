@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"log/slog"
 	"time"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/config"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/port/services"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
@@ -21,6 +23,9 @@ type AuthHandler struct {
 	googleClientSecret string
 	jwtSecret          string
 	logger             *slog.Logger
+
+	publicKey  *rsa.PublicKey
+	privateKey *rsa.PrivateKey
 }
 
 func NewAuthHandler(
@@ -30,6 +35,12 @@ func NewAuthHandler(
 	cfg *config.Config,
 	logger *slog.Logger,
 ) *AuthHandler {
+	privateKey, publicKey, err := helpers.GenerateKeys()
+	if err != nil {
+		logger.Error("Failed to generate RSA keys", "err", err.Error())
+		panic("cannot start AuthHandler without RSA keys")
+	}
+
 	goth.UseProviders(
 		google.New(
 			cfg.Google.ClientID,
@@ -48,6 +59,8 @@ func NewAuthHandler(
 		googleClientSecret: cfg.Google.ClientSecret,
 		jwtSecret:          cfg.JwtSecret,
 		logger:             logger,
+		privateKey:         privateKey,
+		publicKey:          publicKey,
 	}
 }
 

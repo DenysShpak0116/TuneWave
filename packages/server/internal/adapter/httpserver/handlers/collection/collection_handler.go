@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type CollectionHandler struct {
@@ -20,6 +22,7 @@ type CollectionHandler struct {
 	userCollectionService services.UserCollectionService
 	userReactionService   services.UserReactionService
 	userService           services.UserService
+	eventService          services.EventService
 	dtoBuilder            *dto.DTOBuilder
 }
 
@@ -28,6 +31,7 @@ func NewCollectionHandler(
 	userCollectionService services.UserCollectionService,
 	userReactionService services.UserReactionService,
 	userService services.UserService,
+	eventService services.EventService,
 	dtoBuilder *dto.DTOBuilder,
 ) *CollectionHandler {
 	return &CollectionHandler{
@@ -35,6 +39,7 @@ func NewCollectionHandler(
 		userCollectionService: userCollectionService,
 		userReactionService:   userReactionService,
 		userService:           userService,
+		eventService:          eventService,
 		dtoBuilder:            dtoBuilder,
 	}
 }
@@ -87,6 +92,18 @@ func (ch *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Req
 	}
 	if err := ch.userCollectionService.Create(ctx, userCollection); err != nil {
 		return helpers.InternalServerError("error creating user collection")
+	}
+
+	event := &models.Event{
+		UserID:     userUUID,
+		EventType:  models.CreatePlaylistEvent,
+		PlaylistID: &collection.ID,
+		Metadata: datatypes.JSONMap{
+			"title": title,
+		},
+	}
+	if err := ch.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create create_playlist event", "err", err.Error())
 	}
 
 	preloads := []string{"User"}

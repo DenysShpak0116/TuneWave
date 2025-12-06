@@ -1,54 +1,84 @@
-import { FC, useEffect, useState } from "react";
+// chat.page.tsx
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { ChatLayout } from "@ui/layout/Chat/chat-layout";
 import { Loader } from "@ui/Loader/loader.component";
 import { ChatList } from "@modules/ChatList";
 import { Divider } from "./chat.style";
 import { MainChat } from "@modules/MainChat";
-import { useChatSocket } from "@modules/MainChat/hooks/useChatSocket";
+import { useChatSocket } from "@modules/MainChat/hooks/useChatSocket"; // new version (string key)
 import { useGetUserChats } from "./hooks/useGetUserChats";
 import { IMessageType } from "types/chat/message.type";
 import { useAuthStore } from "@modules/LoginForm/store/store";
-import { useGetUser } from "pages/UserProfilePage/hooks/useGetUserById";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "pages/router/consts/routes.const";
 
 export const ChatPage: FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const searchParams = new URLSearchParams(location.search);
-    const targetUserId = searchParams.get("targetUserId");
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const currentUserId = useAuthStore(state => state.user!.id)
+    const rawUserIds = searchParams.get("userIds") ?? "";
 
+    const userIds = useMemo(() => {
+        if (!rawUserIds) return [];
+        return rawUserIds
+            .split(",")
+            .filter(Boolean)
+            .filter(id => id !== currentUserId);
+    }, [rawUserIds, currentUserId]);
+
+    const chatName = searchParams.get("name") ?? "";
     const { data: chatPreviews, isLoading, refetch } = useGetUserChats();
     const [messages, setMessages] = useState<IMessageType[]>([]);
-    const currentUserId = useAuthStore(state => state.user!.id);
+    const sortedUserIds = useMemo(() => [...userIds].sort(), [userIds]);
+    const usersParam = useMemo(() => sortedUserIds.join(","), [sortedUserIds]);
+    const chatKey = useMemo(() => `${usersParam}_${chatName}`, [usersParam, chatName]);
 
-    const shouldFetchUser = !!targetUserId;
-    const { data: user, isLoading: loadUser } = useGetUser(targetUserId!)
+    const currentChatPreview = useMemo(() => {
+        if (!chatPreviews) return undefined;
+        return chatPreviews.find(cp => {
+            const cpUsersSorted = [...cp.userIds].sort().join(",");
+            if (chatName) {
+                return cpUsersSorted === usersParam && cp.chatName === chatName;
+            }
+            return cpUsersSorted === usersParam;
+        });
+    }, [chatPreviews, usersParam, chatName]);
 
     const { sendMessage } = useChatSocket({
-        userId: targetUserId ?? "",
-        onMessageReceived: (msg) => {
-            setMessages((prev) => [...prev, msg]);
+        usersParam,
+        chatName,
+        onMessageReceived: (msg: IMessageType) => {
+            setMessages(prev => [...prev, msg]);
         }
     });
 
+    const prevChatKey = useRef<string>("");
     useEffect(() => {
-        setMessages([]);
-    }, [targetUserId]);
-
-    useEffect(() => {
-        if (!targetUserId && chatPreviews && chatPreviews.length > 0) {
-            const firstChat = chatPreviews[0];
-            navigate(`${ROUTES.CHAT_PAGE}?targetUserId=${firstChat.targetUserId}`, { replace: true });
+        if (prevChatKey.current !== chatKey) {
+            setMessages([]);
+            prevChatKey.current = chatKey;
         }
-    }, [targetUserId, chatPreviews, navigate]);
+    }, [chatKey]);
+
+    const didRedirect = useRef(false);
+    useEffect(() => {
+        if (userIds.length === 0 && chatPreviews && chatPreviews.length > 0 && !didRedirect.current) {
+            didRedirect.current = true;
+            const firstChat = chatPreviews[0];
+            navigate(
+                `${ROUTES.CHAT_PAGE}?userIds=${firstChat.userIds.join(",")}&name=${encodeURIComponent(firstChat.chatName ?? "")}`,
+                { replace: true }
+            );
+        }
+    }, [userIds, chatPreviews, navigate]);
 
     const handleSendMessage = (text: string) => {
         sendMessage(text);
-        refetch()
+        refetch();
     };
 
-    if (isLoading || (shouldFetchUser && loadUser)) {
+    if (isLoading) {
         return (
             <ChatLayout>
                 <Loader />
@@ -56,22 +86,29 @@ export const ChatPage: FC = () => {
         );
     }
 
+    const noChats = (!chatPreviews || chatPreviews.length === 0) && userIds.length === 0;
     return (
         <ChatLayout>
-            <ChatList chatPreviews={chatPreviews} targetUserId={targetUserId ?? ""} />
+            <ChatList chatPreviews={chatPreviews} targetUserIds={userIds} />
             <Divider />
-            {chatPreviews?.length === 0 && !targetUserId || !user ? (
+
+            {noChats ? (
                 <div style={{ padding: "20px", fontSize: "16px" }}>
                     Ви поки що не маєте чатів
                 </div>
+            ) : usersParam === "" ? (
+                <div style={{ padding: "20px", fontSize: "16px" }}>
+                    Виберіть чат
+                </div>
             ) : (
                 <MainChat
-                    targetUserId={user.id}
+                    chatName={chatName || currentChatPreview?.chatName || "Чат"}
                     messages={messages}
                     currentUserId={currentUserId}
-                    partnerUsername={user.username}
-                    partnerAvatar={user.profilePictureUrl}
+                    users={sortedUserIds}
+                    chatPhoto={"https://cdn-icons-png.flaticon.com/512/681/681494.png"}
                     onSendMessage={handleSendMessage}
+                    chatId={currentChatPreview?.id}
                 />
             )}
         </ChatLayout>

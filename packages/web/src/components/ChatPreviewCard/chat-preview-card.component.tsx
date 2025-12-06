@@ -13,8 +13,8 @@ export const ChatPreviewCard: FC<Props> = ({ chat, isSelected = false, onClick }
         <CardContainer isSelected={isSelected} onClick={onClick}>
             <Avatar src={chat.userAvatar} alt="avatar" />
             <Content>
-                <Username>@{chat.username}</Username>
-                <Message>{chat.lastMessage}</Message>
+                <Username>{chat.chatName ?? chat.username}</Username>
+                {/* <Message>{chat.lastMessage}</Message> */}
             </Content>
         </CardContainer>
     );

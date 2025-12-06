@@ -57,32 +57,58 @@ export const Container = styled.div`
   }
 `;
 
-export const MessageRow = styled.div<{ isCurrentUser: boolean }>`
-    display: flex;
-    justify-content: ${({ isCurrentUser }) =>
-        isCurrentUser ? "flex-end" : "flex-start"};
+// export const MessageRow = styled.div<{ isCurrentUser: boolean }>`
+//     display: flex;
+//     justify-content: ${({ isCurrentUser }) =>
+//         isCurrentUser ? "flex-end" : "flex-start"};
+// `;
+
+// export const MessageBubble = styled.div<{ isCurrentUser: boolean }>`
+//   background-color: ${({ isCurrentUser }) =>
+//         isCurrentUser ? COLORS.dark_focusing : COLORS.chat_user_message};
+//   color: white;
+//   border-radius: ${({ isCurrentUser }) =>
+//         isCurrentUser ? "20px 20px 1px" : "20px 20px 20px 1px"};
+//   padding: 10px 14px;
+//   max-width: 300px;
+//   word-wrap: break-word;
+//   font-size: 14px;
+//   display: inline-flex;
+//   align-items: flex-end;
+//   gap: 6px;
+// `;
+
+export const MessageRow = styled.div<{ isCurrentUser: boolean }>` 
+  display: flex;
+  justify-content: ${({ isCurrentUser }) =>
+    isCurrentUser ? "flex-end" : "flex-start"};
+  align-items: flex-end;
+  margin-bottom: 10px;
 `;
 
 export const MessageBubble = styled.div<{ isCurrentUser: boolean }>`
   background-color: ${({ isCurrentUser }) =>
-        isCurrentUser ? COLORS.dark_focusing : COLORS.chat_user_message};
+    isCurrentUser ? COLORS.dark_focusing : COLORS.chat_user_message};
   color: white;
-  border-radius: ${({ isCurrentUser }) =>
-        isCurrentUser ? "20px 20px 1px" : "20px 20px 20px 1px"};
-  padding: 10px 14px;
+  border-radius: 20px;
+  padding: 8px 12px;
   max-width: 300px;
-  word-wrap: break-word;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
+
+// export const Timestamp = styled.div`
+//   font-size: 10px;
+//   color: rgba(255, 255, 255, 0.5);
+//   white-space: nowrap;
+//   flex-shrink: 0;
+// `;
 
 export const Timestamp = styled.div`
   font-size: 10px;
   color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
-  flex-shrink: 0;
+  align-self: flex-end;
 `;
 
 export const InputWrapper = styled.div`
@@ -121,4 +147,24 @@ export const SendButton = styled.button`
         width: 20px;
         height: 20px;
     }
+`;
+
+export const AvatarChat = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  margin: 0 8px;
+  cursor: pointer;
+`;
+
+export const UsernameChat = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: ${COLORS.dark_backdrop};
+  cursor: pointer;
+`;
+
+export const Content = styled.div`
+  font-size: 14px;
+  word-wrap: break-word;
 `;

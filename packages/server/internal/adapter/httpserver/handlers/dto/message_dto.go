@@ -11,6 +11,7 @@ type MessageDTO struct {
 	CreatedAt time.Time `json:"createdAt"`
 	ID        uuid.UUID `json:"id"`
 	SenderID  uuid.UUID `json:"senderId"`
+	Sender    UserDTO   `json:"sender"`
 	Content   string    `json:"content"`
 }
 
@@ -20,5 +21,6 @@ func (b *DTOBuilder) BuildMessageDTO(message *models.Message) *MessageDTO {
 		Content:   message.Content,
 		CreatedAt: message.CreatedAt,
 		SenderID:  message.SenderID,
+		Sender:    *b.BuildUserDTO(&message.Sender),
 	}
 }

@@ -1,6 +1,7 @@
 package song
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,9 @@ type SongHandler struct {
 	collectionSongService services.CollectionSongService
 	userReactionService   services.UserReactionService
 	commentService        services.CommentService
+	eventService          services.EventService
 	dtoBuilder            *dto.DTOBuilder
+	logger                *slog.Logger
 }
 
 func NewSongHandler(
@@ -27,14 +30,18 @@ func NewSongHandler(
 	collectionSongService services.CollectionSongService,
 	userReactionService services.UserReactionService,
 	commentService services.CommentService,
+	eventService services.EventService,
 	dtoBuilder *dto.DTOBuilder,
+	logger *slog.Logger,
 ) *SongHandler {
 	return &SongHandler{
 		songService:           songService,
 		collectionSongService: collectionSongService,
 		userReactionService:   userReactionService,
 		commentService:        commentService,
+		eventService:          eventService,
 		dtoBuilder:            dtoBuilder,
+		logger:                logger,
 	}
 }
 

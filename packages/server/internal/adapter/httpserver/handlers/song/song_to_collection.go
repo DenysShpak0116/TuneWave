@@ -3,6 +3,8 @@ package song
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/helpers"
@@ -11,12 +13,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type SongCollectionRequest struct {
 	CollectionID string `json:"collectionId"`
 }
 
+// TODO: Handle only collection creator can add songs to it
 // AddToCollection godoc
 // @Summary        Add song to collection
 // @Description    Add song to collection
@@ -28,7 +32,16 @@ type SongCollectionRequest struct {
 // @Param          body body      SongCollectionRequest true "Collection ID"
 // @Router         /songs/{id}/add-to-collection [post]
 func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) error {
+	const op = "adapter.httpserver.handlers.SongHandler.AddToCollection"
+	logger := sh.logger.With(
+		slog.String("op", op),
+	)
+
 	ctx := r.Context()
+	userUUID, err := helpers.GetUserID(ctx)
+	if err != nil {
+		return helpers.BadRequest("invalid user ID")
+	}
 
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -55,9 +68,22 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 		return helpers.NewAPIError(http.StatusConflict, "this song is already in collection")
 	}
 
-	err = sh.songService.AddToCollection(ctx, songUUID, collectionUUID)
-	if err != nil {
+	if err := sh.songService.AddToCollection(ctx, songUUID, collectionUUID); err != nil {
 		return helpers.InternalServerError("failed to add song to collection")
+	}
+
+	event := &models.Event{
+		BaseModel:  models.BaseModel{},
+		UserID:     userUUID,
+		EventType:  models.AddToPlaylistEvent,
+		TrackID:    &songUUID,
+		PlaylistID: &collectionUUID,
+		Metadata: datatypes.JSONMap{
+			"source": "add_to_collection_endpoint",
+		},
+	}
+	if err := sh.eventService.Create(ctx, event); err != nil {
+		logger.Error("failed to create add_to_playlist event", "err", err.Error())
 	}
 
 	render.JSON(w, r, map[string]string{"message": "Song added to collection"})
@@ -76,6 +102,11 @@ func (sh *SongHandler) AddToCollection(w http.ResponseWriter, r *http.Request) e
 // @Router       /songs/{id}/remove-from-collection [delete]
 func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
+	userUUID, err := helpers.GetUserID(ctx)
+	if err != nil {
+		return helpers.BadRequest("invalid user ID")
+	}
+
 	var request SongCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return helpers.BadRequest("invalid request body")
@@ -101,6 +132,19 @@ func (sh *SongHandler) RemoveFromCollection(w http.ResponseWriter, r *http.Reque
 		return helpers.InternalServerError("failed to remove song from collection")
 	}
 
+	event := &models.Event{
+		BaseModel:  models.BaseModel{},
+		UserID:     userUUID,
+		EventType:  models.RemoveFromPlaylistEvent,
+		TrackID:    &songUUID,
+		PlaylistID: &collectionUUID,
+		Metadata: datatypes.JSONMap{
+			"source": "remove_from_collection_endpoint",
+		},
+	}
+	if err := sh.eventService.Create(ctx, event); err != nil {
+		fmt.Println("failed to create remove_from_playlist event", "err", err.Error())
+	}
 	render.JSON(w, r, map[string]string{"message": "Song removed from collection"})
 	return nil
 }

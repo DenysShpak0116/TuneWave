@@ -1,43 +1,39 @@
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { useAuthStore } from "../store/store";
 import toast from "react-hot-toast";
 import { LoginResponse } from "../types/loginResponse";
-import { ErrorType } from "types/error/error.type";
 import { login } from "@api/auth.api";
 import { ROUTES } from "pages/router/consts/routes.const";
 import { useNavigate } from "react-router-dom";
+import { LoginRequest } from "../types/loginRequest";
 
-
-interface LoginRequest {
-    email: string;
-    password: string;
-}
 
 export const useLogin = () => {
-    const navigate = useNavigate()
-    const setAccessToken = useAuthStore(state => state.setAccessToken);
+    const navigate = useNavigate();
+    //const setAccessToken = useAuthStore(state => state.setAccessToken);
     const setUser = useAuthStore(state => state.setUser);
 
     return useMutation({
         mutationFn: async (data: LoginRequest) => {
-            const response = await login(data.email, data.password)
+            const response = await login(data.email, data.password);
             return response.data;
         },
         onSuccess: (data: LoginResponse) => {
-            setAccessToken(data.accessToken);
-            setUser(data.user);
-            localStorage.setItem("token", data.accessToken)
-            toast.success("Вхід успішний");
-            navigate(ROUTES.HOME)
-        },
-        onError: (error) => {
-            if (axios.isAxiosError(error) && error.response) {
-                const data = error.response.data as ErrorType;
-                toast.error(`Помилка авторизації: ${data.message}`);
-            } else {
-                toast.error("Невідома помилка при авторизації");
-            }
+                try {
+                    // const privateKey = localStorage.getItem("clientPrivateKey");
+                    // if (!privateKey) throw new Error("Client private key not found");
+
+                    // const decryptedToken = decryptWithClientPrivateKey(privateKey, data.accessToken);
+
+                    // setAccessToken(decryptedToken);
+                    setUser(data.user);
+                    localStorage.setItem("token", data.accessToken);
+                    toast.success("Вхід успішний");
+                    navigate(ROUTES.HOME);
+                } catch (err) {
+                    console.error("Decryption failed:", err);
+                    toast.error("Помилка дешифрування токена");
+                }
         }
     });
 };

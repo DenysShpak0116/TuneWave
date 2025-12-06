@@ -29,13 +29,11 @@ type RegisterRequest struct {
 // @Tags		auth
 // @Accept		json
 // @Produce		json
-// @Param		user body dto.RegisterRequest true "User registration data"
+// @Param		user body RegisterRequest true "User registration data"
 // @Router		/auth/register [post]
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Register"
-	logger := ah.logger.With(
-		slog.String("op", op),
-	)
+	logger := ah.logger.With(slog.String("op", op))
 
 	ctx := r.Context()
 	var req RegisterRequest
@@ -44,7 +42,10 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return helpers.BadRequest("invalid request")
 	}
 
-	if _, err := ah.userService.First(ctx, &models.User{Email: req.Email}); !errors.Is(err, service.ErrNotFound) {
+	if _, err := ah.userService.First(
+		ctx,
+		&models.User{Email: req.Email},
+	); !errors.Is(err, service.ErrNotFound) {
 		logger.Error("Failed to check for user existence", "err", err.Error())
 		if err != nil {
 			return helpers.InternalServerError("failed to check existing users")
@@ -73,10 +74,10 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return helpers.InternalServerError("failed to create user")
 	}
 
+	logger.Error("User successfully created")
+
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, ah.dtoBuilder.BuildUserDTO(user))
-
-	logger.Error("User successfully created")
 	return nil
 }
 
@@ -91,20 +92,24 @@ type LoginRequest struct {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param login body dto.LoginRequest true "User login data"
+// @Param login body LoginRequest true "User login data"
 // @Router /auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.auth.AuthHandler.Login"
-	logger := ah.logger.With(
-		slog.String("op", op),
-	)
-
+	logger := ah.logger.With(slog.String("op", op))
 	ctx := r.Context()
+
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error("Failed to decode body", "err", err.Error())
 		return helpers.BadRequest("invalid request")
 	}
+
+	logger.Info(
+		"Received login request",
+		"email", req.Email,
+		"password_encrypted_base64", req.Password,
+	)
 
 	user, err := ah.userService.First(ctx, &models.User{Email: req.Email})
 	if err != nil {
@@ -117,6 +122,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if !CheckPasswordHash(req.Password, user.PasswordHash) {
+		logger.Warn("Password hash mismatch", "email", req.Email)
 		return helpers.NewAPIError(http.StatusUnauthorized, "invalid credentials")
 	}
 
@@ -132,11 +138,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 	authJSON, err := json.Marshal(authData)
 	if err != nil {
-		logger.Error("failed to encode auth data", "err", err.Error())
+		logger.Error("Failed to encode auth data", "err", err.Error())
 		return helpers.InternalServerError("failed to encode auth data")
 	}
+	logger.Info("Auth data JSON", "authJSON", string(authJSON))
 
 	authBase64 := base64.URLEncoding.EncodeToString(authJSON)
+	logger.Info("Auth data Base64 encoded", "authBase64", authBase64)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "authData",
@@ -147,13 +155,14 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 	})
+
+	logger.Info("Log in successful", "email", req.Email)
+	
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]any{
 		"accessToken": accessToken,
 		"user":        ah.dtoBuilder.BuildUserDTO(user),
 	})
-
-	logger.Info("Log in successfull", "email", req.Email)
 	return nil
 }
 

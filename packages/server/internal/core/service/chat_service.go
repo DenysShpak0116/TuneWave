@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
@@ -12,38 +13,91 @@ import (
 
 type ChatService struct {
 	*GenericService[models.Chat]
+	userRepository port.Repository[models.User]
 }
 
-func NewChatService(repo port.Repository[models.Chat], logger *slog.Logger) services.ChatService {
+func NewChatService(
+	repo port.Repository[models.Chat],
+	logger *slog.Logger,
+	userRepository port.Repository[models.User],
+) services.ChatService {
 	return &ChatService{
 		GenericService: NewGenericService(repo, logger),
+		userRepository: userRepository,
 	}
 }
 
-func (cs *ChatService) GetOrCreatePrivateChat(ctx context.Context, user1, user2 uuid.UUID) (*models.Chat, error) {
-	const op = "core.service.ChatService.GetOrCreatePrivateChat"
-	logger := cs.logger.With(
-		slog.String("op", op),
-	)
+func (cs *ChatService) GetOrCreateGroupChat(ctx context.Context, userIDs []uuid.UUID, name string) (*models.Chat, error) {
+	const op = "core.service.ChatService.GetOrCreateGroupChat"
+	logger := cs.logger.With(slog.String("op", op))
 
-	chats, err := cs.repository.NewQuery(ctx).
-		Where("(user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)", user1, user2, user2, user1).
-		Find()
+	preloads := []string{"ChatUsers"}
+	chats, err := cs.repository.NewQuery(ctx).Preload(preloads...).Find()
 	if err != nil {
-		logger.Error("Error while trying to retrieve chats", "err", err.Error())
+		logger.Error("Error while retrieving chats", "err", err.Error())
 		return nil, err
 	}
-	if len(chats) >= 1 {
-		logger.Info("Returned first found chat")
-		return &chats[0], nil
+
+	for _, chat := range chats {
+		if sameParticipants(chat.ChatUsers, userIDs) {
+			logger.Info("Returned existing chat")
+			return &chat, nil
+		}
 	}
 
-	chat := &models.Chat{UserID1: user1, UserID2: user2}
-	if err = cs.repository.Add(ctx, chat); err != nil {
+	users, err := cs.userRepository.NewQuery(ctx).
+		Where("id IN ?", userIDs).
+		Find()
+	if err != nil {
+		logger.Error("Failed to load users", "err", err)
+		return nil, err
+	}
+
+	if name == "" {
+		for i, user := range users {
+			if i > 2 {
+				name = fmt.Sprintf("%s and others", name)
+				break
+			}
+			if i > 0 {
+				name += ", "
+			}
+			name += user.Username
+		}
+	}
+
+	chatUsers := make([]models.ChatUser, 0, len(users))
+	for _, user := range users {
+		chatUsers = append(chatUsers, models.ChatUser{UserID: user.ID})
+	}
+
+	chat := &models.Chat{
+		Name:      name,
+		ChatUsers: chatUsers,
+	}
+
+	if err := cs.repository.Add(ctx, chat); err != nil {
 		logger.Error("Failed to create new chat", "err", err)
 		return nil, err
 	}
 
-	logger.Info("New chat created successfully", "user1", user1.String(), "user2", user2.String())
+	logger.Info("New chat created successfully", "users", userIDs)
 	return chat, nil
+}
+
+func sameParticipants(chatUsers []models.ChatUser, ids []uuid.UUID) bool {
+	if len(chatUsers) != len(ids) {
+		return false
+	}
+
+	idMap := make(map[uuid.UUID]bool)
+	for _, cu := range chatUsers {
+		idMap[cu.UserID] = true
+	}
+	for _, id := range ids {
+		if !idMap[id] {
+			return false
+		}
+	}
+	return true
 }

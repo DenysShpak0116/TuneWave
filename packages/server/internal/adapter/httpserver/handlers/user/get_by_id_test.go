@@ -18,6 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -141,20 +142,27 @@ func TestUserHandler_GetChats(t *testing.T) {
 					GetByID(gomock.Any(), userID, gomock.Any()).
 					Return(&models.User{
 						BaseModel: models.BaseModel{ID: userID},
-						Chats1: []models.Chat{
+						ChatUsers: []models.ChatUser{
 							{
-								BaseModel: models.BaseModel{ID: chatID},
-								User1: models.User{
-									BaseModel: models.BaseModel{ID: userID},
-								},
-								User2: models.User{
-									BaseModel:      models.BaseModel{ID: otherUserID},
-									Username:       "OtherUser",
-									ProfilePicture: "avatar.png",
+								BaseModel: models.BaseModel{},
+								UserID:    userID,
+								User:      models.User{BaseModel: models.BaseModel{ID: userID}, Username: "Me"},
+								ChatID:    chatID,
+								Chat: models.Chat{
+									BaseModel: models.BaseModel{ID: chatID},
+									ChatUsers: []models.ChatUser{
+										{
+											UserID: userID,
+											User:   models.User{BaseModel: models.BaseModel{ID: userID}, Username: "Me"},
+										},
+										{
+											UserID: otherUserID,
+											User:   models.User{BaseModel: models.BaseModel{ID: otherUserID}, Username: "OtherUser", ProfilePicture: "avatar.png"},
+										},
+									},
 								},
 							},
 						},
-						Chats2: []models.Chat{},
 					}, nil)
 
 				mockMessageService.
@@ -194,6 +202,10 @@ func TestUserHandler_GetChats(t *testing.T) {
 				var actual []map[string]interface{}
 				err := json.Unmarshal(rr.Body.Bytes(), &actual)
 				assert.NoError(t, err)
+
+				require.NotEmpty(t, actual)
+				assert.Equal(t, "OtherUser", actual[0]["username"])
+				assert.Equal(t, "Hello!", actual[0]["lastMessage"])
 			} else {
 				var actual map[string]interface{}
 				err := json.Unmarshal(rr.Body.Bytes(), &actual)

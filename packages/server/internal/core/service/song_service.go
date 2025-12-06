@@ -364,7 +364,7 @@ func (ss *SongService) associateTags(ctx context.Context, song *models.Song, tag
 	return nil
 }
 
-func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error) {
+func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, string, error) {
 	const op = "core.service.SongService.SetReaction"
 	logger := ss.logger.With(
 		slog.String("op", op),
@@ -375,10 +375,13 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 		Find()
 	if err != nil {
 		logger.Error("Failed to get song reactions", "id", songID.String(), "err", err.Error())
-		return 0, 0, err
+		return 0, 0, "", err
 	}
 
+	var reactionAction string
+
 	if len(reactions) == 0 {
+		// Пользователь ставит новый лайк/дизлайк
 		reaction := models.UserReaction{
 			SongID: songID,
 			UserID: userID,
@@ -386,37 +389,46 @@ func (ss *SongService) SetReaction(ctx context.Context, songID uuid.UUID, userID
 		}
 		if err := ss.ReactionsRepository.Add(ctx, &reaction); err != nil {
 			logger.Error("Failed to add reaction", "id", songID.String(), "err", err.Error())
-			return 0, 0, err
+			return 0, 0, "", err
 		}
+		reactionAction = reactionType // "like" или "dislike"
 	} else {
 		existingReaction := reactions[0]
 		if existingReaction.Type == reactionType {
+			// Снятие лайка или дизлайка
 			if err := ss.ReactionsRepository.Delete(ctx, existingReaction.ID); err != nil {
 				logger.Error("Failed to delete reaction", "id", songID.String(), "err", err.Error())
-				return 0, 0, err
+				return 0, 0, "", err
+			}
+			if reactionType == "like" {
+				reactionAction = "unlike"
+			} else if reactionType == "dislike" {
+				reactionAction = "undislike"
 			}
 		} else {
+			// Смена реакции с лайка на дизлайк или наоборот
 			existingReaction.Type = reactionType
 			if err := ss.ReactionsRepository.Update(ctx, &existingReaction); err != nil {
 				logger.Error("Failed to update song reaction", "id", songID.String(), "err", err.Error())
-				return 0, 0, err
+				return 0, 0, "", err
 			}
+			reactionAction = reactionType //
 		}
 	}
 
 	dislikes, err := ss.ReactionsCount(ctx, songID, "dislike")
 	if err != nil {
 		logger.Error("Failed to get song dislikes", "id", songID.String(), "err", err.Error())
-		return 0, 0, err
+		return 0, 0, "", err
 	}
 	likes, err := ss.ReactionsCount(ctx, songID, "like")
 	if err != nil {
 		logger.Error("Failed to get song likes", "id", songID.String(), "err", err.Error())
-		return 0, 0, err
+		return 0, 0, "", err
 	}
 
-	logger.Info("Song reaction successfully proceeded", "id", songID.String())
-	return likes, dislikes, nil
+	logger.Info("Song reaction successfully proceeded", "id", songID.String(), "action", reactionAction)
+	return likes, dislikes, reactionAction, nil
 }
 
 func (ss *SongService) IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error) {

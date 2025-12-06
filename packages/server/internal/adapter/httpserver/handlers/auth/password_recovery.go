@@ -19,7 +19,7 @@ type ForgotPasswordRequest struct {
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        request body dto.ForgotPasswordRequest true "Email address for password reset"
+// @Param        request body ForgotPasswordRequest true "Email address for password reset"
 // @Router       /auth/forgot-password [post]
 func (ah *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.httpserver.handlers.AuthHandler.ForgotPassword"
@@ -56,7 +56,7 @@ type ResetPasswordRequest struct {
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        request body dto.ResetPasswordRequest true "New password and token"
+// @Param        request body ResetPasswordRequest true "New password and token"
 // @Router       /auth/reset-password [post]
 func (ah *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) error {
 	const op = "adapter.handlers.httpserver.AuthHandler.ResetPassword"

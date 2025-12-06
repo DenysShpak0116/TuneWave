@@ -38,12 +38,12 @@ func (uh *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-type ChatPreview struct {
-	ID           uuid.UUID `json:"id"`
-	TargetUserID uuid.UUID `json:"targetUserId"`
-	UserAvatar   string    `json:"userAvatar"`
-	Username     string    `json:"username"`
-	LastMessage  string    `json:"lastMessage"`
+type chatPreview struct {
+	ID          uuid.UUID   `json:"id"`
+	UserIDs     []uuid.UUID `json:"userIds"`
+	UserAvatar  string      `json:"userAvatar"`
+	LastMessage string      `json:"lastMessage"`
+	ChatName    string      `json:"chatName"`
 }
 
 // GetChats godoc
@@ -61,45 +61,67 @@ func (uh *UserHandler) GetChats(w http.ResponseWriter, r *http.Request) error {
 		return helpers.NotFound("invalid user ID")
 	}
 
-	preloads := []string{"Chats1", "Chats2", "Chats1.User1", "Chats1.User2", "Chats2.User1", "Chats2.User2"}
+	preloads := []string{
+		"ChatUsers",
+		"ChatUsers.Chat",
+		"ChatUsers.Chat.ChatUsers",
+		"ChatUsers.Chat.ChatUsers.User",
+	}
 	user, err := uh.userService.GetByID(ctx, userUUID, preloads...)
 	if err != nil {
 		return helpers.NotFound("user not found")
 	}
 
-	chats := make([]ChatPreview, 0, len(user.Chats1)+len(user.Chats2))
-	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats1, uh)
-	chats = appendChatsForUser(ctx, chats, userUUID, user.Chats2, uh)
+	chats := make([]chatPreview, 0, len(user.ChatUsers))
+	chats = appendChatsForUser(ctx, chats, userUUID, user.ChatUsers, uh)
+
 	render.JSON(w, r, chats)
 	return nil
 }
 
-func appendChatsForUser(ctx context.Context, chats []ChatPreview, userUUID uuid.UUID, userChats []models.Chat, uh *UserHandler) []ChatPreview {
-	for _, chat := range userChats {
+func appendChatsForUser(
+	ctx context.Context,
+	chats []chatPreview,
+	userUUID uuid.UUID,
+	userChats []models.ChatUser,
+	uh *UserHandler,
+) []chatPreview {
+	for _, userChat := range userChats {
+		chat := userChat.Chat
+
 		lastMessage, err := uh.messageService.Last(ctx, &models.Message{ChatID: chat.ID})
 		if err != nil {
-			lastMessage = &models.Message{
-				Content: "",
+			lastMessage = &models.Message{Content: ""}
+		}
+
+		var otherUsers []models.User
+		for _, cu := range chat.ChatUsers {
+			if cu.UserID != userUUID {
+				otherUsers = append(otherUsers, cu.User)
 			}
 		}
 
-		var chatPreview ChatPreview
-		if chat.User1.ID == userUUID {
-			chatPreview = ChatPreview{
-				ID:           chat.ID,
-				UserAvatar:   chat.User2.ProfilePicture,
-				Username:     chat.User2.Username,
-				LastMessage:  lastMessage.Content,
-				TargetUserID: chat.User2.ID,
+		userIDs := make([]uuid.UUID, 0, len(otherUsers)+1)
+		userIDs = append(userIDs, userUUID)
+		for _, user := range otherUsers {
+			userIDs = append(userIDs, user.ID)
+		}
+
+		chatName := chat.Name
+		var avatar string
+		if len(otherUsers) > 0 {
+			if chatName == "" {
+				chatName = otherUsers[0].Username
 			}
-		} else {
-			chatPreview = ChatPreview{
-				ID:           chat.ID,
-				UserAvatar:   chat.User1.ProfilePicture,
-				Username:     chat.User1.Username,
-				LastMessage:  lastMessage.Content,
-				TargetUserID: chat.User1.ID,
-			}
+			avatar = otherUsers[0].ProfilePicture
+		}
+
+		chatPreview := chatPreview{
+			ID:          chat.ID,
+			UserIDs:     userIDs,
+			UserAvatar:  avatar,
+			LastMessage: lastMessage.Content,
+			ChatName:    chatName,
 		}
 
 		chats = append(chats, chatPreview)

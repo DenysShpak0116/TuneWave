@@ -20,7 +20,7 @@ export const SearchSongCard: FC<SongCardProps> = ({ song }) => {
             <Info>
                 <Title>{song.title}</Title>
                 <Subtitle>
-                    {song.user.username} • {song.duration}
+                    {song.authors.map(author => author.name).join(",") || ""} • {song.duration}
                 </Subtitle>
                 <Stats>
                     <span>{song.genre}</span>

@@ -14,6 +14,7 @@ import (
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/adapter/httpserver/handlers/dto"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/domain/models"
+	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service"
 	"github.com/DenysShpak0116/TuneWave/packages/server/internal/core/service/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -29,9 +30,17 @@ func TestCollectionHandler_CreateCollection(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
-	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
+	handler := NewCollectionHandler(
+		mockCollectionService,
+		mockUserCollectionService,
+		mockUserReactionService,
+		mockUserService,
+		mockEventService,
+		dtoBuilder,
+	)
 
 	httpHandler := handlers.MakeHandler(handler.CreateCollection)
 
@@ -174,10 +183,17 @@ func TestCollectionHandler_GetCollectionByID(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
-	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
-
+	handler := NewCollectionHandler(
+		mockCollectionService,
+		mockUserCollectionService,
+		mockUserReactionService,
+		mockUserService,
+		mockEventService,
+		dtoBuilder,
+	)
 	httpHandler := handlers.MakeHandler(handler.GetCollectionByID)
 
 	tests := []struct {
@@ -259,10 +275,17 @@ func TestCollectionHandler_DeleteCollection(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
-	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
-
+	handler := NewCollectionHandler(
+		mockCollectionService,
+		mockUserCollectionService,
+		mockUserReactionService,
+		mockUserService,
+		mockEventService,
+		dtoBuilder,
+	)
 	httpHandler := handlers.MakeHandler(handler.DeleteCollection)
 
 	tests := []struct {
@@ -335,10 +358,17 @@ func TestCollectionHandler_UpdateCollection(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
-	handler := NewCollectionHandler(mockCollectionService, mockUserCollectionService, mockUserReactionService, mockUserService, dtoBuilder)
-
+	handler := NewCollectionHandler(
+		mockCollectionService,
+		mockUserCollectionService,
+		mockUserReactionService,
+		mockUserService,
+		mockEventService,
+		dtoBuilder,
+	)
 	httpHandler := handlers.MakeHandler(handler.UpdateCollection)
 
 	tests := []struct {
@@ -496,6 +526,7 @@ func TestCollectionHandler_GetUsersCollections(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 	handler := NewCollectionHandler(
@@ -503,6 +534,7 @@ func TestCollectionHandler_GetUsersCollections(t *testing.T) {
 		mockUserCollectionService,
 		mockUserReactionService,
 		mockUserService,
+		mockEventService,
 		dtoBuilder,
 	)
 
@@ -592,6 +624,7 @@ func TestCollectionHandler_GetCollections(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 	handler := NewCollectionHandler(
@@ -599,6 +632,7 @@ func TestCollectionHandler_GetCollections(t *testing.T) {
 		mockUserCollectionService,
 		mockUserReactionService,
 		mockUserService,
+		mockEventService,
 		dtoBuilder,
 	)
 
@@ -686,6 +720,7 @@ func TestCollectionHandler_AddCollectionToUser(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 	handler := NewCollectionHandler(
@@ -693,6 +728,7 @@ func TestCollectionHandler_AddCollectionToUser(t *testing.T) {
 		mockUserCollectionService,
 		mockUserReactionService,
 		mockUserService,
+		mockEventService,
 		dtoBuilder,
 	)
 
@@ -871,6 +907,7 @@ func TestCollectionHandler_RemoveCollectionFromUser(t *testing.T) {
 	mockUserCollectionService := mocks.NewMockUserCollectionService(ctrl)
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, nil)
 	handler := NewCollectionHandler(
@@ -878,6 +915,7 @@ func TestCollectionHandler_RemoveCollectionFromUser(t *testing.T) {
 		mockUserCollectionService,
 		mockUserReactionService,
 		mockUserService,
+		mockEventService,
 		dtoBuilder,
 	)
 
@@ -1014,6 +1052,7 @@ func TestCollectionHandler_GetCollectionSongs(t *testing.T) {
 	mockUserReactionService := mocks.NewMockUserReactionService(ctrl)
 	mockUserService := mocks.NewMockUserService(ctrl)
 	mockSongReactionService := mocks.NewMockUserReactionService(ctrl)
+	mockEventService := &service.EventService{}
 
 	dtoBuilder := dto.NewDTOBuilder(mockUserService, mockSongReactionService)
 	handler := NewCollectionHandler(
@@ -1021,6 +1060,7 @@ func TestCollectionHandler_GetCollectionSongs(t *testing.T) {
 		mockUserCollectionService,
 		mockUserReactionService,
 		mockUserService,
+		mockEventService,
 		dtoBuilder,
 	)
 

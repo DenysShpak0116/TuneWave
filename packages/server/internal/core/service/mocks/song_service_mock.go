@@ -578,13 +578,14 @@ func (c *MockSongServiceSaveSongCall) DoAndReturn(f func(context.Context, servic
 }
 
 // SetReaction mocks base method.
-func (m *MockSongService) SetReaction(ctx context.Context, songID, userID uuid.UUID, reactionType string) (int64, int64, error) {
+func (m *MockSongService) SetReaction(ctx context.Context, songID, userID uuid.UUID, reactionType string) (int64, int64, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetReaction", ctx, songID, userID, reactionType)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(int64)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret2, _ := ret[2].(string)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // SetReaction indicates an expected call of SetReaction.
@@ -600,19 +601,19 @@ type MockSongServiceSetReactionCall struct {
 }
 
 // Return rewrite *gomock.Call.Return
-func (c *MockSongServiceSetReactionCall) Return(arg0, arg1 int64, arg2 error) *MockSongServiceSetReactionCall {
-	c.Call = c.Call.Return(arg0, arg1, arg2)
+func (c *MockSongServiceSetReactionCall) Return(arg0, arg1 int64, arg2 string, arg3 error) *MockSongServiceSetReactionCall {
+	c.Call = c.Call.Return(arg0, arg1, arg2, arg3)
 	return c
 }
 
 // Do rewrite *gomock.Call.Do
-func (c *MockSongServiceSetReactionCall) Do(f func(context.Context, uuid.UUID, uuid.UUID, string) (int64, int64, error)) *MockSongServiceSetReactionCall {
+func (c *MockSongServiceSetReactionCall) Do(f func(context.Context, uuid.UUID, uuid.UUID, string) (int64, int64, string, error)) *MockSongServiceSetReactionCall {
 	c.Call = c.Call.Do(f)
 	return c
 }
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
-func (c *MockSongServiceSetReactionCall) DoAndReturn(f func(context.Context, uuid.UUID, uuid.UUID, string) (int64, int64, error)) *MockSongServiceSetReactionCall {
+func (c *MockSongServiceSetReactionCall) DoAndReturn(f func(context.Context, uuid.UUID, uuid.UUID, string) (int64, int64, string, error)) *MockSongServiceSetReactionCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

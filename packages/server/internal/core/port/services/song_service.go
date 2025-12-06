@@ -48,7 +48,7 @@ type SongService interface {
 	SaveSong(ctx context.Context, songParams SaveSongParams) (*models.Song, error)
 	UpdateSong(ctx context.Context, songParams UpdateSongParams) error
 	ReactionsCount(ctx context.Context, id uuid.UUID, reactionType string) (int64, error)
-	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, error)
+	SetReaction(ctx context.Context, songID uuid.UUID, userID uuid.UUID, reactionType string) (int64, int64, string, error)
 	AddToCollection(ctx context.Context, songUUID, collectionUUID uuid.UUID) error
 	IsReactedByUser(ctx context.Context, songID uuid.UUID, userID uuid.UUID) (string, error)
 	GetGenres(context.Context) []string

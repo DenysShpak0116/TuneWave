@@ -12,11 +12,12 @@ import { TrackInformationLayout } from "@ui/layout/TrackInformation/track-inform
 
 interface ITrackInformationProps {
     song: ISong;
+    songComments: IComment[]
 }
 
-export const TrackInformation: FC<ITrackInformationProps> = ({ song }) => {
+export const TrackInformation: FC<ITrackInformationProps> = ({ song, songComments }) => {
     const user = useAuthStore(state => state.user);
-    const [comments, setComments] = useState<IComment[]>(song.comments);
+    const [comments, setComments] = useState<IComment[]>(songComments);
     const isMainUserTrack = user?.id === song.user.id
     const { mutate: songReact } = useReaction();
     const { data: currentReaction, isLoading } = useGetUserReaction(song.id, user?.id);
